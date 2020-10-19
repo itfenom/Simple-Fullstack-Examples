@@ -1,0 +1,57 @@
+﻿@model Playground.Mvc.Models.ShoppingCartDetailsViewModel
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2 class="text-primary">Shopping Cart</h2>
+
+@if (Model.ShoppingDetails.Count() == 0)
+{
+    <p>Your cart is empty!</p>
+}
+else
+{
+    using (@Html.BeginForm())
+    {
+        <p>
+            @Html.ActionLink("Empty Cart", "EmptyCart", "Cart",
+                           new { confirm = true },
+                           new { onclick = "return confirm('Are you sure, you want to empty this cart?')" })
+        </p>
+        <table class="table table-hover table-striped">
+            <thead>
+                <tr>
+                    <th>
+                        @Html.DisplayName("ID")
+                    </th>
+                    <th>
+                        @Html.DisplayName("Name")
+                    </th>
+                    <th>
+                        @Html.DisplayName("Price (each)")
+                    </th>
+                    <th>
+                        @Html.DisplayName("Quantity")
+                    </th>
+                    <th>
+                        @Html.DisplayName("Item Total")
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            @Html.EditorFor(x => x.ShoppingDetails)
+        </table>
+        <div>
+            <p>
+                <b>Order Total: @Html.Raw(ViewBag.OrderTotal)</b>
+            </p>
+        </div>
+        <p>
+            <input type="submit" class="btn btn-default btn-lg" value="Update Cart" />
+        </p>
+        <p>
+            <a href="@Url.Action("Index", "Checkout",  new { orderTotal = ViewBag.OrderTotal})" class="btn btn-success btn-lg">Check out &raquo;</a>
+        </p>
+    }
+}

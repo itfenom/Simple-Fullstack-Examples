@@ -1,0 +1,114 @@
+﻿@model Playground.Mvc.Models.EmailViewModel
+
+@{
+    ViewBag.Title = "Send Email | Index";
+}
+
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("input:text,form").attr("autocomplete", "off");
+        })
+
+        function LimtCharacters(txtMsg, CharLength, indicator) {
+            chars = txtMsg.value.length;
+            document.getElementById(indicator).innerHTML = CharLength - chars;
+            if (chars > CharLength) {
+                txtMsg.value = txtMsg.value.substring(0, CharLength);
+            }
+        }
+    </script>
+}
+
+<br />
+<br />
+<br />
+
+<h5>Send Email using 'Gmail Account'</h5>
+<h6>Attachment field is optional!</h6>
+
+@using (Html.BeginForm("SendEmail", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        @Html.ValidationSummary(true)
+        <fieldset>
+            <legend>From(Gmail account):</legend>
+            <div class="form-group">
+                @Html.LabelFor(model => model.EmailFrom, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.EmailFrom)
+                    @Html.ValidationMessageFor(model => model.EmailFrom)
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.EmailFromPassword, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.EmailFromPassword)
+                    @Html.ValidationMessageFor(model => model.EmailFromPassword)
+                </div>
+            </div>
+        </fieldset>
+
+        <br />
+
+        <fieldset>
+            <legend>Choose Email Template</legend>
+            @foreach (var _template in Model.EmailTemplates)
+            {
+                @Html.RadioButtonFor(m => m.SelectedTemplate, _template.TemplateID,
+                (_template.IsSelected.HasValue && _template.IsSelected.Value) ? new { @checked = "checked" } : null) @_template.TemplateName
+                <br />
+            }
+        </fieldset>
+
+        <br />
+
+        <fieldset>
+            <legend>To(Any valid email address):</legend>
+            <div class="form-group">
+                @Html.LabelFor(model => model.EmailTo, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.EmailTo)
+                    @Html.ValidationMessageFor(model => model.EmailTo)
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.EmailSubject, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.EmailSubject)
+                    @Html.ValidationMessageFor(model => model.EmailSubject)
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(model => model.EmailBody, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.TextAreaFor(model => model.EmailBody, new { cols = "20", rows = "4", onkeyup = "LimtCharacters(this,1000,'lblcount');" })
+                    @Html.ValidationMessageFor(model => model.EmailBody)
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.Label("Characters Remaining:", new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    <label id="lblcount" style="background-color:#E2EEF1;color:Red;font-weight:bold;">1000</label>
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(model => model.File, new { @class = "control-label col-md-2", title = "Hold-down control key to select multiple files..." })
+                <div class="col-md-10">
+                    <input type="file" id="fileToUpload" name="file" multiple />
+                    @Html.ValidationMessageFor(model => model.File)
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Send" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}

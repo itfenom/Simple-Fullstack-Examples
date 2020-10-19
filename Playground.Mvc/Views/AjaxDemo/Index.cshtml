@@ -1,0 +1,95 @@
+﻿@{
+    ViewBag.Title = "Ajax Demo | Index";
+}
+
+<head>
+    <title>@ViewBag.Title</title>
+    <script type="text/javascript" src="@Url.Content("~/Scripts/jquery-3.2.1.js")"></script>
+</head>
+
+<br />
+<br />
+<br />
+
+<h2>Ajax Example/Loading data in partial View</h2>
+
+<select id="ddlAuthors">
+    <option></option>
+</select>
+
+<div id="displayValues">
+</div>
+
+<div id="errorDisplay" style="width:600px; display: none; border: solid 2px red;">
+</div>
+
+<br />
+<div>
+    <input id="btnLoadAllBooksAjax" name="btnLoadAllBooksAjax" type="button" value="Load All Books" />
+    <br />
+    <br />
+    <div id="books" style="background-color:lightskyblue"></div>
+</div>
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        //alert('Hello')Url.Content(
+        $.ajax({
+            url: '@Url.Content("~/AjaxDemo/GetAuthors")',
+            type: 'GET',
+            success: function (result) {
+                for (var i = 0; i < result.length; i++) {
+                    var option = new Option(result[i], result[i]);
+                    $('#ddlAuthors').append(option);
+                }
+            }
+        });
+
+        $('#ddlAuthors').change(function () {
+            var author = $('#ddlAuthors').val();
+            $.ajax({
+                url: '@Url.Content("~/AjaxDemo/GetBooksForAuthor")',
+                type: 'POST',
+                data: { author: author },
+                success: function (result) {
+                    var currObj, authorName, title, subject;
+                    $('#displayValues').empty();
+                    for (var i = 0; i < result.length; i++) {
+                        currObj = result[i];
+                        authorName = currObj.Author.toString();
+                        title = currObj.Title.toString();
+                        subject = currObj.Subject.toString();
+
+                        $('#displayValues').append('<li>' + "<strong>Subject:</strong> " + subject + '</li>');
+                    }
+                },
+                error: function (result) {
+                    $('#erorDisplay').show();
+                    $('#errorDisplay').html(result.responseText);
+                }
+            });
+        });
+
+        $('#btnLoadAllBooksAjax').click(function(){
+            @*$("#books").load('@(Url.Action("GetBooks", "AjaxDemo", null, Request.Url.Scheme))?categoryId=' + categoryId);*@
+            $("#books").load('@(Url.Action("GetBooks", "AjaxDemo", null, Request.Url.Scheme))')
+            });
+        });
+
+        @*$('#btnLoadAllBooksAjax').click(function () {
+            $.ajax({
+                url: '@Url.Content("~/AjaxDemo/GetBooks")',
+                contentType: 'application/html; charset=utf-8',
+                type: 'GET',
+                dataType: 'html'
+            })
+            .success(function (result) {
+                $('#books').html(result);
+            })
+            .error(function (xhr, status) {
+                alert(status);
+                })
+            });
+        });*@
+</script>

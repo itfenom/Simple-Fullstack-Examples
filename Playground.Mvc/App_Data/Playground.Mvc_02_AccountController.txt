@@ -1,0 +1,453 @@
+SeraphWeb.Mvc_02_AccountController
+
+using System;
+using System.Web.Mvc;
+using System.Web.Security;
+using SeraphWeb.Mvc.Models;
+using SeraphWeb.Mvc.DAL;
+
+namespace SeraphWeb.Mvc.Controllers
+{
+    public class AccountController : BaseController
+    {
+        private IAccountRepository _repository;
+
+        public AccountController()
+        {
+            this._repository = new AccountRepository(new SeraphEntities());
+        }
+
+        [AllowAnonymous]
+        public ActionResult Login(string returnUrl)
+        {
+            ViewBag.ReturnUrl = returnUrl;
+            return View();
+        }
+
+        [HttpPost]
+        public ActionResult Login(LoginViewModel model, string returnUrl)
+        {
+            if (!ModelState.IsValid)
+            {
+                ModelState.AddModelError("", "Invalid Credentials. Try again.");
+                return View(model);
+            }
+
+            if (_repository.IsUserExist(model.UserName))
+            {
+                var _user = _repository.GetUser(model.UserName, model.Password);
+
+                if (_user != null)
+                {
+                    //populate static class here with credentials!
+                    FormsAuthentication.RedirectFromLoginPage(model.UserName, model.RememberMe);
+
+                    System.Web.HttpContext.Current.Session["ID"] = _user.ID;
+                    System.Web.HttpContext.Current.Session["USER_NAME"] = _user.UserName;
+                    System.Web.HttpContext.Current.Session["DISPLAY_NAME"] = _user.DisplayName;
+                    System.Web.HttpContext.Current.Session["ROLE_ID"] = _user.RoleID;
+                    System.Web.HttpContext.Current.Session["USER_ROLE"] = _user.UserRole;
+
+                    if (Url.IsLocalUrl(returnUrl) && returnUrl.Length > 1
+                        && returnUrl.StartsWith("/")
+                        && !returnUrl.StartsWith("//")
+                        && !returnUrl.StartsWith("/\\"))
+                    {
+                        return RedirectToLocal(returnUrl);
+                    }
+                    else
+                    {
+                        return RedirectToAction("Index", "Home");
+                    }
+                }
+            }
+
+            //if we get this far, then credentials were not validated, so display error!
+            ModelState.AddModelError("", "Invalid Credentials. Try again.");
+            return View(model);
+        }
+
+        private ActionResult RedirectToLocal(string returnUrl)
+        {
+            if (Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+            else
+            {
+                return RedirectToAction("Index", "Home");
+            }
+        }
+
+        public ActionResult LogOff()
+        {
+            Session.Clear();
+            FormsAuthentication.SignOut();
+            return RedirectToAction("Index", "Home");
+        }
+
+        [HttpGet]
+        public ActionResult Register()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public ActionResult Register(UserViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                //check if user exist
+                if (_repository.IsUserExist(model.UserName.Trim()))
+                {
+                    Danger(string.Format("<b>{0}</b> already exist. Choose a different user name.", model.UserName), true);
+                    return View(model);
+                }
+
+                APP_USER _newUser = new APP_USER();
+                _newUser.USER_NAME = model.UserName;
+                _newUser.DISPLAY_NAME = model.DisplayName;
+                _newUser.USER_PASSWORD = model.ConfirmPassword;
+                _newUser.ROLE_ID = 102;
+                _repository.AddNewUser(_newUser);
+
+                Success(string.Format("<b>{0}</b> user created successfully. Please login.", model.UserName), true);
+
+                return RedirectToAction("Login", "Account");
+            }
+
+            ModelState.AddModelError("", "Invalid/incomplete data provided. Try again.");
+            return View(model);
+        }
+
+        [HttpGet]
+        public ActionResult Manage()
+        {
+            if (System.Web.HttpContext.Current.Session["ID"] == null)
+            {
+                return RedirectToAction("LogOff");
+            }
+            var _user = _repository.GetUserByID(Convert.ToInt32(System.Web.HttpContext.Current.Session["ID"]));
+            return View(_user);
+        }
+
+        [HttpGet]
+        public ActionResult Edit(int ID)
+        {
+            var _user = _repository.GetUserByID(ID);
+            return View(_user);
+        }
+
+        [HttpPost]
+        public ActionResult Edit(UserViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                APP_USER _updateUser = new APP_USER();
+                _updateUser.ID = model.ID;
+                _updateUser.USER_NAME = model.UserName;
+                _updateUser.DISPLAY_NAME = model.DisplayName;
+                _updateUser.USER_PASSWORD = model.ConfirmPassword;
+                _updateUser.ROLE_ID = model.RoleID;
+                _repository.UpdateUser(_updateUser);
+
+                Success(string.Format("<b>{0}</b> updated successfully.", model.UserName), true);
+
+                return RedirectToAction("Manage");
+            }
+
+            return View(model);
+        }
+
+        [HttpGet]
+        [Authorize(Users = "kmubarak")]
+        public ActionResult ManageAdmin()
+        {
+            var _allUsers = _repository.GetAllUsers();
+            return View(_allUsers);
+        }
+
+        [Authorize(Users = "kmubarak")]
+        public ActionResult DeleteUser(int ID)
+        {
+            var _user = _repository.GetUserByID(ID);
+
+            if (_user.UserRole.ToUpper() == "ADMIN")
+            {
+                Danger(string.Format("<b>You cannot delete an Admin user!</b>"), true);
+            }
+            else
+            {
+                _repository.DeleteUser(ID);
+                Success(string.Format("User <b>'{0}'</b> deleted successfully.", _user.DisplayName), true);
+            }
+
+            return RedirectToAction("ManageAdmin");
+        }
+    }
+}
+--------------------------------------------------------------------------------------------------------------------------
+Account.View.Edit:
+@model SeraphWeb.Mvc.Models.UserViewModel
+
+@{
+    ViewBag.Title = "Edit";
+}
+
+<h2>Edit</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <hr />
+        @Html.ValidationSummary(true)
+        @Html.HiddenFor(model => model.ID)
+        @Html.HiddenFor(model => model.RoleID)
+        @Html.HiddenFor(model => model.UserName)
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.UserName, new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.TextBoxFor(model => model.UserName, new { @readonly = "readonly" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Password, new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Password)
+                @Html.ValidationMessageFor(model => model.Password)
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.ConfirmPassword, new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.ConfirmPassword)
+                @Html.ValidationMessageFor(model => model.ConfirmPassword)
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.DisplayName, new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.DisplayName)
+                @Html.ValidationMessageFor(model => model.DisplayName)
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.UserRole, new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.TextBoxFor(model => model.UserRole, new { @readonly = "readonly" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Save" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}
+
+<div>
+    @Html.ActionLink("Back to List", "Manage")
+</div>
+
+--------------------------------------------------------------------------------------------------------------------------
+Account.View.Login:
+@using SeraphWeb.Mvc.Models
+@model LoginViewModel
+
+@{
+    ViewBag.Title = "Login";
+}
+
+<h2>@ViewBag.Title.</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <section id="loginForm">
+            @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
+            {
+                @Html.AntiForgeryToken()
+                <h4>Use a local account to log in.</h4>
+                <hr />
+                @Html.ValidationSummary(true)
+                <div class="form-group">
+                    @Html.LabelFor(m => m.UserName, new { @class = "col-md-2 control-label" })
+                    <div class="col-md-10">
+                        @Html.TextBoxFor(m => m.UserName, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.UserName)
+                    </div>
+                </div>
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Password, new { @class = "col-md-2 control-label" })
+                    <div class="col-md-10">
+                        @Html.PasswordFor(m => m.Password, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.Password)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-offset-2 col-md-10">
+                        <div class="checkbox">
+                            @Html.CheckBoxFor(m => m.RememberMe)
+                            @Html.LabelFor(m => m.RememberMe)
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-offset-2 col-md-10">
+                        <input type="submit" value="Log in" class="btn btn-default" />
+                    </div>
+                </div>
+                <p>
+                    @Html.ActionLink("Register", "Register") if you don't have a local account.
+                </p>
+            }
+        </section>
+    </div>
+</div>
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
+--------------------------------------------------------------------------------------------------------------------------
+Account.View.Manage:
+@model SeraphWeb.Mvc.Models.UserViewModel
+
+@{
+    ViewBag.Title = "Manage";
+}
+
+<h2>Manage</h2>
+
+<div>
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.UserName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.UserName)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.DisplayName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.DisplayName)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.UserRole)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.UserRole)
+        </dd>
+
+    </dl>
+</div>
+<p>
+    @Html.ActionLink("Edit", "Edit", new { ID = Model.ID }) |
+    @Html.ActionLink("Back to List", "Index")
+</p>
+
+--------------------------------------------------------------------------------------------------------------------------
+Account.View.ManageAdmin:
+@model IEnumerable<SeraphWeb.Mvc.Models.UserViewModel>
+
+@{
+    ViewBag.Title = "Manage Add Users";
+}
+
+<h2>@ViewBag.Title</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Register")
+</p>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.UserName)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.DisplayName)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.UserRole)
+        </th>
+        <th></th>
+    </tr>
+
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.UserName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.DisplayName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.UserRole)
+            </td>
+            <td>
+                @Html.ActionLink("Delete", "DeleteUser", new { ID = item.ID })
+            </td>
+        </tr>
+    }
+
+</table>
+
+--------------------------------------------------------------------------------------------------------------------------
+Account.View.Register:
+@model SeraphWeb.Mvc.Models.UserViewModel
+
+<h2>@ViewBag.Title</h2>
+
+@using (Html.BeginForm("Register", "Account", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
+{
+    @Html.AntiForgeryToken()
+    <h4>Create a new account.</h4>
+    <hr />
+    @Html.ValidationSummary()
+    <div class="form-group">
+        @Html.LabelFor(m => m.UserName, new { @class = "col-md-2 control-label" })
+        <div class="col-md-10">
+            @Html.TextBoxFor(m => m.UserName, new { @class = "form-control" })
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.DisplayName, new { @class = "col-md-2 control-label" })
+        <div class="col-md-10">
+            @Html.TextBoxFor(m => m.DisplayName, new { @class = "form-control" })
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.Password, new { @class = "col-md-2 control-label" })
+        <div class="col-md-10">
+            @Html.PasswordFor(m => m.Password, new { @class = "form-control" })
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.ConfirmPassword, new { @class = "col-md-2 control-label" })
+        <div class="col-md-10">
+            @Html.PasswordFor(m => m.ConfirmPassword, new { @class = "form-control" })
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-md-offset-2 col-md-10">
+            <input type="submit" class="btn btn-default" value="Register" />
+        </div>
+    </div>
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
+--------------------------------------------------------------------------------------------------------------------------

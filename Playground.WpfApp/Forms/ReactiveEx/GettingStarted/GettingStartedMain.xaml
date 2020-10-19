@@ -1,0 +1,76 @@
+﻿<controls:MetroWindow 
+    x:Class="Playground.WpfApp.Forms.ReactiveEx.GettingStarted.GettingStartedMain"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:Playground.WpfApp.Forms.ReactiveEx.GettingStarted"
+    xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+    Width="600"
+    Height="500"
+    mc:Ignorable="d"
+    TextElement.FontWeight="Regular"
+    TextElement.FontSize="12"
+    TextOptions.TextFormattingMode="Ideal" 
+    TextOptions.TextRenderingMode="Auto"   
+    TitleCharacterCasing="Normal"
+    NonActiveWindowTitleBrush="{DynamicResource WindowTitleColorBrush}"
+    WindowTitleBrush="{DynamicResource WindowTitleColorBrush}"
+    GlowBrush="{DynamicResource AccentColorBrush3}"
+    WindowStartupLocation="CenterScreen"  
+    Title="Getting Started with ReactiveUI">
+
+    <controls:MetroWindow.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="{x:Type vm:SelectableItemsViewModel}">
+                <vm:SelectableItemsView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vm:AggregationViewModel}">
+                <vm:AggregationView />
+            </DataTemplate>
+
+
+            <DataTemplate DataType="{x:Type vm:FilterObservableViewModel}">
+                <vm:FilterObservableView />
+            </DataTemplate>
+
+            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="controls:ButtonHelper.PreserveTextCase" Value="True" />
+            </Style>
+        </ResourceDictionary>
+    </controls:MetroWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <TextBlock Margin="4 4 4 0" Grid.Row="0" Grid.Column="0"
+                   TextWrapping="Wrap"
+                   Text="Make a Selection:"/>
+
+        <TextBlock Margin="4 4 4 0" Grid.Row="0" Grid.Column="1"
+                   TextWrapping="Wrap"
+                   Text="{Binding SelectedChild.Description}" Foreground="DarkBlue" FontWeight="Bold" />
+
+        <StackPanel Margin="4 4 4 0" Grid.Row="1" Grid.Column="0" Orientation="Vertical">
+            <Button Margin="4" Width="100" Content="Selected Items" Command="{Binding LoadSelectedItemsCommand}" />
+            <Button Margin="4" Width="100" Content="Aggregations" Command="{Binding LoadAggregationCommand}" />
+            <Button Margin="4" Width="100" Content="Filter Observable" Command="{Binding LoadFilterObservableCommand}"/>
+        </StackPanel>
+
+        <Grid  Grid.Row="1" Grid.Column="1" Margin="0 0 6 4">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <ContentControl Grid.Row="0" Grid.Column="0" Content="{Binding SelectedChild}"/>
+        </Grid>
+    </Grid>
+</controls:MetroWindow>

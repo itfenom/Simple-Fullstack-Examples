@@ -1,0 +1,39 @@
+﻿@model Playground.Mvc.Models.UserViewModel
+
+@{
+    ViewBag.Title = "Manage";
+}
+
+<h2>Manage</h2>
+
+<div>
+    <dl class="dl-horizontal">
+        <dt>
+            @Html.DisplayNameFor(model => model.UserName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.UserName)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.DisplayName)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.DisplayName)
+        </dd>
+
+        <dt>
+            @Html.DisplayNameFor(model => model.UserRole)
+        </dt>
+
+        <dd>
+            @Html.DisplayFor(model => model.UserRole)
+        </dd>
+    </dl>
+</div>
+<p>
+    @Html.ActionLink("Edit", "Edit", new { ID = Model.ID }) |
+    @Html.ActionLink("Back to List", "Index")
+</p>

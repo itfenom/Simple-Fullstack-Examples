@@ -1,0 +1,94 @@
+﻿<controls:MetroWindow
+    x:Class="Playground.WpfApp.Forms.ListViewEx.Delegates.PersonDelegateView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+    mc:Ignorable="d"
+    WindowStartupLocation="CenterScreen"
+    WindowTransitionsEnabled="True"
+    TitleCaps="False"
+    Title="{Binding Title}"  Height="450" Width="1000">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="..\..\..\Styles\EmployeesStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Border x:Name="LayoutRoot" Padding="5"
+            BorderBrush="{StaticResource ApplicationForeground}" BorderThickness="2"
+            Background="{StaticResource ApplicationBackground}">
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <ListBox x:Name="PersonListBox"
+                     Grid.Column="0" Grid.Row="0" Grid.RowSpan="5"
+                     Margin="5"
+                     BorderBrush="DarkSlateGray" BorderThickness="1"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ItemTemplate="{StaticResource PersonListTemplate}"
+                     ItemsSource="{Binding PersonDelegateList}">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+            </ListBox>
+
+            <DockPanel Grid.Column="1" Grid.Row="0" Grid.RowSpan="2">
+                <StackPanel Orientation="Vertical">
+                    <Expander Margin="2" Header="String Handling" IsExpanded="{Binding IsExpandedStringHandling, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <StackPanel Orientation="Vertical">
+                            <RadioButton GroupName="Delagate" IsChecked="{Binding DefaultRdoBtn, UpdateSourceTrigger=PropertyChanged }" Content="Default" />
+                            <RadioButton GroupName="Delagate" IsChecked="{Binding LastNameRdoBtn, UpdateSourceTrigger=PropertyChanged }" Content="Last Name" />
+                            <RadioButton GroupName="Delagate" IsChecked="{Binding FirstNameRdoBtn, UpdateSourceTrigger=PropertyChanged }" Content="First Name" />
+                            <RadioButton GroupName="Delagate" IsChecked="{Binding FullNameRdoBtn, UpdateSourceTrigger=PropertyChanged }" Content="Full Name" />
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </DockPanel>
+
+            <DockPanel Grid.Column="1" Grid.Row="2" Grid.RowSpan="2">
+                <StackPanel Orientation="Vertical">
+                    <Expander Margin="2" Header="Actions" IsExpanded="{Binding IsExpandedActions, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <StackPanel Orientation="Vertical">
+                            <CheckBox  IsChecked="{Binding  AverageRatingChkBox, UpdateSourceTrigger=PropertyChanged}" Content="Average Rating" />
+                            <CheckBox  IsChecked="{Binding EarliestStartDateChkBox, UpdateSourceTrigger=PropertyChanged }" Content="Earliest Start Date" />
+                            <CheckBox  IsChecked="{Binding BestCommanderChkBox, UpdateSourceTrigger=PropertyChanged }" Content="Best Commander" />
+                            <CheckBox  IsChecked="{Binding FirstLettersChkBox, UpdateSourceTrigger=PropertyChanged }" Content="First Letters" />
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+            </DockPanel>
+
+            <Button x:Name="ProcessData" Grid.Column="1" Grid.Row="4" Margin="2"
+                    Content="Process Data"
+                    Style="{StaticResource GoButtonStyle}"
+                    Command="{Binding ProcessDataCommand}" />
+
+            <ListBox x:Name="ActionListBox"
+                     Grid.Column="2" Grid.Row="0" Grid.RowSpan="5"
+                     Margin="5"
+                     BorderBrush="DarkSlateGray" BorderThickness="1"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ItemsSource="{Binding OutputStringList}">
+            </ListBox>
+        </Grid>
+    </Border>
+</controls:MetroWindow>

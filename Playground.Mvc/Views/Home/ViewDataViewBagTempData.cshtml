@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>ViewDataViewBagTempData</title>
+</head>
+<body>
+    <br />
+    <br />
+    <br />
+    <h2>ViewBag, ViewData and TempData Example</h2>
+
+    <div>
+        Ex. 1: ViewBag. It is dynamic bag on the fly to pass data from contorller to view. Don't need to cast the object to its original type. <br />
+        <ul>
+            @foreach (var item in ViewBag.LatestTechnologies)
+            {
+                <li>
+                    @item
+                </li>
+            }
+        </ul>
+    </div>
+
+    <div>
+        Ex. 2: ViewData. Object stored in ViewData need to be cast back to its original data type. <br />
+        <ul>
+            @foreach (var item in ViewData["LatestTechnologies"] as List<string>)
+            {
+                <li>
+                    @item
+                </li>
+            }
+        </ul>
+    </div>
+
+    <div>
+        <p>
+            Ex. 3: TempData.  Helps to maintain data when you move from one controller to other controller <br />
+            or from one action to an other action. It internally uses session variables. Temp data use <br />
+            during the current and subsequent request only. Meaning, it is used when you are sure that next <br />
+            request will be redirecting to next view. It’s life is very short and lies only till the target view is fully loaded.
+            <br />
+            <br />
+            public ActionResult Index()<br />
+            {<br />
+            var model = new Review()<br />
+            {<br />
+            Body = "Start",<br />
+            Rating=5<br />
+            };<br />
+            <br />
+            TempData["ModelName"] = model;<br />
+            return RedirectToAction("About");<br />
+            }<br />
+            <br />
+            public ActionResult About()<br />
+            {<br />
+            var model= TempData["ModelName"];<br />
+            return View(model);<br />
+            }<br />
+            <br />
+        </p>
+    </div>
+</body>
+</html>

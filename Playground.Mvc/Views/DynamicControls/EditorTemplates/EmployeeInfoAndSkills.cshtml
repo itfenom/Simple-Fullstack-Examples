@@ -1,0 +1,11 @@
+﻿@model Playground.Mvc.Models.EmployeeInfoAndSkills
+
+<tr>
+    <td>@Html.TextBoxFor(x => x.Name, new { style = "width:100px;" })</td>
+    <td>@Html.DropDownListFor(x => x.Gender, Model.GenderList, new { style = "width:100px;" })</td>
+    <td>@Html.DropDownList("EnumSelection", new SelectList((string[])ViewData["Choices"], Model))</td>
+    <td>@Html.TextBoxFor(x => x.SkillCount, new { style = "width:30px;" })</td>
+    <td>@Html.TextAreaFor(x => x.CurrentSkills, new { @rows = 2, @cols = 20 })</td>
+    <td>@Html.CheckBoxFor(x => x.Active, new { style = "width:20px;" })</td>
+    <td><input type="button" value="UpdateSkills" /> </td>
+</tr>

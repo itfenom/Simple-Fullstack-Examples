@@ -1,0 +1,13 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Bootstrap Alerts</h2>
+
+<div>
+
+    <input type="button" class="btn btn-success" id="btnSuccess" value="View Success Alert" onclick="location.href='@Url.Action("Alerts", "Bootstrap", new { value = "SUCCESS" })'" /><br /><br />
+    <input type="button" class="btn btn-info" id="btnInfo" value="View Info Alert" onclick="location.href='@Url.Action("Alerts", "Bootstrap", new { value = "INFO" })'" /><br /><br />
+    <input type="button" class="btn btn-warning" id="btnWarning" value="View Warning Alert" onclick="location.href='@Url.Action("Alerts", "Bootstrap", new { value = "WARNING" })'" /><br /><br />
+    <input type="button" class="btn btn-danger" id="btnDanger" value="View Danger Alert" onclick="location.href='@Url.Action("Alerts", "Bootstrap", new { value = "DANGER" })'" /><br /><br />
+</div>

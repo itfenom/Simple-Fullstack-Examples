@@ -1,0 +1,169 @@
+﻿@model IEnumerable<Playground.Mvc.Models.EmployeeInfo>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<style>
+    .wy-tooltip {
+        border: 1px solid #F1D031;
+        color: #444;
+        background: #FFFFA3;
+        box-shadow: 0 2px 3px #999;
+        position: absolute;
+        padding: 5px;
+        text-align: left;
+        border-radius: 5px;
+        -moz-border-radius: 5px;
+        -webkit-border-radius: 5px;
+        white-space: pre-wrap; /*all whitespace and line breaks are preserved*/
+    }
+
+    .wy-hide {
+        display: none;
+    }
+</style>
+
+@section Scripts {
+    <script src="~/Scripts/jquery-3.2.1.js"></script>
+    @Scripts.Render("~/bundles/jqueryui")
+    <script>
+        $(document).ready(function () {
+
+            var Delay = 500, ToolTipTimer
+
+            $(".printFriendly").click(function (e) {
+
+                e.preventDefault();
+                var currentdate = new Date();
+                var datetime = (currentdate.getMonth() + 1) + "/"
+                    + currentdate.getDate() + "/"
+                    + currentdate.getFullYear() + " @@ "
+                    + currentdate.getHours() + ":"
+                    + currentdate.getMinutes() + ":"
+                    + currentdate.getSeconds();
+
+                var divToPrint = document.getElementById('printableArea');
+                var htmlToPrint = '' +
+                    '<style type="text/css">' +
+                    'table th, table td {' +
+                    'border: 0px #000;' +
+                    'padding;0.5em;' +
+                    '}' +
+                    '</style>';
+                htmlToPrint += divToPrint.outerHTML;
+                newWin = window.open("");
+                newWin.document.write("<h3 align='center'>Print request on: " + datetime + " </h3>");
+                newWin.document.write(htmlToPrint);
+                newWin.print();
+                newWin.close();
+
+                return false;
+            });
+
+            $('.showToolTip').hover(function (e) {
+
+                e.preventDefault();
+
+                var title = $(this).attr('title');
+                $(this).data('ToolTipText', title).removeAttr('title');
+                $('<div class="wy-tooltip wy-hide"></div>').text(title).appendTo('body');
+                ToolTipTimer = setTimeout(function (e) {
+                    $('.wy-tooltip').removeClass('wy-hide').fadeIn('fast');
+                }, Delay);
+            }, function () {
+                // hover out
+                clearTimeout(ToolTipTimer);
+                $(this).attr('title', $(this).data('ToolTipText'));
+                $('.wy-tooltip').remove();
+
+            }).mousemove(function (e) {
+                // mouse move
+                var pLeft;
+                var pTop;
+                var offset = 10;
+                var CursorX = e.pageX;
+                var CursorY = e.pageY;
+                var WindowWidth = $(window).width();
+                var WindowHeight = $(window).height();
+                var toolTip = $('.wy-tooltip');
+                var TTWidth = toolTip.width();
+                var TTHeight = toolTip.height();
+
+                if (CursorX - offset >= (WindowWidth / 4) * 3) {
+                    pLeft = CursorX - TTWidth - offset;
+                } else {
+                    pLeft = CursorX + offset;
+                }
+                if (CursorY - offset >= (WindowHeight / 4) * 3) {
+                    pTop = CursorY - TTHeight - offset;
+                } else {
+                    pTop = CursorY + offset;
+                }
+
+                /*
+                console.log('CursorX: ' + CursorX);
+                console.log('CursorY: ' + CursorY);
+                console.log('WindowWidth: ' + WindowWidth);
+                console.log('WindowHeight: ' + WindowHeight);
+                console.log('TTWidth: ' + TTWidth);
+                console.log('TTHeight: ' + TTHeight);
+                console.log('CursorX-offset: ' + (CursorX - offset));
+                console.log('(WindowWidth/4)*3: ' + (WindowWidth / 4) * 3);
+                console.log('CursorY-offset: ' + (CursorY - offset));
+                console.log('(WindowHeight/4)*3: ' + (WindowHeight / 4) * 3);
+                console.log('-----------------------------------');
+                */
+                $('.wy-tooltip').css({ top: pTop, left: pLeft })
+            });
+
+        });
+    </script>
+}
+
+    <h2>Employees</h2>
+
+    <div id="printableArea">
+        <table class="table">
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.EmployeeName)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Location)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Skills)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.IsCurrentEmployee)
+                </th>
+                <th></th>
+            </tr>
+
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.EmployeeName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Location)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Skills)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.IsCurrentEmployee)
+                    </td>
+                    <td>
+                        @{
+                            var _title = string.Format("Name: {0}\nLocation: {1}\nSkills: {2}", item.EmployeeName, item.Location, item.Skills);
+                            <a href="#" class="showToolTip" title="@_title">Details</a>
+                            <a href="#" class="printFriendly">Print</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </table>
+</div>

@@ -1,0 +1,53 @@
+﻿@model Playground.Mvc.Models.EmployeeInfo
+
+<tr>
+    <td>@Html.TextBoxFor(x => x.EmployeeName, new { style = "width:100px;", @readonly = "readonly", @class = "emp-info-name" })</td>
+    <td>@Html.TextBoxFor(x => x.Location, new { style = "width:100px;", @readonly = "readonly", @class = "emp-info-location" })</td>
+    <td>@Html.TextBoxFor(x => x.DisplayOrder, new { style = "width:100px;", @readonly = "readonly", @class = "emp-info-displayOrder" })</td>
+
+    <td style="display:none;">
+        @Html.TextBoxFor(x => x.EditDetailsFlag, new { @class = "emp-info-editDetailsFlag" })
+    </td>
+
+    <td style="display:none;">
+        @Html.TextBoxFor(x => x.Skills, new { @readonly = "readonly", @class = "emp-info-skills" })
+    </td>
+
+    <td>
+        @Html.Label("Male")
+        @if (Model.Sex == Playground.Mvc.Models.Gender.Male)
+        {
+            @Html.RadioButtonFor(x => x.Sex, Playground.Mvc.Models.Gender.Male, new { @checked = "checked", @class = "rdoMaleFemale" })
+        }
+        else
+        {
+            @Html.RadioButtonFor(x => x.Sex, Playground.Mvc.Models.Gender.Male, new { @class = "rdoMaleFemale" })
+        }
+
+        &nbsp;&nbsp;&nbsp;
+
+        @Html.Label("Female")
+        @if (Model.Sex == Playground.Mvc.Models.Gender.Female)
+        {
+            @Html.RadioButtonFor(x => x.Sex, Playground.Mvc.Models.Gender.Female, new { @checked = "checked", @class = "rdoMaleFemale" })
+        }
+        else
+        {
+            @Html.RadioButtonFor(x => x.Sex, Playground.Mvc.Models.Gender.Female, new { @class = "rdoMaleFemale" })
+        }
+    </td>
+
+    <td>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        @Html.CheckBoxFor(x => x.IsCurrentEmployee, new { @class = "cBoxIsCurrentEmployee" })
+    </td>
+
+    <td>
+        <a href="#" class="btn btn-primary editing"><i class="fa fa-edit"></i> Edit Location</a>  |
+        <a href="#" class="btn btn-primary addSkills"><i class="fa fa-edit"></i> Add Skills</a>  |
+        <a href="#" class="btn btn-danger deleting"><i class="fa fa-trash-o"></i> Delete</a> |
+        <a href="#" class="up"> <i class="fa fa-arrow-up"></i></a> |
+        <a href="#" class="down"> <i class="fa fa-arrow-down"></i></a> |
+        <i class="fa fa-newspaper-o fa-2x showToolTip"></i>
+    </td>
+</tr>

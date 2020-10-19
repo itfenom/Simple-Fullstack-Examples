@@ -1,0 +1,126 @@
+﻿@{
+    ViewBag.Title = "SelectBox filtering";
+}
+
+<br />
+<h2>Filtering ListBox by Ajax call or javascript</h2>
+<br />
+<br />
+
+<div class="row">
+    <div class="col-md-6">
+        <input type="text" id="txtFilterByAjaxCall" placeholder="filter by Ajax call..." />
+        <br />
+        <br />
+        <input type="text" id="txtFilterByJavascript" placeholder="filter by Javascript..." />
+        <br />
+        <br />
+        @Html.ListBox("MyList", (List<SelectListItem>)ViewData["Items"], new { size = 5, @style = "width:600px;" })
+    </div>
+    <div class="col-md-4 col-md-offset-4">
+        <span id="SelectedItems"></span>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script src="~/Scripts/jquery-3.2.1.js"></script>
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            $("#MyList").change(function () {
+                var _entries = $.map($('#MyList option:selected'), function (element) {
+                    return element.text;
+                });
+
+                if (_entries.length > 0) {
+                    for (var i = 0; i < _entries.length; i++) {
+                        var _entryId = _entries[i].split('(')[0];
+
+                        var add = true;
+                        $("input:hidden").each(function () {
+                            if ($(this).attr("id") === _entryId)
+                                add = false;
+                        });
+
+                        if (add) {
+
+                            var newItem = $("<span id='RemoveSelectedEntrySpan" + _entryId + "'>" + _entries[i]
+                                + "<input type='hidden' id='" + _entryId + "' name='SelectedEntryList' value='" + _entryId + "'  />"
+                                + "<a class='RemoveEntry' id ='RemoveEntry_" + _entryId + "' href = #" + ">Remove</a><br /></span>");
+
+                            $("#SelectedItems").append(newItem);
+                        }
+                    }
+                }
+            });
+
+            $(document).on('click', 'a.RemoveEntry', function (e) {
+
+                e.preventDefault();
+
+                var _entryId = this.id.replace("RemoveEntry_", "");
+                $("#RemoveSelectedEntrySpan" + _entryId).remove();
+            });
+
+            $("#txtFilterByAjaxCall").keyup(function (evt) {
+                evt.preventDefault();
+
+                var _filterVal = $("#txtFilterByAjaxCall").val();
+
+                $.ajax({
+                    url: 'FilterByAjaxCall',
+                    type: 'POST',
+                    async: false,
+                    data: { searchStr: _filterVal },
+                    success: function (items) {
+
+                        var select = $('#MyList');
+                        select.empty();
+
+                        if (items.length === 0) {
+                            select.append($('<option />', {
+                                value: "",
+                                text: "No Item found"
+                            }));
+                        }
+                        else {
+                            $.each(items, function (index, itemData) {
+                                select.append($('<option />', {
+                                    value: itemData.Value,
+                                    text: itemData.Text,
+                                    selected: itemData.Selected
+                                }));
+                            });
+                        }
+                    },
+                });
+            });
+
+            $("#txtFilterByJavascript").keyup(function (evt) {
+                evt.preventDefault();
+                var userInput = $("#txtFilterByJavascript").val();
+                DisplayFilteredValues($("#MyList"), userInput, true);
+            });
+
+            var DisplayFilteredValues = function (selectionEl, str, isCaseSensitive) {
+                if (isCaseSensitive)
+                    str = str.toLowerCase();
+                // cache <select> elements
+                var $el = $(selectionEl);
+                if (!$el.data("options")) {
+                    // cache all the options in <select> element
+                    $el.data("options", $el.find("option").clone());
+                }
+                var newOptions = $el.data("options").filter(function () {
+                    var text = $(this).text();
+                    if (isCaseSensitive)
+                        text = text.toLowerCase();
+                    return text.match(str);
+                });
+                $el.empty().append(newOptions);
+            };
+        });
+    </script>
+}

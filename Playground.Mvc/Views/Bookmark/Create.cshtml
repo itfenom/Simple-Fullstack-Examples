@@ -1,0 +1,77 @@
+﻿@model Playground.Mvc.Models.BookmarkViewModel
+@{
+    ViewBag.Title = "Create";
+}
+
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("input:text,form").attr("autocomplete", "off");
+        })
+    </script>
+}
+
+<br />
+<br />
+
+<h2>Create a Bookmark</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+
+        @Html.ValidationSummary(true)
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Bookmark_Category_ID, new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.DropDownListFor(model => model.Bookmark_Category_ID, (List<SelectListItem>)ViewBag.BookmarkCategories, string.Format("--- Select a Category ---"))
+                @Html.ValidationMessageFor(model => model.Bookmark_Category_ID)
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Bookmark_Name, new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Bookmark_Name)
+                @Html.ValidationMessageFor(model => model.Bookmark_Name)
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Bookmark_Link, new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Bookmark_Link)
+                @Html.ValidationMessageFor(model => model.Bookmark_Link)
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Bookmark_Login_ID, new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Bookmark_Login_ID)
+                @Html.ValidationMessageFor(model => model.Bookmark_Login_ID)
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Bookmark_Login_Password, new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Bookmark_Login_Password)
+                @Html.ValidationMessageFor(model => model.Bookmark_Login_Password)
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Create" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}
+
+<div>
+    @Html.ActionLink("Back to List", "Index")
+</div>

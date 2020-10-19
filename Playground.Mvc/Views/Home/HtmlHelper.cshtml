@@ -1,0 +1,70 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>HtmlHelper</title>
+</head>
+<body>
+    <br />
+    <br />
+    <br />
+    <br />Label with TextBox with ToolTip(Read-only)<br />
+    @Html.Label("firstName", "First Name:")
+    @Html.TextBox("firstName", "John Smith", new { style = "background-color:Red; color:white, font-wieght:bold", title = "Please enter your first name.", @readonly = "true" })<br /><br />
+
+    Password masked text box<br />
+    @Html.Label("password", "Password:")
+    @Html.Password("Password", "", new { title = "Please enter your password." })<br /><br />
+
+    Multiline TextBox<br />
+    @Html.Label("comments", "Comments:")
+    @Html.TextArea("Comments", "", 5, 20, new { title = "Type comments." })<br /><br />
+
+    Hidden text box to store values (11001)<br />
+    @Html.Label("id", "ID to store in hidden field:")
+    @Html.Hidden("ID", 11001)<br /><br />
+
+    @* The drop-down list helper class has three overloaded methods. we are using the one
+        that takes three arguments [The name, the list of contenets to be displayed and selected property]. *@
+
+    Generating drop-down list (hard-coded, No item was pre-selected!!!)<br />
+    @Html.Label("Departments:")
+    @Html.DropDownList("Departments", new List<SelectListItem>
+    {
+        new SelectListItem { Text = "IT", Value="IT"},
+        new SelectListItem { Text ="HR", Value="HR"},
+        new SelectListItem {Text ="Payroll", Value="Payroll"}
+    }, "Select Departments")<br /><br />
+
+    Generating drop-down list (hard-coded, 3rd item is pre-selected!!!)<br />
+    @Html.Label("Departments:")
+    @Html.DropDownList("Select Departments", new List<SelectListItem>
+    {
+        new SelectListItem { Text = "IT", Value="IT"},
+        new SelectListItem { Text ="HR", Value="HR"},
+        new SelectListItem {Text ="Payroll", Value="Payroll", Selected=true}
+    }, "Select Departments")<br /><br />
+
+    Generating drop-down list (from collection: HR is pre-selected as its value was set to true!)<br />
+    @Html.Label("Departments:")
+    @Html.DropDownList("Departments", "Select Departments")<br /><br />
+
+    Date-Picker using jQuery!<br />
+    <div class="editor-label">
+        @Html.Label("Click in the text Box to pick a Date:")
+    </div>
+    <div class="editor-field">
+        <input type="text" id="datePicker" value="@DateTime.Today.Date.ToString("MM/dd/yyyy")" />
+    </div>
+</body>
+</html>
+
+@section Scripts{
+    @Scripts.Render("~/bundles/jqueryui")
+    <script type="text/javascript">
+        $(function () {
+            $('#datePicker').datepicker();
+        });
+    </script>
+}

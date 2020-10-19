@@ -1,0 +1,741 @@
+- Update Database Model (.edmx)
+- Add new folder "Catalog" in the project and copy "Catalog" folder content there.
+- Copy the "ExceptionUtility" into the Models folder.
+- Add the following Models:
+
+    public class OrderViewModel
+    {
+        [ScaffoldColumn(false)]
+        public int OrderId { get; set; }
+        [ScaffoldColumn(false)]
+        public System.DateTime OrderDate { get; set; }
+        [ScaffoldColumn(false)]
+        public string Username { get; set; }
+        [Required(ErrorMessage = "First Name is required")]
+        [DisplayName("First Name")]
+        [StringLength(160)]
+        public string FirstName { get; set; }
+        [Required(ErrorMessage = "Last Name is required")]
+        [DisplayName("Last Name")]
+        [StringLength(160)]
+        public string LastName { get; set; }
+        [Required(ErrorMessage = "Address is required")]
+        [StringLength(70)]
+        public string Address { get; set; }
+        [Required(ErrorMessage = "City is required")]
+        [StringLength(40)]
+        public string City { get; set; }
+        [Required(ErrorMessage = "State is required")]
+        [StringLength(40)]
+        public string State { get; set; }
+        [Required(ErrorMessage = "Postal Code is required")]
+        [DisplayName("Postal Code")]
+        [StringLength(10)]
+        public string PostalCode { get; set; }
+        [Required(ErrorMessage = "Country is required")]
+        [StringLength(40)]
+        public string Country { get; set; }
+        [Required(ErrorMessage = "Phone is required")]
+        [StringLength(24)]
+        public string Phone { get; set; }
+        [Required(ErrorMessage = "Email Address is required")]
+        [DisplayName("Email Address")]
+
+        [RegularExpression(@"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}",
+            ErrorMessage = "Email is is not valid.")]
+        [DataType(DataType.EmailAddress)]
+        public string Email { get; set; }
+        [ScaffoldColumn(false)]
+        public decimal Total { get; set; }
+        public List<OrderDetail> OrderDetails { get; set; }
+    }
+	
+    public class ProcessOrderViewModel
+    {
+        public int OrderID { get; set; }
+
+        public string FirstName { get; set; }
+
+        public string LastName { get; set; }
+
+        public string Address { get; set; }
+
+        public string City { get; set; }
+
+        public string State { get; set; }
+
+        public string PostalCode { get; set; }
+
+        public string Country { get; set; }
+
+        public string Phone { get; set; }
+
+        public string Email { get; set; }
+
+        public decimal Total { get; set; }
+
+        public List<ShoppingCartDetails> ShoppingCartDetails { get; set; }
+    }
+	
+    public class ShoppingCartDetailsViewModel
+    {
+        public IList<ShoppingCartDetails> ShoppingDetails { get; set; }
+    }
+
+    public class ShoppingCartDetails
+    {
+        public string ItemID { get; set; }
+
+        public string CartID { get; set; }
+
+        [Display(Name="ID")]
+        public int ProductID { get; set; }
+
+        [Display(Name = "Name")]
+        public string ProductName { get; set; }
+
+        [Display(Name = "Price (each)")]
+        public double? Price { get; set; }
+
+        [Display(Name = "Quantity")]
+        public int Quantity { get; set; }
+
+        public string DisplayPrice
+        {
+            get
+            {
+                return string.Format("$ {0}", this.Price);
+            }
+        }
+
+        public string ItemTotal
+        {
+            get
+            {
+                double? _result = (this.Price * this.Quantity);
+                return string.Format("$ {0}", _result);
+            }
+        }
+
+    }
+
+*******************************************************************************************************
+-- Add Controller: "ShoppingController":
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using SeraphMvcBootstrap.Website.Models;
+using SeraphMvcBootstrap.Website.DAL;
+
+namespace SeraphMvcBootstrap.Website.Controllers
+{
+    public class ShoppingController : BaseController
+    {
+        private ShoppingRepository _repository;
+
+        public ShoppingController()
+        {
+            this._repository = ShoppingRepository.GetCart(this.HttpContext);
+        }
+
+        public ActionResult ShoppingSelection(int categoryID)
+        {
+            var _model = _repository.GetProductsByCategoryID(categoryID);
+            return View(_model);
+        }
+
+        public ActionResult Details(int productID)
+        {
+            var _model = _repository.GetProductByProductID(productID);
+            return View(_model);
+        }
+
+        public ActionResult AddToCart(int productID)
+        {
+            var _p = _repository.GetProductByProductID(productID);
+            _repository.AddToCart(productID);
+            Success(string.Format("<b>{0}</b> Product <b>'{1}'</b> added to cart successfully!", "SUCCESS", _p.ProductName), true);
+            return RedirectToAction("ShoppingSelection", new { categoryID = _p.CategoryID });
+        }
+	}
+}
+
+-- View: SoppingSelection:
+
+@model IEnumerable<SeraphMvcBootstrap.Website.DAL.Product>
+
+@{
+    ViewBag.Title = "ShoppingSelection";
+}
+
+<h2>Product Selection</h2>
+
+<table class="table table-hover">
+
+@foreach (var item in Model) {
+    <tr>
+        <td>
+            <strong>Name: </strong>@Html.DisplayFor(modelItem => item.ProductName)<br />
+            <img src="~/Catalog/Images/Thumbs/@(item.ImagePath)" alt="@(item.ImagePath)" class="img-thumbnail" /><br />
+            <strong>Description: </strong><p>@Html.DisplayFor(modelItem => item.Description)</p>
+            <strong>Price: $ </strong>@Html.DisplayFor( modelitem => item.UnitPrice)<br />
+            @Html.ActionLink("Add to Cart", "AddToCart", new { productID = item.ProductID })<br />
+            @Html.ActionLink("Details", "Details", new { productID = item.ProductID })<br />
+        </td>
+    </tr>
+}
+
+</table>
+
+
+-- View: Details:
+
+@model SeraphMvcBootstrap.Website.DAL.Product
+
+@{
+    ViewBag.Title = "Details";
+}
+
+<h2>Details</h2>
+
+<div class="row">
+    <div class="col-md-4 col-xs-12 col-md-offset-2">
+        <a href="#" class="btn btn-primary btn-lg">@Model.ProductName &raquo;</a><br /><br />
+        <img src="~/Catalog/Images/@(Model.ImagePath)" alt="@(Model.ImagePath)" class="img-rounded" /><br />
+    </div>
+    <div class="col-md-6 col-xs-12">
+        <h2>Description:</h2>
+        <p>@Model.Description</p>
+        <strong>Price: $</strong>@Model.UnitPrice<br />
+        <strong>Product Number: </strong>@Model.ProductID
+    </div>
+</div>
+<p>
+    @Html.ActionLink("Back to List", "ShoppingSelection", new { categoryID = @Model.CategoryID })
+</p>
+
+
+*******************************************************************************************************
+-- Add Another Controller "CartController":
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using SeraphMvcBootstrap.Website.Models;
+using SeraphMvcBootstrap.Website.DAL;
+
+namespace SeraphMvcBootstrap.Website.Controllers
+{
+    public class CartController : BaseController
+    {
+        ShoppingRepository _repository;
+   
+        public CartController()
+        {
+            this._repository = ShoppingRepository.GetCart(this.HttpContext);
+        }
+
+        public ActionResult Index()
+        {
+            ShoppingCartDetailsViewModel _model = new ShoppingCartDetailsViewModel()
+            {
+                ShoppingDetails = _repository.GetShoppingCartDetails()
+            };
+
+
+            if (_model.ShoppingDetails.Count != 0)
+            {
+                ViewBag.OrderTotal = "$ " + _repository.GetShoppingCartTotal();
+            }
+
+            return View(_model);
+        }
+
+        [HttpPost]
+        public ActionResult Index(ShoppingCartDetailsViewModel postedModel)
+        {
+            if (!ValidateQuantity(postedModel))
+            {
+                Danger(string.Format("Invalid Quantity entered!"), true);
+                return View(postedModel);
+            }
+
+            foreach (var item in postedModel.ShoppingDetails)
+            {
+                _repository.UpdateCartItems(item);
+            }
+            return RedirectToAction("Index");
+        }
+
+        private bool ValidateQuantity(ShoppingCartDetailsViewModel postedModel)
+        {
+            bool _retVal = true;
+            foreach (var item in postedModel.ShoppingDetails)
+            {
+                if (item.Quantity == 0)
+                {
+                    _retVal = false;
+                    break;
+                }
+                else
+                {
+                    int _number;
+                    bool _isNumberic = int.TryParse(item.Quantity.ToString(), out _number);
+
+                    if (!_isNumberic)
+                    {
+                        _retVal = false;
+                        break;
+                    }
+                }
+            }
+            return _retVal;
+        }
+
+        public ActionResult RemoveItem(string cartID, int productID)
+        {
+            var _p = _repository.GetProductByProductID(productID);
+            _repository.RemoveItem(cartID, productID);
+
+            Success(string.Format("<b>{0}</b> Product <b>'{1}'</b> removed from the cart successfully!", "SUCCESS", _p.ProductName), true);
+
+            return RedirectToAction("Index");
+        }
+
+        public ActionResult EmptyCart()
+        {
+            _repository.EmptyCart();
+            return RedirectToAction("Index");
+        }
+	}
+}
+
+ 
+-- View: Index:
+@model SeraphMvcBootstrap.Website.Models.ShoppingCartDetailsViewModel
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2 class="text-primary">Shopping Cart</h2>
+
+
+@if (Model.ShoppingDetails.Count() == 0)
+{
+    <p>Your cart is empty!</p>
+}
+else
+{
+    using (@Html.BeginForm())
+    {
+         <p>
+             @Html.ActionLink("Empty Cart", "EmptyCart", "Cart",
+                           new { confirm = true}, 
+                           new { onclick = "return confirm('Are you sure, you want to empty this cart?')" })
+        </p>
+        <table class="table table-hover table-striped">
+            <thead>
+                <tr>
+                    <th>
+                        @Html.DisplayName("ID")
+                    </th>
+                    <th>
+                        @Html.DisplayName("Name")
+                    </th>
+                    <th>
+                        @Html.DisplayName("Price (each)")
+                    </th>
+                    <th>
+                        @Html.DisplayName("Quantity")
+                    </th>
+                    <th>
+                        @Html.DisplayName("Item Total")
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            @Html.EditorFor(x => x.ShoppingDetails)
+        </table>
+        <div>
+            <p>
+                <b>Order Total: @Html.Raw(ViewBag.OrderTotal)</b>
+            </p>
+        </div>
+        <p>
+            <input type="submit" class="btn btn-default btn-lg" value="Update Cart" />
+        </p>
+        <p>
+            <a href="@Url.Action("Index", "Checkout",  new { orderTotal = ViewBag.OrderTotal})" class="btn btn-success btn-lg">Check out &raquo;</a> 
+        </p>
+    }
+}
+
+
+-- Add EditorTemplates Folder in Views/Cart folder and add the following view:
+
+@model SeraphMvcBootstrap.Website.Models.ShoppingCartDetails
+
+<tr>
+    @Html.HiddenFor(x => x.ItemID)
+    @Html.HiddenFor(x => x.CartID)
+    <td>@Html.DisplayFor(x => x.ProductID, new { style = "width:30px;" }) @Html.HiddenFor(x => x.ProductID)</td>
+    <td>@Html.DisplayFor(x => x.ProductName, new { style = "width:60px;" }) @Html.HiddenFor(x => x.ProductName)</td>
+    <td>@Html.DisplayFor(x => x.DisplayPrice, new { style = "width:50px;" }) @Html.HiddenFor(x => x.Price)</td>
+    <td>@Html.TextBoxFor(x => x.Quantity, new { style = "width:30px;" }) @Html.HiddenFor(x => x.Quantity)</td>
+    <td>@Html.DisplayFor(x => x.ItemTotal, new { style = "width:60px;" })</td>
+    <td><a href="@Url.Action("RemoveItem", "Cart", new { cartID = Model.ItemID, productID = Model.ProductID  })">Remove</a></td>
+</tr>
+
+
+
+*******************************************************************************************************
+-- Add Another Controller "CheckoutController":
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using SeraphMvcBootstrap.Website.DAL;
+using SeraphMvcBootstrap.Website.Models;
+
+namespace SeraphMvcBootstrap.Website.Controllers
+{
+    [Authorize]
+    public class CheckoutController : Controller
+    {
+        ShoppingRepository _repository;
+
+        public CheckoutController()
+        {
+            this._repository = ShoppingRepository.GetCart(this.HttpContext);
+        }
+
+        [HttpGet]
+        public ActionResult Index(string orderTotal)
+        {
+            decimal _orderTotal = Convert.ToDecimal(orderTotal.TrimStart('$').Trim());
+            OrderViewModel _model = new OrderViewModel();
+            _model.Total = _orderTotal;
+            return View(_model);
+        }
+
+        [HttpPost]
+        public ActionResult Index(OrderViewModel order)
+        {
+            if (!ModelState.IsValid)
+            {
+                ModelState.AddModelError("", "Please fix error before proceeding!");
+                return View(order);
+            }
+
+            Order _order = new Order();
+            _order.OrderDate = DateTime.Today.Date;
+            _order.Username = System.Web.HttpContext.Current.Session["USER_NAME"].ToString();
+            _order.FirstName = order.FirstName;
+            _order.LastName = order.LastName;
+            _order.Address = order.Address;
+            _order.City = order.City;
+            _order.State = order.State;
+            _order.PostalCode = order.PostalCode;
+            _order.Country = order.Country;
+            _order.Email = order.Email;
+            _order.Phone = order.Phone;
+            _order.HasBeenShipped = false;
+            _order.Total = order.Total;
+
+            _repository.AddOrder(_order);
+
+            var _shoppingCartDetails = _repository.GetShoppingCartDetails();
+
+            for (int i = 0; i < _shoppingCartDetails.Count; i++)
+            {
+                OrderDetail _orderDetails = new OrderDetail();
+                _orderDetails.OrderId = _order.OrderId;
+                _orderDetails.Username = System.Web.HttpContext.Current.Session["USER_NAME"].ToString();
+                _orderDetails.ProductId = _shoppingCartDetails[i].ProductID;
+                _orderDetails.Quantity = _shoppingCartDetails[i].Quantity;
+                _orderDetails.UnitPrice = _shoppingCartDetails[i].Price;
+
+                _repository.AddOrderDetails(_orderDetails);
+            }
+
+            return RedirectToAction("ReviewOrder", new { orderID = _order.OrderId });
+        }
+
+        [HttpGet]
+        public ActionResult ReviewOrder(int orderID)
+        {
+            //Display order with user's Info for review and submit!
+            ProcessOrderViewModel _model = new ProcessOrderViewModel();
+            var _orderModel = _repository.GetOrderByOrderID(orderID);
+
+            _model.FirstName = _orderModel.FirstName;
+            _model.LastName = _orderModel.LastName;
+            _model.Address = _orderModel.Address;
+            _model.City = _orderModel.City;
+            _model.State = _orderModel.State;
+            _model.PostalCode = _orderModel.PostalCode;
+            _model.Country = _orderModel.Country;
+            _model.Email = _orderModel.Email;
+            _model.Total = _orderModel.Total;
+            _model.Phone = _orderModel.Phone;
+            _model.OrderID = _orderModel.OrderId;
+            _model.ShoppingCartDetails = _repository.GetShoppingCartDetails();
+
+            return View(_model);
+        }
+
+        [HttpPost]
+        public ActionResult ReviewOrder(ProcessOrderViewModel model)
+        {
+            _repository.EmptyCart();
+
+            return View("ThankYou", new { email = model.Email });
+        }
+
+        public ActionResult ThankYou(string email)
+        {
+            ViewBag.Email = email;
+            return View();
+        }
+	}
+}
+
+-- View: Index:
+
+
+@model SeraphMvcBootstrap.Website.Models.OrderViewModel
+
+@using (Html.BeginForm()) 
+{
+    @Html.AntiForgeryToken()
+    
+    <div class="form-horizontal">
+        <hr />
+        @Html.ValidationSummary(true)
+        <fieldset>
+            <legend>Please fill out address for shipping.</legend>
+            @Html.HiddenFor(model => model.Total);
+            <div class="form-group">
+                @Html.LabelFor(model => model.FirstName, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.FirstName)
+                    @Html.ValidationMessageFor(model => model.FirstName)
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.LastName, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.LastName)
+                    @Html.ValidationMessageFor(model => model.LastName)
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.Address, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.Address)
+                    @Html.ValidationMessageFor(model => model.Address)
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.City, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.City)
+                    @Html.ValidationMessageFor(model => model.City)
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.State, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.State)
+                    @Html.ValidationMessageFor(model => model.State)
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.PostalCode, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.PostalCode)
+                    @Html.ValidationMessageFor(model => model.PostalCode)
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.Country, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.Country)
+                    @Html.ValidationMessageFor(model => model.Country)
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.Phone, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.Phone)
+                    @Html.ValidationMessageFor(model => model.Phone)
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.Email, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.Email)
+                    @Html.ValidationMessageFor(model => model.Email)
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Continue >>" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}
+
+
+-- Add EditorTemplates folder and add another View "ShoppingCartDetails":
+
+@model SeraphMvcBootstrap.Website.Models.ShoppingCartDetails
+
+<tr>
+    @Html.HiddenFor(x => x.ItemID)
+    @Html.HiddenFor(x => x.CartID) 
+    @Html.HiddenFor(x => x.ProductID)
+    <td>@Html.DisplayFor(x => x.ProductName, new { style = "width:60px;" }) @Html.HiddenFor(x => x.ProductName)</td>
+    <td>@Html.DisplayFor(x => x.DisplayPrice, new { style = "width:50px;" }) @Html.HiddenFor(x => x.Price)</td>
+    <td>@Html.DisplayFor(x => x.Quantity, new { style = "width:30px;" }) @Html.HiddenFor(x => x.Quantity)</td>
+    <td>@Html.DisplayFor(x => x.ItemTotal, new { style = "width:60px;" })</td>
+</tr>
+
+-- View: ReviewOrder:
+
+@model SeraphMvcBootstrap.Website.Models.ProcessOrderViewModel
+
+@{
+    ViewBag.Title = "ReviewOrder";
+}
+
+<h2>Review & Place Order</h2>
+
+@using (Html.BeginForm())
+{
+     @Html.HiddenFor(X => Model.Address)
+     @Html.HiddenFor(X => Model.City)
+     @Html.HiddenFor(X => Model.Country)
+     @Html.HiddenFor(X => Model.Email)
+     @Html.HiddenFor(X => Model.FirstName)
+     @Html.HiddenFor(X => Model.LastName)
+     @Html.HiddenFor(X => Model.Phone)
+     @Html.HiddenFor(X => Model.PostalCode)
+     @Html.HiddenFor(X => Model.ShoppingCartDetails)
+     @Html.HiddenFor(X => Model.State)
+     @Html.HiddenFor(X => Model.Total)
+    
+    
+    <div class="row">
+        <div class="col-md-4 col-xs-12">
+            <fieldset>
+                <legend>Address Info</legend>
+                <b>Name:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@Model.FirstName&nbsp;&nbsp;@Model.LastName<br />
+                <b>Address: </b> @Model.Address<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@Model.City&nbsp;&nbsp;@Model.State,&nbsp;&nbsp;@Model.PostalCode<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@Model.Country<br />
+                <b>Phone: </b> @Model.Phone<br />
+            </fieldset>
+        </div>
+        <div class="col-md-8 col-xs-12">
+            <fieldset>
+                <legend>You Order</legend>
+                <table class="table table-hover table-striped">
+                    <thead>
+                        <tr>
+                            <th>
+                                @Html.DisplayName("Name")
+                            </th>
+                            <th>
+                                @Html.DisplayName("Price (each)")
+                            </th>
+                            <th>
+                                @Html.DisplayName("Quantity")
+                            </th>
+                            <th>
+                                @Html.DisplayName("Item Total")
+                            </th>
+                        </tr>
+                    </thead>
+                    @Html.EditorFor(x => x.ShoppingCartDetails)
+                </table><br /><br />
+                <b>Order Total: $ @Model.Total</b>
+            </fieldset>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group">
+            <div class="col-md-offset-4 col-md-8 pull-right">
+                <input type="submit" value="Submit Order" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}
+
+
+-- View: ThankYou
+
+
+@{
+    ViewBag.Title = "ThankYou";
+}
+
+<h2 class="text-primary">Thank You for your order.</h2>
+    
+    <p class="text-success">
+
+        We will email at @Html.Raw(@ViewBag.Email) you when your order is shipped!
+    </p>
+
+-- Add PartialVIew "_CartCount" in Views/Shared/ folder:
+@using SeraphMvcBootstrap.Website.Models
+
+@if (Request.IsAuthenticated)
+{
+        <ul class="nav navbar-nav navbar-right">
+        <li>
+            <a href="@Url.Action("Index", "Cart")" class="fa fa-shopping-cart"> View Cart ( @(SessionSingleton.Current.CartItemCount) )</a>
+        </li>
+    </ul>
+}
+
+
+
+-- Finally, Updat the _Layout page Menu to include the _PartialView that displays CartCount:
+
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li>@Html.ActionLink("Home", "Index", "Home")</li>
+                    <li>@Html.ActionLink("jQuery UI", "Index", "jQueryUI")</li>
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle fa fa-briefcase"> Shopping<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="@Url.Action("ShoppingSelection", "Shopping", new { categoryID = 4 })" class="fa fa-warning"> Shopping for Boats</a></li>
+                            <li><a href="@Url.Action("ShoppingSelection", "Shopping", new { categoryID = 1 })" class="fa fa-ambulance"> Shopping for Cars</a></li>
+                            <li><a href="@Url.Action("ShoppingSelection", "Shopping", new { categoryID = 2 })" class="fa fa-plane"> Shopping for Planes</a></li>
+                            <li><a href="@Url.Action("ShoppingSelection", "Shopping", new { categoryID = 3 })" class="fa fa-truck"> Shopping for Trucks</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                @Html.Partial("_CartCountPartial")
+            </div>
+
+*******************************************************************************************************

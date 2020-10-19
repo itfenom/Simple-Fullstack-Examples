@@ -1,0 +1,11 @@
+﻿@model Playground.Mvc.Models.ShoppingCartDetails
+
+<tr>
+    @Html.HiddenFor(x => x.ItemID)
+    @Html.HiddenFor(x => x.CartID)
+    @Html.HiddenFor(x => x.ProductID)
+    <td>@Html.DisplayFor(x => x.ProductName, new { style = "width:60px;" }) @Html.HiddenFor(x => x.ProductName)</td>
+    <td>@Html.DisplayFor(x => x.DisplayPrice, new { style = "width:50px;" }) @Html.HiddenFor(x => x.Price)</td>
+    <td>@Html.DisplayFor(x => x.Quantity, new { style = "width:30px;" }) @Html.HiddenFor(x => x.Quantity)</td>
+    <td>@Html.DisplayFor(x => x.ItemTotal, new { style = "width:60px;" })</td>
+</tr>

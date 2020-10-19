@@ -1,0 +1,99 @@
+﻿<controls:MetroWindow 
+    x:Class="Playground.WpfApp.Forms.DataGridsEx.NavigationEx.NavigationMainView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="clr-namespace:Playground.WpfApp.Forms.DataGridsEx.NavigationEx"
+    xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+    mc:Ignorable="d"
+    xmlns:myControls="clr-namespace:Playground.WpfApp.Controls"
+    BorderBrush="{DynamicResource AccentColorBrush}"
+    BorderThickness="1"
+    GlowBrush="{DynamicResource AccentColorBrush}"
+    ResizeMode="CanResizeWithGrip"
+    UseLayoutRounding="True"
+    WindowStartupLocation="CenterScreen"
+    WindowTransitionsEnabled="True"
+    TitleCaps="False"
+    Title="{Binding Title}" Height="650" Width="1100">
+
+    <controls:MetroWindow.Resources>
+        <ResourceDictionary>
+            <DataTemplate DataType="{x:Type local:EmployeeViewModel}">
+                <local:EmployeeView />
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type local:DepartmentViewModel}">
+                <local:DepartmentView />
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type local:ReportingViewModel}">
+                <local:ReportingView />
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type local:BlankViewModel}">
+                <local:BlankView />
+            </DataTemplate>
+
+            <ControlTemplate x:Key="HyperlinkLikeButtonTemplate" TargetType="{x:Type Button}">
+                <TextBlock x:Name="innerText" Foreground="{DynamicResource {x:Static SystemColors.HotTrackBrushKey}}" Cursor="Hand" >
+                    <ContentPresenter />
+                </TextBlock>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="Button.IsMouseOver" Value="true">
+                        <Setter TargetName="innerText" Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+                        <Setter TargetName="innerText" Property="TextDecorations" Value="Underline" />
+                    </Trigger>
+                    <Trigger Property="Button.IsEnabled" Value="False">
+                        <Setter TargetName="innerText" Property="Foreground" Value="{DynamicResource {x:Static SystemColors.InactiveCaptionBrushKey}}" />
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+
+            <Style x:Key="HyperlinkLikeButton" TargetType="{x:Type Button}">
+                <Setter Property="Template" Value="{StaticResource HyperlinkLikeButtonTemplate}" />
+            </Style>
+
+            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="controls:ButtonHelper.PreserveTextCase" Value="True" />
+            </Style>
+        </ResourceDictionary>
+    </controls:MetroWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal">
+            <Button Style="{StaticResource HyperlinkLikeButton}" Content="Employees" Width="80" Command="{Binding GoToEmployeesCommand}" IsEnabled="{Binding IsEnabledEmployees}" Margin="5" />
+            <Button Style="{StaticResource HyperlinkLikeButton}" Content="Departments" Width="80" Command="{Binding GoToDepartmentsCommand}" IsEnabled="{Binding IsEnabledDepartments}" Margin="5" />
+            <Button Style="{StaticResource HyperlinkLikeButton}" Content="View Report" Width="80" Command="{Binding GoToViewReportCommand}" IsEnabled="{Binding IsEnabledReporting}" Margin="5" />
+            <Button Style="{StaticResource HyperlinkLikeButton}" Content="Blank" Width="80" Command="{Binding GoToBlankCommand}" IsEnabled="{Binding IsEnabledBlank}" Margin="5" />
+
+        </StackPanel>
+
+        <Label Grid.Row="1"
+               Content="{Binding SelectedChild.Title}"
+               FontFamily="cambria" FontSize="20" Foreground="Brown" FontWeight="Bold"
+               HorizontalAlignment="Center"
+               Margin="3" />
+
+        <myControls:FadingContentControl Grid.Row="2" Content="{Binding SelectedChild}" />
+
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Grid.Row="3">
+            <Label Content="{Binding Version}" 
+                   ContentStringFormat="v{0}"
+                   Margin="5"/>
+
+            <Label Content="{Binding Time}" 
+                   Margin="50,5,10,5"
+                   HorizontalAlignment="Right"/>
+        </StackPanel>
+    </Grid>
+</controls:MetroWindow>

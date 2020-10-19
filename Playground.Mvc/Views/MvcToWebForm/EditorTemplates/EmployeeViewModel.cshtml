@@ -1,0 +1,12 @@
+﻿@model Playground.Mvc.Models.EmployeeViewModel
+
+@{
+    Layout = null;
+}
+
+<tr>
+    <td>@Html.TextBoxFor(x => x.EmpName, new { @style = "width:120px;" })</td>
+    <td>@Html.TextBoxFor(x => x.EmpEmail, new { @style = "width:120px;" })</td>
+    <td>@Html.TextBoxFor(x => x.EmpPhone, new { @style = "width:110px;" })</td>
+    <td>@Html.TextBoxFor(x => x.HireDate, new { @style = "width:100px;" })</td>
+</tr>

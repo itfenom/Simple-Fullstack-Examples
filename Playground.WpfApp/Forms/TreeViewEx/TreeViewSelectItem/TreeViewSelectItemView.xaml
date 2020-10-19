@@ -1,0 +1,196 @@
+﻿<controls:MetroWindow
+    x:Class="Playground.WpfApp.Forms.TreeViewEx.TreeViewSelectItem.TreeViewSelectItemView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="clr-namespace:Playground.WpfApp.Forms.TreeViewEx.TreeViewSelectItem"
+    xmlns:i="clr-namespace:System.Windows.Interactivity;assembly=System.Windows.Interactivity"
+    xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+    xmlns:converters="clr-namespace:Playground.WpfApp.Converters"
+    xmlns:behaviors="clr-namespace:Playground.WpfApp.Behaviors"
+    mc:Ignorable="d"
+    BorderBrush="{DynamicResource AccentColorBrush}"
+    BorderThickness="1"
+    ResizeMode="CanResizeWithGrip"
+    WindowStartupLocation="CenterScreen"
+    WindowTransitionsEnabled="True"
+    TitleCaps="False"
+    Title="{Binding Title}" Height="450" Width="800">
+
+    <Window.Resources>
+
+        <converters:InverseBooleanConverter x:Key="inverseConverter" />
+
+        <!-- the context menu for the tree -->
+        <Style TargetType="{x:Type ContextMenu}">
+            <Setter Property="SnapsToDevicePixels"
+          Value="True" />
+            <Setter Property="OverridesDefaultStyle"
+          Value="True" />
+            <Setter Property="Grid.IsSharedSizeScope"
+          Value="true" />
+            <Setter Property="HasDropShadow"
+          Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ContextMenu}">
+                        <Border x:Name="Border" Background="LightGray" BorderThickness="1">
+                            <Border.BorderBrush>
+                                <SolidColorBrush Color="#FF888888" />
+                            </Border.BorderBrush>
+                            <StackPanel IsItemsHost="True"
+                      KeyboardNavigation.DirectionalNavigation="Cycle" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="HasDropShadow" Value="true">
+                                <Setter TargetName="Border" Property="Padding" Value="0,3,0,3" />
+                                <Setter TargetName="Border" Property="CornerRadius" Value="4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!--DataTemplate for ListView selectedItem-->
+        <DataTemplate x:Key="SelectedTreeViewItemTemplate">
+            <Border Name="border" BorderBrush="Aqua" BorderThickness="1" Padding="5" Margin="5">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Continent/Country:" FontWeight="Bold" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Path=Type}" />
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Name:" FontWeight="Bold" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Path=Name}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+
+        <Grid Grid.Column="0" Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <TreeView Grid.Row="0"
+                      Name="myTreeView"
+                      Margin="2"
+                      ItemsSource="{Binding ContinentNodes}"
+                      Background="AliceBlue">
+
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="{x:Type TreeViewItem}">
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                        <Setter Property="FontWeight" Value="Normal" />
+                    </Style>
+                </TreeView.ItemContainerStyle>
+
+                <i:Interaction.Behaviors>
+                    <behaviors:TreeViewSelectedItemBlendBehavior SelectedItem="{Binding SelectedItem}" />
+                </i:Interaction.Behaviors>
+
+                <TreeView.Resources>
+                    <!-- Open/Closed folder icons and Styles (This only applies to Category node!)-->
+                    <BitmapImage x:Key="Icon_FolderOpen"   UriSource="pack://application:,,,/Images/Open-Folder-icon.png" />
+                    <BitmapImage x:Key="Icon_FolderClosed" UriSource="pack://application:,,,/Images/Closed-Folder-icon.png" />
+                    <Style x:Key="IconImageStyleSmall" TargetType="Image">
+                        <Setter Property="MaxWidth" Value="16" />
+                        <Setter Property="MaxHeight" Value="16" />
+                        <Setter Property="Margin" Value="1" />
+                    </Style>
+                    <!---->
+
+                <!--Continent Node-->
+                    <HierarchicalDataTemplate DataType="{x:Type local:ContinentNode}" ItemsSource="{Binding Children}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image>
+                                <Image.Style>
+                                    <Style BasedOn="{StaticResource IconImageStyleSmall}" TargetType="Image">
+                                        <Setter Property="Source" Value="{Binding Source={StaticResource Icon_FolderClosed}, Mode=OneTime}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=TreeViewItem}, Path=IsExpanded}" Value="True">
+                                                <Setter Property="Source" Value="{Binding Source={StaticResource Icon_FolderOpen}, Mode=OneTime}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Image.Style>
+                            </Image>
+                            <TextBlock Text="{Binding Name}" ToolTip="{Binding ToolTipText}">
+                                <TextBlock.ContextMenu>
+                                    <ContextMenu>
+
+                                        <MenuItem Header="Display" CommandParameter="Display">
+                                            <MenuItem.Icon>
+                                                <Image Source="/Images/Cooler-01.png" Width="16" Height="16" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="Edit" CommandParameter="Edit">
+                                            <MenuItem.Icon>
+                                                <Image Source="/Images/Edit.png" Width="16" Height="16" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+
+                                        <ContextMenu.ItemContainerStyle>
+                                            <Style TargetType="MenuItem">
+                                                <Setter Property="Command" Value="{Binding DataContext.CategoryContextMenuCommand, Source={x:Reference myTreeView}}" />
+                                            </Style>
+                                        </ContextMenu.ItemContainerStyle>
+                                    </ContextMenu>
+                                </TextBlock.ContextMenu>
+                            </TextBlock>
+                        </StackPanel>
+                    </HierarchicalDataTemplate>
+
+                    <!--Country Node-->
+                    <HierarchicalDataTemplate DataType="{x:Type local:CountryNode}" ItemsSource="{Binding Children}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image>
+                                <Image.Style>
+                                    <Style BasedOn="{StaticResource IconImageStyleSmall}" TargetType="Image">
+                                        <Setter Property="Source" Value="{Binding Source={StaticResource Icon_FolderClosed}, Mode=OneTime}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=TreeViewItem}, Path=IsExpanded}" Value="True">
+                                                <Setter Property="Source" Value="{Binding Source={StaticResource Icon_FolderOpen}, Mode=OneTime}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Image.Style>
+                            </Image>
+                            <TextBlock Text="{Binding Name}" ToolTip="{Binding ToolTipText}" />
+                        </StackPanel>
+                    </HierarchicalDataTemplate>
+
+                    <!--City node can be of type DataTemplate as this node does not have children-->
+                    <DataTemplate DataType="{x:Type local:CityNode}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="../../../Images/File-icon.png" />
+                            <TextBlock Text="{Binding Name}" ToolTip="{Binding ToolTipText}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </TreeView.Resources>
+            </TreeView>
+        </Grid>
+
+        <StackPanel Grid.Column="1" Margin="5">
+            <TextBlock Text="Selected TreeView Item: " />
+            <ListBox ItemsSource="{Binding SelectedTreeViewItems}"
+                     ItemTemplate="{StaticResource SelectedTreeViewItemTemplate}"
+                     HorizontalContentAlignment="Stretch" />
+        </StackPanel>
+    </Grid>
+</controls:MetroWindow>

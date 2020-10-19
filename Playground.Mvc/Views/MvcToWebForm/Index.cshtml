@@ -1,0 +1,28 @@
+﻿@model Playground.Mvc.Models.MvcToWebFormViewModel
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Pass data to Web-Form</h2>
+
+@using (Html.BeginForm())
+{
+    <div id="mainArea">
+        @Html.ValidationSummary(true)
+        <table id="container">
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Hire Date</th>
+            </tr>
+            @Html.EditorFor(x => x.Employees)
+        </table>
+    </div>
+
+    <br />
+    <p>
+        <input type="submit" value="Submit to Web-Form" />
+    </p>
+}

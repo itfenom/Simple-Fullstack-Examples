@@ -1,0 +1,12 @@
+﻿@{
+    ViewBag.Title = "Ok";
+}
+
+<h2>Posted Data</h2>
+
+<p>
+    @{
+        string item = @ViewData["POSTED_LINK_TEXT"].ToString();
+    }
+    <strong>Link data-tag:</strong> @item;
+</p>

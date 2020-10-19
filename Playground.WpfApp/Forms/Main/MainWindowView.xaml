@@ -1,0 +1,238 @@
+﻿<!-- ReSharper disable once ObsoleteElement -->
+<controls:MetroWindow 
+    x:Class="Playground.WpfApp.Forms.Main.MainWindowView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+    xmlns:local="clr-namespace:Playground.WpfApp.Forms.Main"
+    xmlns:settingsHelper="clr-namespace:Playground.WpfApp.WpfUtilities"
+    xmlns:main="clr-namespace:Playground.WpfApp.Forms.Main"
+    xmlns:metroDialog="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
+    metroDialog:DialogParticipation.Register="{Binding}"
+    mc:Ignorable="d"
+    BorderBrush="{DynamicResource AccentColorBrush}"
+    BorderThickness="1"
+    GlowBrush="{DynamicResource AccentColorBrush}"
+    ResizeMode="CanResizeWithGrip"
+    UseLayoutRounding="True"
+    WindowStartupLocation="CenterScreen"
+    WindowTransitionsEnabled="True"
+    TitleCaps="False"
+    Title="Main" Height="650" Width="800"
+    settingsHelper:WindowSettings.Save="True">
+
+    <!--Height="{SettingsHelper:SettingBinding MainWindowHeight}"
+    Width="{SettingsHelper:SettingBinding MainWindowWidth}"
+    Top="{SettingsHelper:SettingBinding MainWindowTop}"
+    Left="{SettingsHelper:SettingBinding MainWindowLeft}">-->
+
+    <controls:MetroWindow.RightWindowCommands>
+        <controls:WindowCommands>
+            <Button Content="Settings">
+                <Button.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="_Change Theme" Command="{Binding ChangeThemeCommand}" />
+                        <Separator />
+                        <MenuItem Header="_Login" Command="{Binding LoginCommand}" IsCheckable="True" IsChecked="{Binding IsCheckedLogin}" IsEnabled="{Binding IsEnabledLogin}" />
+                        <Separator />
+                        <MenuItem Header="_Logout" Command="{Binding LogoutCommand}" IsCheckable="True" IsChecked="{Binding IsCheckedLogout}" IsEnabled="{Binding IsEnabledLogout}" />
+                        <Separator />
+                        <MenuItem Header="_Exit" Command="{Binding ExitCommand}" />
+                    </ContextMenu>
+                </Button.ContextMenu>
+            </Button>
+        </controls:WindowCommands>
+    </controls:MetroWindow.RightWindowCommands>
+
+    <controls:MetroWindow.Flyouts>
+        <controls:FlyoutsControl>
+            <controls:Flyout Position="Right" Width="300" Theme="Adapt" IsModal="True" IsOpen="{Binding FlyoutIsOpen}">
+                <Grid Margin="15">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Grid MinWidth="250">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Label
+                        Grid.Column="0" Grid.Row="0"
+                        Content="_Color schema:"
+                        Margin="0 3" />
+                        <ComboBox Grid.Column="1" Grid.Row="0" ItemsSource="{Binding AccentColors}" SelectedItem="{Binding CurrentAccentColor}" Margin="0 3">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type main:AccentColorMenuData}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="16" Height="16" Margin="0 0 4 0" Fill="{Binding ColorBrush, Mode=OneWay}" />
+                                        <TextBlock Text="{Binding Name}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </Grid>
+
+                    <StackPanel
+                    Margin="0 16 0 0"
+                    Grid.Row="1"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Left">
+                        <Button
+                        MinWidth="80"
+                        Command="{Binding FlyoutOkCommand}"
+                        Content="OK" />
+                    </StackPanel>
+                </Grid>
+            </controls:Flyout>
+        </controls:FlyoutsControl>
+    </controls:MetroWindow.Flyouts>
+
+    <controls:MetroWindow.Resources>
+        <ResourceDictionary>
+
+            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="controls:ButtonHelper.PreserveTextCase" Value="True" />
+            </Style>
+
+        </ResourceDictionary>
+    </controls:MetroWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!--1st row: Menus -->
+        <DockPanel Grid.Row="0">
+            <Menu DockPanel.Dock="Top">
+
+                <MenuItem Header="_Grouped Controls" Margin="5">
+                    <MenuItem Header="Async">
+                        <MenuItem Header="Basic Async await" Command="{Binding ShowBasicAsyncAwaitCommand}" />
+                        <MenuItem Header="Adv Async await" Command="{Binding ShowAdvAsyncAwaitCommand}" />
+                        <MenuItem Header="Async with progressbar" Command="{Binding ShowAsyncWithProgressbarCommand}" />
+                    </MenuItem>
+                    <MenuItem Header="DataGridViews">
+                        <MenuItem Header="Account Mgr" Command="{Binding ShowAccountMgrCommand}" />
+                        <MenuItem Header="Navigation" Command="{Binding ShowNavigationDataGridCommand}" />
+                        <MenuItem Header="Multiple DataGrids" Command="{Binding ShowMultipleDataGridsCommand}" />
+                        <MenuItem Header="CheckBox DataGrid" Command="{Binding ShowCheckBoxDataGridCommand}" />
+                        <MenuItem Header="SelectAll DataGrid" Command="{Binding ShowSelectAllDataGridCommand}" />
+                    </MenuItem>
+                    <MenuItem Header="TreeViews">
+                        <MenuItem Header="TreeView SelectItem" Command="{Binding ShowTreeViewSelectedItemCommand}" />
+                    </MenuItem>
+                    <MenuItem Header="ListViews">
+                        <MenuItem Header="Delegates" Command="{Binding ShowDelegateCommand}" />
+                        <MenuItem Header="ListView Filtering" Command="{Binding ShowListViewFilteringCommand}" />
+                        <MenuItem Header="ListView Paging" Command="{Binding ShowListViewPagingCommand}" />
+                    </MenuItem>
+                    <MenuItem Header="Tabs">
+                        <MenuItem Header="Dynamic Tabs" Command="{Binding ShowDynamicTabsCommand}" />
+                        <MenuItem Header="Tab Navigation" Command="{Binding SowTabNavigationCommand}" />
+                    </MenuItem>
+                </MenuItem>
+
+                <MenuItem Header="_Others" Margin="5">
+                    <MenuItem Header="Basic DataBinding" Command="{Binding ShowBasicDataBindingCommand}">
+                        <MenuItem.Icon>
+                            <Image Source="{settingsHelper:Resource knot }" Height="16" Width="16" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="XAML Misc" Command="{Binding ShowXamlMiscCommand}" />
+                    <MenuItem Header="DataTemplating" Command="{Binding ShowDataTemplatingCommand}" />
+                    <MenuItem Header="Data Caching" Command="{Binding ShowDataCachingViewCommand}" />
+                    <MenuItem Header="File Dialog" Command="{Binding ShowFileDialogCommand}" />
+                    <MenuItem Header="Items Control1" Command="{Binding ShowItemsControlEx1Command}" />
+                    <MenuItem Header="Items Control2" Command="{Binding ShowItemsControlEx2Command}" />
+                    <MenuItem Header="Items Control3" Command="{Binding ShowItemsControlEx3Command}" />
+                    <MenuItem Header="Three State CheckBox" Command="{Binding ShowThreeStateCheckBoxCommand}" />
+                    <MenuItem Header="Simple Navigation" Command="{Binding SimpleNavigationCommand}" />
+                </MenuItem>
+
+                <MenuItem Header="_Reactive" Margin="5">
+                    <MenuItem Header="Simple" Command="{Binding ShowSimpleCommand}" />
+                    <MenuItem Header="Getting Started" Command="{Binding ShowReactiveGettingStartedCommand}" />
+                    <MenuItem Header="Login" Command="{Binding ShowReactiveLoginCommand}" />
+                    <MenuItem Header="Teapots" Command="{Binding ShowTeapotsCommand}" />
+                    <MenuItem Header="Open Dialog" Command="{Binding ShowOpenDialogCommand}" />
+                    <MenuItem Header="Progress Dialog" Command="{Binding ShowProgressDialogCommand}" />
+                    <MenuItem Header="CRUD" Command="{Binding ShowCrudCommand}" />
+                    <MenuItem Header="CRUD2" Command="{Binding ShowCrud2Command}" />
+                    <MenuItem Header="Todo" Command="{Binding ShowTodoCommand}" />
+                    <MenuItem Header="Data Entry From" Command="{Binding ShowDataEntryFormCommand}"/>
+                    <MenuItem Header="Tree Assignments" Command="{Binding ShowTreeAssignmentsCommand}"/>
+                </MenuItem>
+            </Menu>
+        </DockPanel>
+
+        <!--2nd row: Main Area -->
+        <DockPanel Grid.Row="1" Background="BlanchedAlmond">
+            <Grid  HorizontalAlignment="Center" Width="580" Height="420">
+                <Grid Background="White" Margin="20 50 20 20">
+                    <Grid.OpacityMask>
+                        <VisualBrush Visual="{ Binding ElementName=BorderG1 }"/>
+                    </Grid.OpacityMask>
+                    <Border x:Name="BorderG1" CornerRadius="5" Background="White"/>
+                    <StackPanel VerticalAlignment="Bottom" >
+                        <TextBlock Text="WPF Playground" Margin="2" FontFamily="Champagne &amp; Limousines" Foreground="Gray" FontSize="20"/>
+                        <StackPanel Orientation="Horizontal" Margin="2">
+                            <TextBlock Text="Kashif.Mubarak@Qorvo.com" FontFamily="Champagne &amp; Limousines" Foreground="Green" FontSize="15"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="5">
+                            <TextBlock Text="{Binding CountryCode}" Foreground="LightGray" FontFamily="Champagne &amp; Limousines" />
+                            <TextBlock Text="{Binding AreaCode}" FontWeight="Bold" Foreground="Red" FontFamily="Champagne &amp; Limousines" />
+                            <TextBlock Text="{Binding PhoneNumber}" Foreground="Green" FontFamily="Champagne &amp; Limousines" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+                <Grid Margin="50 20 50 150">
+                    <Grid.OpacityMask>
+                        <VisualBrush Visual="{ Binding ElementName=BorderG2 }"/>
+                    </Grid.OpacityMask>
+                    <Border x:Name="BorderG2" CornerRadius="15" Background="#FFCFA2E8">
+                        <DockPanel>
+                            <local:ProgressBarUc x:Name="MyProgressBar"/>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </DockPanel>
+
+        <!--3rd row: status bar -->
+        <StatusBar HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Grid.Row="2" Margin="2">
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="4*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
+            <StatusBarItem Grid.Row="0" Grid.Column="0">
+                <Label Content="{Binding StatusBarContent}" />
+            </StatusBarItem>
+            <StatusBarItem Grid.Row="0" Grid.Column="1">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Width="Auto" HorizontalAlignment="Center" ToolTip="Close and exit" Command="{Binding ExitCommand}" Content="Exit" Margin="2" />
+                </StackPanel>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+
+</controls:MetroWindow>

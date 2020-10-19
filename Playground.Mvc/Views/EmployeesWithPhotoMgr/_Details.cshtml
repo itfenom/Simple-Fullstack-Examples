@@ -1,0 +1,25 @@
+﻿@model Playground.Mvc.Models.EmployeeViewModel
+
+<fieldset>
+    <div><strong>Name:</strong></div>
+    <div>@Html.DisplayFor(m => m.EmpName)</div>
+    <div><strong>Email:</strong></div>
+    <div>@Html.DisplayFor(m => m.EmpEmail)</div>
+    <div><strong>Phone:</strong></div>
+    <div>@Html.DisplayFor(m => m.EmpPhone)</div>
+    <div><strong>Photo:</strong></div><br />
+    <div>
+        @if (Model.EmpPhotoId == null)
+        {
+            <img src="~/Images/DefaultImage.jpg" title="Default Image" />
+        }
+        else
+        {
+            <img src="@Url.Action("ShowEmployeePhoto", new { employeeID = Model.EmpID })" alt="~/Content/Images/DefaultImage.jpg">
+        }
+    </div>
+</fieldset>
+
+<div>
+    @Html.ActionLink("Back to List", "Index")
+</div>

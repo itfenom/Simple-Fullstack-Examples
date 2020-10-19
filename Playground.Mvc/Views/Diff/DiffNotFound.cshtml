@@ -1,0 +1,7 @@
+﻿@{
+    ViewBag.Title = "DiffNotFound";
+}
+
+<h2>Difference not found for ID: @ViewData["ID"].ToString()</h2>
+<br /><br />
+<a href="@Url.Action("Index", "Diff", new { id = 101})">Back to Main?</a>

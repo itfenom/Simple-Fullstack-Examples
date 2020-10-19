@@ -1,0 +1,1315 @@
+﻿@model Playground.Mvc.Models.DynamicControls2ViewModel
+
+@{
+    ViewBag.Title = "Index";
+}
+
+@*html for dialogs*@
+
+<div id="add-skills-Dialog" style="display:none;" title="">
+
+    <fieldset>
+        <input type="text" id="txtRowIndex" value="123456" style="display:none;" />
+        <legend></legend>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div id="messageBoxEditDetails" class="text-danger"></div>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col-md-12">
+                <label>Skills:&nbsp;</label>
+                <select id="ddSelectSkills"></select> &nbsp;
+                <button class="btn btn-primary btn-sm" id="btnAddSkill">Add Skill</button>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col-md-5 col-md-offset-7">
+                <label class="text-info">Selected Skill(s):</label>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-5">
+                <select id="lstBoxAvailableSkills" multiple style="height:150px; width:150px;"></select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-default" id="btnAddSelectedSkill" title="Add selected skill" style="height:30px; width:45px;">&gt;</button><br />
+                <button class="btn btn-default" id="btnAddAllSkills" title="Add all skills" style="height:30px; width:45px;">&gt;&gt;</button><br />
+                <button class="btn btn-default" id="btnRemoveSelectedSkill" title="Remove selected skill" style="height:30px; width:45px;">&lt;</button><br />
+                <button class="btn btn-default" id="btnRemovellAllSkills" title="Remove all skills" style="height:30px; width:45px;">&lt;&lt;</button><br />
+            </div>
+            <div class="col-md-5">
+                <select id="lstBoxSelectedSkills" multiple style="height:150px; width:150px;"></select>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col-md-4 col-md-offset-8">
+                <button class="btn btn-primary btn-sm" id="btnCreateLinks">Create Links</button>
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row">
+            <div class="col-md-12">
+                <div id="dynamic-links-area"></div>
+            </div>
+        </div>
+
+        <br />
+    </fieldset>
+</div>
+
+<div id="add-edit-dialog" style="display: none" title="">
+    <form id="add-edit-form">
+        <div id="messageBox" style="color:red">
+        </div>
+        <br />
+        <fieldset>
+            <legend></legend>
+            <input type="text" id="txtSelectedRowIndex" name="txtSelectedRowIndex" style="display:none" />
+            <input type="text" id="txtSelectedLocation" name="txtSelectedLocation" style="display:none" />
+            <input type="text" id="txtGender" name="txtGender" style="display:none" />
+            <input type="text" id="txtActionType" name="txtActionType" style="display:none" />
+
+            <label for="txtEmpName">Employee Name:</label><br />
+            <input type="text" id="txtEmpName" name="txtEmpName" /><br /><br />
+
+            <label for="ddStates">State:</label><br />
+            <select id="ddStates"></select><br /><br />
+
+            <label for="ddCities">City:</label><br />
+            <select id="ddCities"></select><br /><br />
+
+            <input type="radio" name="Gender" id="rdoMale" value="Male" class="rbGender" /> Male<br />
+            <input type="radio" name="Gender" id="rdoFemale" value="Female" class="rbGender" /> Female<br /><br />
+
+            <div id="insertAfterDropDownArea">
+                <label for="ddInsertAfter">Insert After:</label><br />
+                <select id="ddInsertAfter"></select>
+            </div>
+
+            <br />
+            <label for="txtDisplayOrder">Display Order:</label><br />
+            <input type="text" name="txtDisplayOrder" id="txtDisplayOrder" value="" readonly="readonly" /><br />
+        </fieldset>
+    </form>
+</div>
+
+<div id="display-summary-dialog" style="display: none" title="">
+    <form id="display-summary-form">
+        <div id="disp-summary">
+        </div>
+    </form>
+</div>
+
+<div id="delete-dialog" style="display:none" title="">
+    <form id="delete-form">
+        <input type="text" id="txtSelectedRowIndex" name="txtSelectedRowIndex" style="display:none" />
+        <p id="deleteMessage"></p>
+    </form>
+</div>
+
+<div id="info-message-dialog" style="display:none;" title="">
+    <div id="info-message-form">
+        <div id="info-message-area"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/Scripts/jquery-3.2.1.js"></script>
+    @Scripts.Render("~/bundles/jqueryui")
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            //Move row up/down
+            $(document).on('click', 'a.up, a.down', function () {
+
+                //var count = $('table tr').length;    // count gridview rows length
+                var count = $('#container >tbody >tr').length;
+                var $row = $(this).parents('tr:first');
+                var $link = $(this);
+
+                if ($row.index() !== 0) { //Check gridview first row or not
+
+                    if ($link.hasClass('up') && $row.index() > 0) { // check for class 'up' and not the first row
+
+                        var prevRowEmpName = $row.prev().find(".emp-info-name").val();
+                        var currRowEmpName = $row.find(".emp-info-name").val();
+                        var _rowIndex = $row.index();
+                        var _currRowCheckedRadioButtonVal = $row.find("input[name$='Sex']:checked").val();
+                        var _prevRowCheckedRadioButtonVal = $row.prev().find("input[name$='Sex']:checked").val();
+
+                        $row.insertBefore($row.prev());
+
+                        $row.fadeOut();
+                        $row.fadeIn();
+
+                        //if (prevRowEmpName == currRowEmpName) {
+                        //    $row.insertBefore($row.prev());
+
+                        //    $row.fadeOut();
+                        //    $row.fadeIn();
+                        //}
+
+                        //Re-Assign the Sequence order
+                        ReAssignSequenceOrderAndId();
+
+                        //set the correct value of radio buttons
+                        var $newRow = $($('#container >tbody >tr')[parseInt(_rowIndex - 1)]);
+                        if (_currRowCheckedRadioButtonVal == "Male") {
+                            $newRow.find("input[value='Male']").prop("checked", true);
+                        }
+                        else if (_currRowCheckedRadioButtonVal == "Female") {
+                            $newRow.find("input[value='Female']").prop("checked", true);
+                        }
+
+                        //For swapped row
+                        $newRow = $($('#container >tbody >tr')[parseInt(_rowIndex)]);
+                        if (_prevRowCheckedRadioButtonVal == "Male") {
+                            $newRow.find("input[value='Male']").prop("checked", true);
+                        }
+                        else if (_prevRowCheckedRadioButtonVal == "Female") {
+                            $newRow.find("input[value='Female']").prop("checked", true);
+                        }
+
+                    }
+                    else if ($link.hasClass('down') && $row.index() < count - 1) { // check for class 'down' and not the last row
+
+                        var nextRowEmpNameVal = $row.next().find(".emp-info-name").val();
+                        var currRowEmoNameVal = $row.find(".emp-info-name").val();
+                        var _rowIndex = $row.index();
+                        var _currRowCheckedRadioButtonVal = $row.find("input[name$='Sex']:checked").val();
+                        var _nextRowCheckedRadioButtonVal = $row.next().find("input[name$='Sex']:checked").val();
+
+                        $row.insertAfter($row.next());
+
+                        $row.fadeOut();
+                        $row.fadeIn();
+
+                        //if (nextRowEmpNameVal == currRowEmoNameVal) {
+
+                        //    $row.insertAfter($row.next());
+
+                        //    $row.fadeOut();
+                        //    $row.fadeIn();
+                        //}
+
+                        //Re-Assign the Sequence order
+                        ReAssignSequenceOrderAndId();
+
+                        //set the correct value of radio buttons
+                        var $newRow = $($('#container >tbody >tr')[parseInt(_rowIndex + 1)]);
+                        if (_currRowCheckedRadioButtonVal == "Male") {
+                            $newRow.find("input[value='Male']").prop("checked", true);
+                        }
+                        else if (_currRowCheckedRadioButtonVal == "Female") {
+                            $newRow.find("input[value='Female']").prop("checked", true);
+                        }
+
+                        //For swapped row
+                        $newRow = $($('#container >tbody >tr')[parseInt(_rowIndex)]);
+                        if (_prevRowCheckedRadioButtonVal == "Male") {
+                            $newRow.find("input[value='Male']").prop("checked", true);
+                        }
+                        else if (_prevRowCheckedRadioButtonVal == "Female") {
+                            $newRow.find("input[value='Female']").prop("checked", true);
+                        }
+                    }
+
+                    var inputs = $("#container").find("tr").find("input");
+                    var ids = [];
+
+                    inputs.each(function () {
+                        ids.push($(this).val()); //push ids
+                    });
+                }
+            });
+
+            //Deleting a row
+            $(document).on('click', 'a.deleting', function () {
+
+                $('#info-message-area').empty();
+                var rowCount = $('#container >tbody >tr').length;
+                var _message = "";
+
+                if (rowCount == 1) {
+
+                    _message = '<strong>You cannot remove all Employees!</strong>';
+                    $('#info-message-area').append(_message);
+
+                    //Show warning dialog
+                    $("#info-message-dialog").dialog({
+                        title: "Delete Warning"
+                    }).dialog('open');
+                }
+                else if (rowCount > 1) {
+
+                    var $row = $(this).parents('tr:first');
+                    var txtSelectedRowIndex = $("#txtSelectedRowIndex");
+                    var _paragaraphDeleteMsg = $('#deleteMessage');
+
+                    var _selectedRow = $($('#container >tbody >tr')[parseInt($row.index())]);
+                    var _selectedEmpName = _selectedRow.find("input[name$='Name']").val();
+
+                    txtSelectedRowIndex.val($row.index());
+                    _paragaraphDeleteMsg.empty();
+                    _paragaraphDeleteMsg.html("Are you sure to remove {<strong>" + _selectedEmpName + "</strong>} from the list?");
+
+                    $("#delete-dialog").dialog({
+                        title: "Confirm Delete"
+                    }).dialog('open');
+                }
+            });
+
+            //Show Delete dialog
+            $("#delete-dialog").dialog({
+                autoOpen: false,
+                height: 185,
+                width: 550,
+                modal: true,
+                buttons: {
+                    "DELETE": function () {
+                        var _index = $("#txtSelectedRowIndex").val();
+                        var $row = $($('#container >tbody >tr')[parseInt(_index)]);
+
+                        $row.remove();
+
+                        //Re-Assign the Sequence order
+                        ReAssignSequenceOrderAndId();
+
+                        $(this).dialog("close");
+                    },
+                    Cancel: function () {
+                        $(this).dialog("close");
+                    }
+                },
+                close: function () {
+                    return false;
+                },
+                open: function () {
+                }
+            });
+
+            //Editing Location
+            $(document).on('click', 'a.editing, a.adding', function () {
+
+                ResetFields();
+
+                var $link = $(this);
+                var txtSelectedRowIndex = $('#txtSelectedRowIndex');
+                var txtSelectedLocation = $('#txtSelectedLocation');
+                var txtGender = $('#txtGender');
+                var txtActionType = $('#txtActionType');
+
+                var txtEmpName = $('#txtEmpName');
+                var ddStates = $('#ddStates');
+                var ddCities = $('#ddCities');
+                var txtDisplayOrder = $("#txtDisplayOrder");
+                var ddInsertAfter = $('#ddInsertAfter');
+
+                ddInsertAfter.empty();
+
+                if ($link.hasClass('editing')) {
+
+                    var $row = $(this).parents('tr:first');
+
+                    var selectedEmpName = $row.find('.emp-info-name').val();
+                    var selectedCompleteLocation = $row.find('.emp-info-location').val();
+                    var selectedDisplayOrder = $row.find('.emp-info-displayOrder').val();
+                    var selectedLocation = selectedCompleteLocation.split(',');
+                    var selectedCity = selectedLocation[0].trim();
+                    var selectedState = selectedLocation[1].trim();
+                    var selectedGenderVal = $row.find(':checked').val();
+
+                    txtSelectedRowIndex.val($row.index());
+                    txtEmpName.val(selectedEmpName);
+                    txtGender.val(selectedGenderVal);
+
+                    //Set Radio buttons' value
+                    if (txtGender.val() == "Male") {
+                        $('#rdoMale').prop("checked", true);
+                        $('#rdoFemale').prop("checked", false);
+                    }
+                    else if (txtGender.val() == "Female") {
+                        $('#rdoMale').prop("checked", false);
+                        $('#rdoFemale').prop("checked", true);
+                    }
+
+                    //disable radio buttons
+                    $('#rdoMale').attr('disabled', true);
+                    $('#rdoFemale').attr('disabled', true);
+
+                    //Load States and set state in the drop-down to selected state
+                    LoadStates(selectedState);
+
+                    //Set City in the drop-down to selected city
+                    LoadCities(selectedState, selectedCity);
+
+                    //Set display order value
+                    txtDisplayOrder.val(selectedDisplayOrder);
+
+                    txtActionType.val("editing");
+
+                    //hide the insert after as we know where we are inserting this row!
+                    $("#insertAfterDropDownArea").hide();
+
+                    //show the dialog
+                    $("#add-edit-dialog").dialog({
+                        title: "Edit Employee Location"
+                    }).dialog('open');
+                }
+                else if ($link.hasClass('adding')) {
+
+                    var counter = $('#container >tbody >tr').length;
+                    var displayOrder = counter + 1;
+
+                    txtActionType.val("adding");
+                    txtEmpName.val("");
+                    txtDisplayOrder.val(displayOrder);
+                    LoadStates("");
+
+                    //Get list of distinct Employee names for drop-down box in dialog
+                    $("#insertAfterDropDownArea").show();
+                    var EmpNamesList = new Array();
+                    EmpNamesList.push("LAST-ROW");
+
+                    $('#container >tbody >tr').find("input[name$='Name']").each(function (i) {
+                        var $this = $(this);
+                        var _empName = $this.val();
+
+                        if ($.inArray(_empName, EmpNamesList) == -1) {
+                            EmpNamesList.push(_empName);
+                        }
+                    });
+
+                    //populate drop-down on the dialog
+                    if (EmpNamesList.length > 0) {
+
+                        var _options = '';
+                        for (var i = 0; i < EmpNamesList.length; i++) {
+                            _options += '<option value="' + EmpNamesList[i] + '">' + EmpNamesList[i] + '</option>';
+                        }
+
+                        ddInsertAfter.append(_options);
+                    }
+
+                    //Show Dialog
+                    $("#add-edit-dialog").dialog({
+                        title: "Adding new Employee"
+                    }).dialog('open');
+                }
+            });
+
+            //Show Edit/Add dialog
+            $('#add-edit-dialog').dialog({
+
+                autoOpen: false,
+                height: 650,
+                width: 450,
+                modal: true,
+                buttons: {
+                    "OK": function () {
+
+                        var counter = $('#container >tbody >tr').length;
+                        var displayOrder = counter + 1;
+                        var itemIndex = $("#txtSelectedRowIndex").val();
+                        var _state = "";
+                        var _city = "";
+                        var _location = "";
+
+                        if (ValidateInput()) {
+
+                            if ($("#txtActionType").val() == "editing") {
+
+                                var $row = $($('#container >tbody >tr')[parseInt(itemIndex)]);
+                                _state = $("#ddStates").val().trim();
+                                _city = $("#ddCities").val().trim();
+                                _location = _city + ", " + _state;
+
+                                $row.find("input[name$='Location']").val(_location);
+                                $row.find("input[name$='EditDetailsFlag']").val("Y");
+
+                                $(this).dialog('close');
+                            }
+                            else if ($("#txtActionType").val() == "adding") {
+
+                                var rowCount = $('#container >tbody >tr').length;
+                                var _empName = $('#txtEmpName').val();
+                                var _gender = $('input[name=Gender]:checked').val();
+                                var _radioButtonHtml = [];
+                                var _actionButtonsHtml = [];
+                                var _textBoxHtml = [];
+                                var _checkBoxHtml = [];
+
+                                _state = $("#ddStates").val().trim();
+                                _city = $("#ddCities").val().trim();
+                                _location = _city + ", " + _state;
+                                itemIndex = rowCount;
+
+                                if (_gender == "Male") {
+                                    _radioButtonHtml = ['<td> <label for="EmployeeInfo_"' + itemIndex + '__Male>Male</label>',
+
+                                                        '<input checked="checked" class="rdoMaleFemale" id="EmployeeInfo_"' + itemIndex + "'__Sex' name='EmployeeInfo[" + itemIndex + "].Sex' type='radio' value='Male' /> &nbsp;&nbsp;&nbsp;" ,
+
+                                                        '<label for="EmployeeInfo_"' + itemIndex + "__Female>Female</label>" ,
+
+                                                        '<input class="rdoMaleFemale" value="Female" id="EmployeeInfo_"' + itemIndex + "__Sex' name='EmployeeInfo[" + itemIndex + "].Sex' type='radio' />",
+
+                                                        '</td>'].join("\n");
+
+                                }
+                                else if (_gender == "Female") {
+
+                                    _radioButtonHtml = ['<td> <label for="EmployeeInfo_"' + itemIndex + '__Male>Male</label>',
+
+                                                        '<input class="rdoMaleFemale" id="EmployeeInfo_"' + itemIndex + "'__Sex' name='EmployeeInfo[" + itemIndex + "].Sex' type='radio' value='Male' /> &nbsp;&nbsp;&nbsp;",
+
+                                                        '<label for="EmployeeInfo_"' + itemIndex + "__Female>Female</label>",
+
+                                                        '<input checked="checked" class="rdoMaleFemale" value="Female" id="EmployeeInfo_"' + itemIndex + "__Sex' name='EmployeeInfo[" + itemIndex + "].Sex' type='radio' />",
+
+                                                        '</td>'].join("\n");
+                                }
+
+                                _checkBoxHtml = ['<td> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <input type="checkbox" checked="checked" class="cBoxIsCurrentEmployee" id="EmployeeInfo_"' + itemIndex + "'__IsCurrentEmployee' name='EmployeeInfo[" + itemIndex + "].IsCurrentEmployee' value='true' />",
+
+                                                 '</td>'].join("\n");
+
+                                _actionButtonsHtml = ['<td> <a href="#" class="btn btn-primary editing"><i class="fa fa-edit"></i> Edit Location </a> | ',
+
+                                                  '<a href="#" class="btn btn-primary addSkills"><i class="fa fa-edit"></i> Add Skills</a>  | ',
+
+                                                  '<a href="#" class="btn btn-danger deleting"><i class="fa fa-trash-o"></i> Delete </a> | ',
+
+                                                  '<a href="#" class="up"> <i class="fa fa-arrow-up"></i> </a> |',
+
+                                                  '<a href="#" class="down"> <i class="fa fa-arrow-down"></i> </a> |',
+
+                                                  '<i class="fa fa-newspaper-o fa-2x showToolTip"></i>',
+
+                                                  '</td>'].join("\n");
+
+                                _textBoxHtml = ['<td> <input class="emp-info-name" id="EmployeeInfo_"' + itemIndex + "__EmployeeName' name='EmployeeInfo[" + itemIndex + "].EmployeeName' style='width:100px;' type='text' value='" + _empName + "' /></td>",
+
+                                                '<td> <input class="emp-info-location" id="EmployeeInfo_"' + itemIndex + "__Location' name='EmployeeInfo[" + itemIndex + "].Location' style='width:100px;' type='text' value='" + _location + "' /></td>",
+
+                                                '<td> <input class="emp-info-displayOrder" id="EmployeeInfo_"' + itemIndex + "__DisplayOrder' name='EmployeeInfo[" + itemIndex + "].DisplayOrder' readonly='readonly' style='width:100px;' type='text' value='" + displayOrder + "' /></td>" ,
+
+                                                '<td style ="display:none;"> <input class="emp-info-editDetailsFlag" id="EmployeeInfo_"' + itemIndex + "__EditDetailsFlag' name='EmployeeInfo[" + itemIndex + "].EditDetailsFlag' style='width:100px;' type='text' vaule='N' /> </td>",
+
+                                                '<td style ="display:none;"> <input class="emp-info-skills" id="EmployeeInfo_"' + itemIndex + "__Skills' name='EmployeeInfo[" + itemIndex + "].Skills' readonly='readonly' style='width:100px;' type='text' vaule='' /> </td>",
+
+                                               ].join("\n");
+
+                                var newItem = $("<tr>" +
+
+                                          _textBoxHtml +
+
+                                         _radioButtonHtml +
+
+                                         _checkBoxHtml +
+
+                                         _actionButtonsHtml +
+
+                                     "</tr>");
+
+                                var _nameVal = $("#ddInsertAfter").val();
+                                var _nameIndex = 0;
+
+                                if (_nameVal == "LAST-ROW") {
+                                    $("#container tr").last().after(newItem);
+                                }
+                                else {
+
+                                    $('#container tr').each(function (i) {
+                                        var _thisName = $(this).find("input[name$='Name']").val();
+                                        if (_thisName == _nameVal) {
+                                            _nameIndex = i;
+                                        }
+                                    });
+
+                                    $('#container > tbody > tr').eq(_nameIndex - 1).after(newItem);
+                                }
+
+                                $("#EmployeeInfo_" + itemIndex + "__EmployeeName").attr('readonly', true);
+                                $("#EmployeeInfo_" + itemIndex + "__Location").attr('readonly', true);
+                                $("#EmployeeInfo_" + itemIndex + "__DisplayOrder").attr('readonly', true);
+                                $("#EmployeeInfo_" + itemIndex + "__Sex").attr('disabled', true);
+
+                                //Re-Assign the Sequence order
+                                ReAssignSequenceOrderAndId();
+
+                                //Close the dialog
+                                $(this).dialog('close');
+                            }
+                        }
+                        else {
+                            return false;
+                        }
+
+                    },
+                    Cancel: function () {
+                        $(this).dialog("close");
+                    }
+                },
+                close: function () {
+                    ResetFields()
+                },
+                open: function () {
+                }
+            });
+
+            //Display Summary
+            $('#btnDisplaySummary').click(function () {
+
+                var _empNameValue = "", _empLocationValue = "", _empDisplaOrderValue = "", _gender = "", _rowVal = "", _editDetailsFlag = "", _skills = "", _isCurrentEmployee = "";
+                var _isCurrentEmployeeBooleanVal = false;
+                var _row = $("#container > tbody  > tr");
+                var _rowCounter = _row.length;
+
+                $('#info-message-area').empty();
+
+                for (var i = 0; i < _rowCounter; i++) {
+
+                    _empNameValue = $('input[name="EmployeeInfo[' + i + '].EmployeeName"').val();
+                    _empLocationValue = $('input[name="EmployeeInfo[' + i + '].Location"').val();
+                    _empDisplaOrderValue = $('input[name="EmployeeInfo[' + i + '].DisplayOrder"').val();
+                    _gender = $('input[name="EmployeeInfo[' + i + '].Sex"').filter(':checked').val();
+                    _editDetailsFlag = $('input[name="EmployeeInfo[' + i + '].EditDetailsFlag"').val();
+                    _skills = $('input[name="EmployeeInfo[' + i + '].Skills"').val();
+                    _isCurrentEmployeeBooleanVal = $('input[name="EmployeeInfo[' + i + '].IsCurrentEmployee"').is(":checked");
+
+                    if (_editDetailsFlag == null || _editDetailsFlag == "" || _editDetailsFlag.length == 0) {
+                        _editDetailsFlag = "N";
+                    }
+
+                    if (_isCurrentEmployeeBooleanVal == true) {
+                        _isCurrentEmployee = "true";
+                    }
+                    else if (_isCurrentEmployeeBooleanVal == null || _isCurrentEmployeeBooleanVal == false) {
+                        _isCurrentEmployee = "false"
+                    }
+
+                    if (_skills == null || _skills == "" || _skills.length == 0) {
+                        _skills = "No Skills!";
+                    }
+
+                    _rowVal = _empNameValue + " | " + _empLocationValue + " | " + _empDisplaOrderValue + " | " + _gender + " | " + _editDetailsFlag + " | " + _skills + " | " + _isCurrentEmployee + ".</br>";
+                    $('#info-message-area').append(_rowVal);
+                }
+
+                $("#info-message-dialog").dialog({
+                    title: "Summary"
+                }).dialog('open');
+            });
+
+            //Clear Fields
+            function ResetFields() {
+
+                $('#txtSelectedRowIndex').empty();
+                $('#txtSelectedLocation').empty();
+                $('#txtGender').empty();
+                $('#txtActionType').empty();
+                $('#txtEmpName').empty();
+                $('#ddStates').empty();
+                $('#ddCities').empty();
+
+                $('#rdoMale').prop('checked', false);
+                $('#rdoFemale').prop('checked', false);
+
+                $('#rdoMale').attr('disabled', false);
+                $('#rdoFemale').attr('disabled', false);
+
+                $('#ddInsertAfter').empty();
+                $('#txtDisplayOrder').empty();
+                $('#messageBox').empty();
+            };
+
+            //On change event for state drop-down
+            $('#ddStates').change(function () {
+
+                var _selectedState = $('#ddStates').val();
+                var _selectedCity = "";
+
+                LoadCities(_selectedState, _selectedCity);
+            });
+
+            //ReAssign sequence order
+            function ReAssignSequenceOrderAndId() {
+
+                var _counter = 0;
+                var _rowIndex = 0;
+
+                $("#container tr").each(function () { //get all rows in table
+                    $("td", this).each(function () { //get all tds in current row
+                        var value = $(this).find(".emp-info-displayOrder").val(_counter);
+                    });
+                    _counter++;
+                });
+
+                //re-arrange id's and name in order
+                $("#container tbody >tr").each(function (i, tr) { //get all rows in table
+
+                    var _idValEmpName = 'EmployeeInfo_' + _rowIndex + '__EmployeeName';
+                    var _nameValEmpName = 'EmployeeInfo[' + _rowIndex + '].EmployeeName';
+
+                    var _idValLocation = 'EmployeeInfo_' + _rowIndex + '__Location';
+                    var _nameValLocation = 'EmployeeInfo[' + _rowIndex + '].Location';
+
+                    var _idValDisplayOrder = 'EmployeeInfo_' + _rowIndex + '__DisplayOrder';
+                    var _nameValDisplayOrder = 'EmployeeInfo[' + _rowIndex + '].DisplayOrder';
+
+                    var _idValSex = 'EmployeeInfo_' + _rowIndex + '__Sex';
+                    var _nameValSex = 'EmployeeInfo[' + _rowIndex + '].Sex';
+
+                    var _idValEditDetailsFlag = 'EmployeeInfo_' + _rowIndex + '__EditDetailsFlag';
+                    var _nameValEditDetailsFlag = 'EmployeeInfo[' + _rowIndex + '].EditDetailsFlag';
+
+                    var _idValSkills = 'EmployeeInfo_' + _rowIndex + '__Skills';
+                    var _nameValSkills = 'EmployeeInfo[' + _rowIndex + '].Skills';
+
+                    var _idValIsCurrentEmployee = 'EmployeeInfo_' + _rowIndex + '__IsCurrentEmployee';
+                    var _nameValIsCurrentEmployee = 'EmployeeInfo[' + _rowIndex + '].IsCurrentEmployee';
+
+                    var inputs = $(this).find('input');
+
+                    //Set Employee Name
+                    inputs.eq(0).attr('id', _idValEmpName);
+                    inputs.eq(0).attr('name', _nameValEmpName);
+
+                    //Set Location
+                    inputs.eq(1).attr('id', _idValLocation);
+                    inputs.eq(1).attr('name', _nameValLocation);
+
+                    //Set display order
+                    inputs.eq(2).attr('id', _idValDisplayOrder);
+                    inputs.eq(2).attr('name', _nameValDisplayOrder);
+
+                    //Set edit flag
+                    inputs.eq(3).attr('id', _idValEditDetailsFlag);
+                    inputs.eq(3).attr('name', _nameValEditDetailsFlag);
+
+                    //Set skills
+                    inputs.eq(4).attr('id', _idValSkills);
+                    inputs.eq(4).attr('name', _nameValSkills);
+
+                    //Set Gender
+                    inputs.eq(5).attr('id', _idValSex);
+                    inputs.eq(5).attr('name', _nameValSex);
+
+                    inputs.eq(6).attr('id', _idValSex);
+                    inputs.eq(6).attr('name', _nameValSex);
+
+                    //Set IsCurrentEmployee
+                    inputs.eq(7).attr('id', _idValIsCurrentEmployee);
+                    inputs.eq(7).attr('name', _nameValIsCurrentEmployee);
+
+                    _rowIndex++;
+
+                });
+            }
+
+            //Validate form input
+            function ValidateInput() {
+
+                var errorList = [];
+                $("#messageBox").empty();
+
+                var _txtEmpName = $('#txtEmpName').val();
+                var _ddStates = $('#ddStates').val();
+                var _ddCities = $('#ddCities').val();
+                var _isMale = $('#rdoMale').is(":checked");
+                var _isFemale = $('#rdoFemale').is(":checked");
+                var _txtActionType = $('#txtActionType').val();
+
+                var _isValidEmpName = true;
+                var _isValidSelectedState = true;
+                var _isValidSelectedCity = true;
+                var _isGenderSelected = true;
+
+                if (_txtActionType == 'adding') {
+                    //Validate Employee Name
+                    if (_txtEmpName.length == 0) {
+
+                        errorList.push('* Please enter employee name.<br />');
+                        _isValidEmpName = false;
+                    }
+                    else if (_txtEmpName.length > 0) {
+                        $('#container tbody > tr').each(function (i) {
+
+                            _currentEmpName = $(this).find("input[name$='Name']").val();
+
+                            if (_currentEmpName.trim() == _txtEmpName.trim()) {
+                                errorList.push('* The Employee name {' + _txtEmpName + '} already exist!<br />');
+                                _isValidEmpName = false;
+                            }
+                        });
+                    }
+
+                    //Validate Gender
+                    if (_isMale == false && _isFemale == false) {
+                        errorList.push('* Please Select Gender.<br />');
+                        _isGenderSelected = false;
+                    }
+                }
+
+                //Validate State selection from the drop-down
+                if (_ddStates == null || _ddStates.length == 0 || _ddStates == "----SELECT----" || _ddStates == "0") {
+                    errorList.push('* Please select State.<br />');
+                    _isValidSelectedState = false;
+                }
+
+                //Validate City selection from the drop-down
+                if (_ddCities == null || _ddCities.length == 0 || _ddCities == "----SELECT----" || _ddCities == "0") {
+                    errorList.push('* City is required.<br />');
+                    _isValidSelectedCity = false;
+                }
+
+                if (errorList.length > 0) {
+                    for (var i = 0; i < errorList.length; i++) {
+                        $('#messageBox').append(errorList[i]);
+                    }
+                    $('#messageBox').show();
+                }
+
+                if (_isValidEmpName && _isValidSelectedState && _isValidSelectedCity && _isGenderSelected) {
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            };
+
+            //Show summary in toolTip
+            $(document).on('mouseover', 'i.showToolTip', function () {
+
+                var _toolTipText = "";
+                var $row = $(this).parents('tr:first');
+
+                var _empName = $row.find('.emp-info-name').val();
+                var _location = $row.find('.emp-info-location').val();
+                var _displayOrder = $row.find('.emp-info-displayOrder').val();
+                var _sex = $row.find('.rdoMaleFemale:checked').val();
+                var _editDetailsFlag = $row.find('.emp-info-editDetailsFlag').val();
+                var _skills = $row.find('.emp-info-skills').val();
+                var _isCurrentEmployee = $row.find('.cBoxIsCurrentEmployee').is(":checked");
+
+                var _selectedViewDetail = $row.find('.showToolTip');
+
+                _toolTipText = "Name: " + _empName
+                             + "\nLocation: " + _location
+                             + "\nDisplay Order: " + _displayOrder
+                             + "\nGender: " + _sex
+                             + "\nEdit Flag: " + _editDetailsFlag
+                             + "\nSkills: " + _skills
+                             + "\nCurrent Employee: " + _isCurrentEmployee;
+
+                _selectedViewDetail.attr('title', _toolTipText);
+
+            });
+
+            //Info message Dialog
+            $('#info-message-dialog').dialog({
+
+                autoOpen: false,
+                height: 185,
+                width: 550,
+                modal: true,
+                buttons: {
+                    "OK": function () {
+
+                        ReAssignSequenceOrderAndId();
+
+                        //Close the dialog
+                        $(this).dialog('close');
+
+                    }
+                }
+            });
+
+            //Remove blank row from parameter listBox
+            function RemoveBlankOptionFromListBox() {
+
+                $('#lstBoxAvailableSkills option').filter(function () {
+                    return !this.value || $.trim(this.value).length == 0 || $.trim(this.text).length == 0;
+                }).remove();
+
+                $('#lstBoxSelectedSkills option').filter(function () {
+                    return !this.value || $.trim(this.value).length == 0 || $.trim(this.text).length == 0;
+                }).remove();
+
+            };
+
+            //Add Skills
+            $(document).on('click', 'a.addSkills', function () {
+
+                var $row = $(this).parents('tr:first');
+                var txtRowIndex = $('#txtRowIndex');
+                var messageBoxEditDetails = $('#messageBoxEditDetails');
+                var ddSelectSkills = $('#ddSelectSkills');
+                var lstBoxAvailableSkills = $('#lstBoxAvailableSkills');
+                var lstBoxSelectedSkills = $('#lstBoxSelectedSkills');
+                var selectedSkills = $row.find('.emp-info-skills').val();
+                var _options = "";
+                var _arrays = [];
+
+                messageBoxEditDetails.empty();
+                ddSelectSkills.empty();
+                lstBoxAvailableSkills.empty();
+                lstBoxSelectedSkills.empty();
+                txtRowIndex.val("");
+                txtRowIndex.val($row.index());
+
+                //Get list of skills via Ajax call
+                $.ajax({
+                    url: '@Url.Content("~/DynamicControlsII/GetSkills/")',
+                    data: "{}",
+                    type: 'POST',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (data) {
+
+                        $("#ddSelectSkills").append("<option value='0'>----SELECT----</option>");
+
+                        $.each(data, function (index, optiondata) {
+
+                            if (optiondata.Text.toUpperCase() == "C#") {
+
+                                $("#ddSelectSkills").append("<option selected='selected'  value='" + optiondata.Text + "'>" + optiondata.Value + "</option>");
+                            }
+                            else {
+                                $("#ddSelectSkills").append("<option value='" + optiondata.Text + "'>" + optiondata.Value + "</option>");
+                            }
+                        });
+                    },
+                    error: function (result) {
+                        $('#messageBoxEditDetails').html(result.responseText);
+                    }
+                });
+
+                //Pre-load skills, if they are already selected!
+                if (selectedSkills != null && selectedSkills.length > 0 && selectedSkills != "") {
+
+                    _arrays = selectedSkills.split(',');
+
+                    for (var i = 0; i < _arrays.length; i++) {
+
+                        _options += '<option value="' + _arrays[i] + '">' + _arrays[i] + '</option>';
+                    }
+
+                    lstBoxSelectedSkills.append(_options);
+                }
+
+                $("#add-skills-Dialog").dialog({
+                    title: "Add Skills"
+                }).dialog('open');
+            });
+
+            //show add-skills Dialog
+            $('#add-skills-Dialog').dialog({
+
+                autoOpen: false,
+                height: 525,
+                width: 425,
+                modal: true,
+                buttons: {
+                    "OK": function () {
+
+                        if (ValidateSkills()) {
+
+                            var _rowIndex = $('#txtRowIndex').val();
+                            var _lstBoxSelectedSkills = $("select[id='lstBoxSelectedSkills'] option");
+                            var _selectedSkillsArrays = [];
+
+                            for (var i = 0; i < _lstBoxSelectedSkills.length; i++) {
+
+                                _selectedSkillsArrays.push(_lstBoxSelectedSkills[i].value);
+                            }
+
+                            //just make sure that the skills are selected!
+                            if (_rowIndex != null) {
+
+                                var $row = $($('#container >tbody >tr')[_rowIndex]);
+                                $row.find("input[name$='EditDetailsFlag']").val("Y");
+                                $row.find("input[name$='Skills']").val(_selectedSkillsArrays.join(','));
+                            }
+                            //Close the dialog
+                            $(this).dialog('close');
+                        }
+
+                    },
+                    Cancel: function () {
+                        $(this).dialog("close");
+                    }
+                },
+                close: function () {
+                    ResetFields()
+                },
+                open: function () {
+                }
+
+            });
+
+            $('#btnAddSkill').click(function () {
+
+                $('#messageBoxEditDetails').empty();
+                $('#messageBoxEditDetails').hide();
+
+                var _selectedSkill = $('#ddSelectSkills').val();
+                var _existInAvailableLstBox = false;
+                var _existInSelectedLstBox = false;
+
+                if (_selectedSkill == null || _selectedSkill.length == 0 || _selectedSkill == "----SELECT----" || _selectedSkill == "0") {
+
+                    $('#messageBoxEditDetails').append("* Please select a SKILL. <br/ >");
+                    $('#messageBoxEditDetails').show();
+                }
+                else {
+
+                    //Add only if it does not exist!
+                    for (var i = 0, opts = document.getElementById('lstBoxAvailableSkills').options; i < opts.length; ++i) {
+
+                        if (opts[i].value === _selectedSkill) {
+
+                            _existInAvailableLstBox = true;
+                            break;
+                        }
+                    }
+
+                    for (var i = 0, opts = document.getElementById('lstBoxSelectedSkills').options; i < opts.length; ++i) {
+
+                        if (opts[i].value === _selectedSkill) {
+
+                            _existInSelectedLstBox = true;
+                            break;
+                        }
+                    }
+
+                    if (_existInAvailableLstBox == false && _existInSelectedLstBox == false) {
+                        $("#lstBoxAvailableSkills").append("<option value='" + _selectedSkill + "'>" + _selectedSkill + "</option>");
+                    }
+
+                    RemoveBlankOptionFromListBox();
+                }
+            });
+
+            //Add selected
+            $('#btnAddSelectedSkill').click(function (e) {
+
+                var _selectedOpts = $('#lstBoxAvailableSkills option:selected');
+
+                if (_selectedOpts.length == 0) {
+
+                    $('#info-message-area').empty();
+                    $('#info-message-area').append('* Please select a skill to add to selection.');
+
+                    //Show the dialog
+                    $('#info-message-dialog').dialog({
+                        title: "Info: Add selected Skill.",
+                    }).dialog('open');
+
+                    e.preventDefault();
+                }
+                else {
+                    $('#lstBoxSelectedSkills').append($(_selectedOpts).clone());
+                    $(_selectedOpts).remove();
+                    RemoveBlankOptionFromListBox();
+                    e.preventDefault();
+                }
+            });
+
+            //Add all
+            $('#btnAddAllSkills').click(function (e) {
+
+                var _selectedOpts = $('#lstBoxAvailableSkills option');
+
+                if (_selectedOpts.length == 0) {
+
+                    $('#info-message-area').empty();
+                    $('#info-message-area').append('* Nothing to add!');
+
+                    //Show the dialog
+                    $('#info-message-dialog').dialog({
+                        title: "Info: Add all Skills.",
+                    }).dialog('open');
+
+                    e.preventDefault();
+                }
+                else {
+                    $('#lstBoxSelectedSkills').append($(_selectedOpts).clone());
+                    $(_selectedOpts).remove();
+                    RemoveBlankOptionFromListBox();
+                    e.preventDefault();
+                }
+            });
+
+            //Remove selected
+            $('#btnRemoveSelectedSkill').click(function (e) {
+
+                var _selectedOpts = $('#lstBoxSelectedSkills option:selected');
+
+                if (_selectedOpts.length == 0) {
+
+                    $('#info-message-area').empty();
+                    $('#info-message-area').append('* Please select a Skill to remove!');
+
+                    //Show the dialog
+                    $('#info-message-dialog').dialog({
+                        title: "Info: Remove selected Skill.",
+                    }).dialog('open');
+
+                    e.preventDefault();
+                }
+                else {
+                    $('#lstBoxAvailableSkills').append($(_selectedOpts).clone());
+                    $(_selectedOpts).remove();
+                    RemoveBlankOptionFromListBox();
+                    e.preventDefault();
+                }
+            });
+
+            //Remove all
+            $('#btnRemovellAllSkills').click(function (e) {
+
+                var _selectedOpts = $('#lstBoxSelectedSkills option');
+
+                if (_selectedOpts.length == 0) {
+
+                    $('#info-message-area').empty();
+                    $('#info-message-area').append('* Nothing to remove!');
+
+                    //Show the dialog
+                    $('#info-message-dialog').dialog({
+                        title: "Info: Remove all Skills.",
+                    }).dialog('open');
+
+                    e.preventDefault();
+                }
+                else {
+                    $('#lstBoxAvailableSkills').append($(_selectedOpts).clone());
+                    $(_selectedOpts).remove();
+                    RemoveBlankOptionFromListBox();
+                    e.preventDefault();
+                }
+            });
+
+            $('#btnCreateLinks').click(function () {
+
+                if (ValidateSkills() == false) {
+
+                    return;
+                }
+
+                $('#messageBoxEditDetails').empty();
+                $('#dynamic-links-area').empty();
+
+                var _lstBoxSelectedSkills = $("select[id='lstBoxSelectedSkills'] option");
+                var _baseUrl = "http://www.facebook.com?id=";
+                var _selectedSkillsArrays = [];
+
+                for (var i = 0; i < _lstBoxSelectedSkills.length; i++) {
+
+                    _selectedSkillsArrays.push(_lstBoxSelectedSkills[i].value);
+                }
+
+                if (_selectedSkillsArrays.length > 0) {
+
+                    for (var i = 0; i < _selectedSkillsArrays.length; i++) {
+
+                        var _skill = _selectedSkillsArrays[i];
+                        var _linkText = "Link " + i + " " + _skill;
+
+                        $.ajax({
+                            url: '@Url.Content("~/DynamicControlsII/GetNewId/")',
+                            type: 'GET',
+                            dataType: 'json',
+                            cache: false,
+                            async: false,
+                            success: function (data) {
+
+                                var _id = parseInt(data);
+
+                                var _hrefVal = _baseUrl
+                                             + _id
+                                             + '&skill=' + _skill;
+
+                                var _anchorTag = '<a target="_blank" href="' + _hrefVal + '">' + _linkText + '</a>' + "<br/ >";
+
+                                var _table = '<table id="tblLinks" border="0"><tr><td><a href="#" class="deleteLink"> &nbsp;Delete&nbsp;&nbsp;&nbsp; </a></td><td>' + _anchorTag + '</td></tr></table>';
+
+                                $('#dynamic-links-area').append(_table);
+
+                                $('#dynamic-links-area').show();
+                            },
+                            error: function (result) {
+
+                                $('#messageBoxEditDetails').empty();
+                                $('#messageBoxEditDetails').append(result.responseText);
+                            }
+                        });
+                    }
+                }
+            });
+
+            $(document).on('click', 'a.deleteLink', function () {
+
+                var $row = $(this).parents('tr:first');
+                var _selectedRow = $($('#tblLinks >tbody >tr')[parseInt($row.index())]);
+
+                var _selectedRow = $($('#tblLinks >tbody >tr')[parseInt($row.index())]);
+
+                _selectedRow.remove();
+            });
+
+            $(document).on('change', '.cBoxIsCurrentEmployee', function () {
+
+                var _isChecked = $(this).is(':checked');
+
+                var $row = $(this).parents('tr:first');
+
+                var currentRow = $($('#container >tbody >tr')[parseInt($row.index())]);
+
+                currentRow.find("input[name$='.IsCurrentEmployee']").val(_isChecked);
+            });
+
+            function ValidateSkills() {
+
+                $('#messageBoxEditDetails').empty();
+                var _lstBoxSelectedSkills = $("select[id='lstBoxSelectedSkills'] option");
+
+                if (_lstBoxSelectedSkills.length == 0) {
+
+                    $('#messageBoxEditDetails').append("* Please Select at least one skill! <br />");
+                    $('#messageBoxEditDetails').show();
+                    return false;
+                }
+                else if (_lstBoxSelectedSkills.length > 0) {
+
+                    return true;
+                }
+
+            }
+
+            function LoadStates(selectedState) {
+
+                $('#ddStates').empty();
+                $('#messageBox').empty();
+                $('#messageBox').hide();
+
+                $.ajax({
+                    url: '@Url.Content("~/DynamicControlsII/GetStates/")',
+                    data: "{}",
+                    type: 'POST',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (data) {
+                        $("#ddStates").append("<option value='0'>----SELECT----</option>");
+                        $.each(data, function (index, optiondata) {
+                            $("#ddStates").append("<option value='" + optiondata.Text + "'>" + optiondata.Value + "</option>");
+                        });
+
+                        if (selectedState.length > 0) {
+
+                            var objSelectStates = document.getElementById("ddStates");
+
+                            for (var i = 0; i < objSelectStates.options.length; i++) {
+                                if (objSelectStates.options[i].text == selectedState) {
+                                    objSelectStates.options[i].selected = true;
+                                    return;
+                                }
+                            }
+                        }
+                    },
+                    error: function (result) {
+                        $('#messageBox').show();
+                        $('#messageBox').html(result.responseText);
+                    }
+                });
+            };
+
+            function LoadCities(selectedState, selectedCity) {
+
+                $('#ddCities').empty();
+                $('#messageBox').empty();
+                $('#messageBox').hide();
+                $("#ddCities").empty();
+                $("#ddCities").append("<option value='0'>----SELECT----</option>");
+
+                if (selectedState != null && selectedState.length > 0) {
+
+                    //load cities for the selected State
+                    $.ajax({
+                        url: '@Url.Content("~/DynamicControlsII/GetCities/")',
+                        data: { state: selectedState },
+                        type: 'GET',
+                        success: function (data) {
+                            $.each(data, function (index, optiondata) {
+                                $("#ddCities").append("<option value='" + optiondata.Text + "'>" + optiondata.Value + "</option>");
+                            });
+
+                            if (selectedCity.length > 0) {
+
+                                var objSelectCities = document.getElementById("ddCities");
+
+                                for (var i = 0; i < objSelectCities.options.length; i++) {
+                                    if (objSelectCities.options[i].text == selectedCity) {
+                                        objSelectCities.options[i].selected = true;
+                                        return;
+                                    }
+                                }
+                            }
+                        },
+                        error: function (result) {
+                            $('#messageBox').show();
+                            $('#messageBox').html(result.responseText);
+                        }
+                    });
+                }
+            };
+
+        });//end of jQuery document.ready function!
+    </script>
+}
+
+<br />
+<br />
+<br />
+@using (Html.BeginForm("ValidateSubmit", "DynamicControlsII", FormMethod.Post, new { id = "frmMain" }))
+{
+    <a href="#" id="btnAddNew" class="btn btn-success adding"><i class="fa fa-plus"></i> Add New</a><br /><br />
+
+    <div id="mainArea">
+        @Html.ValidationSummary(true)
+        <table id="container" class="table table-hover">
+            <thead>
+                <tr class="success">
+                    <th>Name</th>
+                    <th>Location</th>
+                    <th>Display Order</th>
+                    <th>Gender</th>
+                    <th>CurrentEmployee?</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            @Html.EditorFor(x => x.EmployeeInfo)
+        </table>
+    </div>
+    <br />
+
+    <p><input type="button" class="btn btn-primary" id="btnDisplaySummary" value="Display Summary" /></p>
+    <input type="submit" value="Submit" />
+}

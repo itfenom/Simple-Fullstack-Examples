@@ -1,0 +1,23 @@
+﻿@model Playground.Mvc.Models.Person
+
+@{
+    Layout = null;
+}
+
+<div>
+    <fieldset>
+        <legend>Confirm Delete</legend>
+        <p>
+            Are you sure, you want to delete <strong>@Model.Name</strong> with <strong>ID @Model.ID</strong> ?
+        </p>
+    </fieldset>
+
+    @using (Html.BeginForm())
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="form-actions no-color">
+            <input type="submit" value="Delete" class="btn btn-default" />
+        </div>
+    }
+</div>

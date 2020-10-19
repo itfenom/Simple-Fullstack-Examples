@@ -1,0 +1,142 @@
+using System;
+using System.Web;
+using System.Web.Mvc;
+using System.Web.Optimization;
+using System.Web.Routing;
+using SeraphWeb.Mvc.Controllers;
+
+namespace SeraphWeb.Mvc
+{
+    public class MvcApplication : System.Web.HttpApplication
+    {
+        protected void Application_Start()
+        {
+            AreaRegistration.RegisterAllAreas();
+            FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
+            RouteConfig.RegisterRoutes(RouteTable.Routes);
+            BundleConfig.RegisterBundles(BundleTable.Bundles);
+        }
+
+        protected void Application_Error(object sender, EventArgs e)
+        {
+            Exception lastError = Server.GetLastError();
+            Server.ClearError();
+
+            int statusCode = 0;
+
+            if (lastError.GetType() == typeof(HttpException))
+            {
+                statusCode = ((HttpException)lastError).GetHttpCode();
+            }
+            else
+            {
+                // Not an HTTP related error so this is a problem in our code, set status to
+                // 500 (internal server error)
+                statusCode = 500;
+            }
+
+            HttpContextWrapper contextWrapper = new HttpContextWrapper(this.Context);
+
+            RouteData routeData = new RouteData();
+            routeData.Values.Add("controller", "Error");
+            routeData.Values.Add("action", "Index");
+            routeData.Values.Add("statusCode", statusCode);
+            routeData.Values.Add("exception", lastError);
+            routeData.Values.Add("isAjaxRequet", contextWrapper.Request.IsAjaxRequest());
+
+            IController controller = new ErrorController();
+
+            RequestContext requestContext = new RequestContext(contextWrapper, routeData);
+
+            controller.Execute(requestContext);
+            Response.End();
+        }
+    }
+}
+-------------------------------------------------------------------------------------------
+ErrorController.cs:
+
+using System;
+using System.Web.Mvc;
+using SeraphWeb.Mvc.Models;
+
+namespace SeraphWeb.Mvc.Controllers
+{
+    public class ErrorController : Controller
+    {
+        public ActionResult Index(int statusCode, Exception exception, bool isAjaxRequet)
+        {
+            Response.StatusCode = statusCode;
+
+            // If it's not an AJAX request that triggered this action then just retun the view
+            if (!isAjaxRequet)
+            {
+                ErrorModel model = new ErrorModel { HttpStatusCode = statusCode, Exception = exception };
+
+                return View(model);
+            }
+            else
+            {
+                // Otherwise, if it was an AJAX request, return an anon type with the message from the exception
+                var errorObjet = new { message = exception.Message };
+                return Json(errorObjet, JsonRequestBehavior.AllowGet);
+            }
+        }
+    }
+}
+
+-------------------------------------------------------------------------------------------
+ErrorModel.cs:
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+namespace SeraphWeb.Mvc.Models
+{
+    public class ErrorModel
+    {
+        public int HttpStatusCode { get; set; }
+        public Exception Exception { get; set; }
+    }
+}
+
+-------------------------------------------------------------------------------------------
+Views.Error.Index:
+
+@model SeraphWeb.Mvc.Models.ErrorModel
+
+@{
+    ViewBag.Title = "Error";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="box">
+            <div class="col-lg-12 col-xs-12 text-center">
+                <p class="text-danger">
+                    Uh oh, it looks like something went wrong...
+                </p>
+
+                <div id="errorMessage" style="color:red; font-weight: bold; padding-top: 20px;">
+                    @{
+                        string message = null;
+                        switch (Model.HttpStatusCode)
+                        {
+                            case 404:
+                                message = "The requested content was not found";
+                                break;
+                            case 500:
+                                message = string.Concat("The following server error was encountered:<br /> ", Model.Exception.Message);
+                                break;
+                        }
+                    }
+
+                    @Html.Raw(message)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+-------------------------------------------------------------------------------------------

@@ -1,0 +1,108 @@
+﻿<UserControl 
+    x:Class="Playground.WpfApp.Forms.DataGridsEx.NavigationEx.DepartmentView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    mc:Ignorable="d" 
+    d:DesignHeight="450" d:DesignWidth="800">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <DockPanel Background="#110000FF" Grid.Row="0" Grid.Column="0" Margin="1">
+            <StackPanel Orientation="Horizontal">
+                <Button HorizontalAlignment="Left"
+                            Command="{Binding AddNewDepartmentCommand}" 
+                            ToolTip="Add new Department." 
+                            Margin="4"
+                            Height="30">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Add New " />
+                        <Image Source="../../../Images/Add.png"  Margin="2,0,0,0" />
+                    </StackPanel>
+                </Button>
+                <Separator/>
+                <Button HorizontalAlignment="Left"
+                            Command="{Binding DeleteDepartmentCommand}" 
+                            ToolTip="Delete selected Department." 
+                            Margin="4"
+                            Height="30">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Delete " />
+                        <Image Source="../../../Images/Delete.png"  Margin="2,0,0,0" />
+                    </StackPanel>
+                </Button>
+                <Separator/>
+                <Button Command="{Binding SaveDepartmentCommand}" 
+                            Margin="2,2,4,2"
+                            MinWidth="60" 
+                            Height="30"
+                            ToolTip="Save changes">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Save " />
+                        <Image Source="../../../Images/Save.png"  Margin="2,0,0,0" />
+                    </StackPanel>
+                </Button>
+                <Separator/>
+                <Button HorizontalAlignment="Left"
+                            Command="{Binding ReloadDataCommand}" 
+                            ToolTip="Reload Data" 
+                            Margin="4"
+                            Height="30">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Reload " />
+                        <Image Source="../../../Images/Redo.png"  Margin="2,0,0,0" />
+                    </StackPanel>
+                </Button>
+                <Separator/>
+                <Button HorizontalAlignment="Left"
+                            Command="{Binding ClearFilterCommand}" 
+                            ToolTip="Clear All Filters" Margin="4"
+                            Content="Clear All Filters"
+                            Height="30"/>
+            </StackPanel>
+        </DockPanel>
+
+        <DockPanel Background="#110000FF" Grid.Row="1" Grid.Column="0">
+            <Border Background="White" BorderBrush="LightGray" BorderThickness="1" CornerRadius="4" DockPanel.Dock="Top" Margin="4">
+                <DataGrid Name="DgvDepartments"
+                          ItemsSource="{Binding DepartmentsView}"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          SelectedItem="{Binding SelectedDepartment, ValidatesOnNotifyDataErrors=True}"
+                          IsSynchronizedWithCurrentItem="True"
+                          SelectionMode="Single"
+                          GridLinesVisibility="All"
+                          RowHeaderWidth="27">
+
+                    <DataGrid.Columns>
+
+                        <DataGridTextColumn Header=" Id " Width="65" IsReadOnly="True" Binding="{Binding DepartmentId}" />
+
+                        <DataGridTextColumn Header=" Department "
+                                                    Width="*"
+                                                    EditingElementStyle="{StaticResource errorStyle}"
+                                                    Binding="{Binding DepartmentName, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Vertical">
+                                        <TextBlock TextAlignment="Center" Text="{Binding Content, RelativeSource={RelativeSource Mode=TemplatedParent}}" />
+                                        <TextBox Style="{StaticResource FilterTextBoxStyles}" Tag="Filter..." Width="200" Text="{Binding DataContext.DeptNameFilter, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
+
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+        </DockPanel>
+    </Grid>
+</UserControl>

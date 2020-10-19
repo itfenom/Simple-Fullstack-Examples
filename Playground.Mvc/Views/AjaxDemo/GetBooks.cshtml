@@ -1,0 +1,17 @@
+﻿@model IEnumerable<Playground.Mvc.DAL.Book>
+
+<table>
+    <tr>
+        <th>Author</th>
+        <th>Subject</th>
+        <th>Title</th>
+    </tr>
+    @foreach (Playground.Mvc.DAL.Book _b in Model)
+    {
+        <tr>
+            <td>@_b.Author</td>
+            <td>@_b.Subject</td>
+            <td>@_b.Title</td>
+        </tr>
+    }
+</table>

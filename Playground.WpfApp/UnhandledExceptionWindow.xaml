@@ -1,0 +1,34 @@
+﻿<controls:MetroWindow 
+    x:Class="Playground.WpfApp.UnhandledExceptionWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="clr-namespace:Playground.WpfApp"
+    xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+    mc:Ignorable="d"
+    BorderBrush="{DynamicResource AccentColorBrush}"
+    BorderThickness="1"
+    ResizeMode="CanResizeWithGrip"
+    WindowStartupLocation="CenterScreen"
+    WindowTransitionsEnabled="True"
+    TitleCaps="False"
+    Title="Un-handled Exception" Height="450" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <DockPanel Grid.Row="0" Margin="2" LastChildFill="True" >
+            <Label Content="Msg:" Margin="2"></Label>
+            <TextBlock x:Name="TxtMsg" Margin="2"></TextBlock>
+        </DockPanel>
+        <DockPanel Grid.Row="1" Margin="2" LastChildFill="True">
+            <Label Content="Stack Trace:" Margin="2"></Label>
+        </DockPanel>
+        <DockPanel Grid.Row="2" Margin="2" LastChildFill="True">
+            <TextBox x:Name="TxtStackTrace" Margin="2" IsReadOnly="True" TextWrapping="Wrap" ></TextBox>
+        </DockPanel>
+    </Grid>
+</controls:MetroWindow>

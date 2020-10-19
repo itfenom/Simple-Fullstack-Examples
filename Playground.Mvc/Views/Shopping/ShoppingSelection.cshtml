@@ -1,0 +1,24 @@
+﻿@model IEnumerable<Playground.Mvc.DAL.Product>
+
+@{
+    ViewBag.Title = "Shopping Selection";
+}
+
+<h2>Product Selection</h2>
+
+<table class="table table-hover">
+
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                <strong>Name: </strong>@Html.DisplayFor(modelItem => item.ProductName)<br />
+                <img src="~/Catalog/Images/Thumbs/@(item.ImagePath)" alt="@(item.ImagePath)" class="img-thumbnail" /><br />
+                <strong>Description: </strong><p>@Html.DisplayFor(modelItem => item.Description)</p>
+                <strong>Price: $ </strong>@Html.DisplayFor(modelitem => item.UnitPrice)<br />
+                @Html.ActionLink("Add to Cart", "AddToCart", new { productID = item.ProductID })<br />
+                @Html.ActionLink("Details", "Details", new { productID = item.ProductID })<br />
+            </td>
+        </tr>
+    }
+</table>

@@ -1,0 +1,52 @@
+﻿@model Playground.Mvc.Models.ContactViewModel
+
+@{
+    ViewBag.Title = "Contact";
+}
+<br />
+<br />
+<div id="result">
+
+    @using (Ajax.BeginForm(new AjaxOptions { HttpMethod = "post", InsertionMode = System.Web.Mvc.Ajax.InsertionMode.Replace, UpdateTargetId = "result" }))
+    {
+        @Html.AntiForgeryToken()
+
+        @Html.HiddenFor(model => model.Name)
+        @Html.HiddenFor(model => model.Address.StreetAddress)
+        @Html.HiddenFor(model => model.Address.City)
+        @Html.HiddenFor(model => model.Address.State)
+        @Html.HiddenFor(model => model.Address.Zip)
+        @Html.HiddenFor(model => model.Email)
+        @Html.HiddenFor(model => model.Phone)
+
+        <div class="form-horizontal">
+            <p>
+                <strong>Name:</strong> @Model.Name <br />
+            </p>
+            <p>
+                <strong>Address:</strong> @Model.Address.StreetAddress <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                @Model.Address.City, @Model.Address.State @Model.Address.Zip<br />
+            </p>
+            <p>
+                <strong>Email:</strong> @Model.Email <br />
+                <strong>Phone:</strong> @Model.Phone <br /><br />
+                <strong>Message:</strong><br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                @Html.TextAreaFor(model => model.Msg, 5, 20, new { title = "Enter Message!" })<br />
+                @Html.ValidationMessageFor(model => model.Msg)<br />
+                <div class="row">
+                    <div class="col-md-6 col-md-offset-1">
+                        <input type="submit" value="Submit" class="btn btn-default" />
+                    </div>
+                </div>
+            </p>
+        </div>
+    }
+</div>
+
+@section scripts{
+
+    <script src="@Url.Content("~/Scripts/jquery.unobtrusive-ajax.min.js")"></script>
+
+}

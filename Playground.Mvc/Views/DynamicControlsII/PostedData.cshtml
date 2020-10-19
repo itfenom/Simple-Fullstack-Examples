@@ -1,0 +1,17 @@
+﻿@model Playground.Mvc.Models.DynamicControls2ViewModel
+
+<br />
+<br />
+<br />
+<h3>Posted data is: </h3>
+@foreach (var item in Model.EmployeeInfo)
+{
+    <p>
+        <strong>Name:</strong> @item.EmployeeName |
+        <strong>Location:</strong> @item.Location |
+        <strong>Display Order:</strong> @item.DisplayOrder |
+        <strong>Skills:</strong> @item.Skills |
+        <strong>Sex:</strong> @item.Sex |
+        <strong>EditDetailsFlag?</strong> @item.EditDetailsFlag
+    </p>
+}

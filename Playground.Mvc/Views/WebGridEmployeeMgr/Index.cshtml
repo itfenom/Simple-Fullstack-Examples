@@ -1,0 +1,174 @@
+﻿@model Playground.Mvc.Models.WebGridEmployeeViewModel
+
+@{
+    ViewBag.Title = "Manage Employees using MVC WebGrid with Search/Sort/Filter options - Index";
+    WebGrid grid = new WebGrid(rowsPerPage: Model.Pages);
+
+    grid.Bind(Model.Employees, autoSortAndPage: false, rowCount: Model.Rows);
+}
+
+<h2>Index</h2>
+
+<style type="text/css">
+    .webgrid-table {
+        font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+        font-size: 1.2em;
+        width: 100%;
+        display: table;
+        border-collapse: separate;
+        border: solid 1px #98BF21;
+        background-color: white;
+    }
+
+        .webgrid-table td, th {
+            border: 1px solid #98BF21;
+            padding: 3px 7px 2px;
+        }
+
+    .webgrid-header {
+        background-color: beige;
+        color: black;
+        padding-bottom: 4px;
+        padding-top: 5px;
+        text-align: center;
+    }
+
+    .webgrid-footer {
+    }
+
+    .webgrid-row-style {
+        padding: 3px 7px 2px;
+    }
+
+    .webgrid-alternating-row {
+        background-color: #EBEEF0;
+        padding: 3px 7px 2px;
+    }
+</style>
+
+<div id="gridContent" style=" padding:20px; ">
+
+    <h2>Employee Manager using MVC WebGrid</h2>
+
+    @using (Html.BeginForm(null, null, FormMethod.Get))
+    {
+        <fieldset>
+            <legend>Search Criteria</legend>
+            @Html.Label("Search", "Filter By:")
+            @Html.TextBox("searchTerm")
+            @Html.DropDownList("filterBy", new List<SelectListItem>
+                            {
+                                new SelectListItem { Text = "Name", Value="EMP_NAME", Selected = true},
+                                new SelectListItem { Text = "Email", Value="EMP_EMAIL", Selected = false},
+                            })
+            <br />
+            <br />
+            <input type="submit" value="Search" />
+        </fieldset>
+    }
+
+    <br />
+
+    <p>
+        @Html.ActionLink("Create New", "Create")
+        <br />
+        <br />
+        @Html.ActionLink("Export to Excel", "ExportToExcel")
+    </p>
+
+    @grid.GetHtml(
+         fillEmptyRows: false,
+         tableStyle: "webgrid-table",
+         headerStyle: "webgrid-header",
+         footerStyle: "webgrid-footer",
+         alternatingRowStyle: "webgrid-alternating-row",
+         selectedRowStyle: "webgrid-selected-row",
+         rowStyle: "webgrid-row-style",
+         mode: WebGridPagerModes.All,
+         firstText: "<< First",
+         previousText: "< Prev",
+         nextText: "Next >",
+         lastText: "Last >>",
+         columns: new[] {
+         grid.Column("", header: "Actions", format:
+        @<text>
+            @Html.ActionLink("Edit", "Edit", new { empID = item.empID }) |
+            @Html.ActionLink("Delete", "Delete", new { empID = item.empID }, new { onclick = "return confirm('Do you really want to delete selected Employee?')" })
+        </text>),
+
+            grid.Column("EmpName", header: "Name", canSort: true),
+            grid.Column("EmpEmail", header: "Email", canSort: true),
+            grid.Column("EmpPhone", header: "Phone", canSort: false),
+            grid.Column("Salary", header: "Salary", canSort: true),
+            grid.Column("HireDate", header: "Hire Date", canSort: false),
+            grid.Column("IsActive", header: "Is Active?", canSort: false),
+            grid.Column("EmpGender", header: "Gender", canSort: false)
+            //grid.Column("CREATE_DATE", header: "Created Date", canSort: false, format: item => ((item.CREATE_DATE == null) ? "" : item.CREATE_DATE.ToString("MM/dd/yyyy")))
+ })
+
+    <br />
+    <br />
+    <a id="lnkShowHideAdvSearch" href="#">Advanced Search Options</a>
+    <br />
+    <br />
+
+    <div id="advSearchDiv">
+        <fieldset>
+            <legend>Search Options</legend>
+            <div>
+                @Html.Label("Search", "Filter By:")
+                @Html.TextBox("txtSearchTerm")
+                @Html.DropDownList("filterBy", new List<SelectListItem>
+                               {
+                                    new SelectListItem { Text = "Name", Value="EMP_NAME", Selected = false},
+                                    new SelectListItem { Text = "Email", Value="EMP_EMAIL", Selected = false}
+                               }, "--- Please Select ---", new { @id = "ddlFilterBy" })
+            </div>
+            <input type="button" id="btnSearch" onclick="PerformAdvSearch()" value="Search" />
+        </fieldset>
+    </div>
+</div>
+
+@section Scripts{
+    @Scripts.Render("~/bundles/jquery")
+
+    <script type="text/javascript">
+
+            //Posting to controller with Advanced search Values
+            function PerformAdvSearch() {
+                var _filterBy = "";
+                var _searchTerm = "";
+
+                _searchTerm = $('#txtSearchTerm').val();
+                _filterBy = $('#ddlFilterBy').val();
+
+                if (_filterBy == "" || _searchTerm == "") {
+                    alert("Missing value(s). Try again.");
+                    return false;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("Index")',
+                    data: { searchTerm: _searchTerm, filterBy: _filterBy },
+                    dataType: "html",
+                    cache: false,
+                    success: function (data) {
+                        $('#gridContent').empty().html(data);
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        //alert(errorThrown);
+                        return false;
+                    }
+                });
+            };
+
+            $(document).ready(function () {
+                //Toggling show/hide advanced search options
+                $('#advSearchDiv').hide();
+                $('a#lnkShowHideAdvSearch').click(function () {
+                    $('#advSearchDiv').toggle('slow');
+                });
+            });
+    </script>
+}

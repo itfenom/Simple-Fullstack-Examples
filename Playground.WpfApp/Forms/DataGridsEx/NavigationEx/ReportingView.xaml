@@ -1,0 +1,107 @@
+﻿<UserControl 
+    x:Class="Playground.WpfApp.Forms.DataGridsEx.NavigationEx.ReportingView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:controls="clr-namespace:Playground.WpfApp.Controls"
+    mc:Ignorable="d" 
+    d:DesignHeight="485" d:DesignWidth="675">
+
+    <Grid>
+        <FlowDocumentReader Grid.Row="0" x:Name="ReportReader" Padding="0,10,0,0">
+            <FlowDocument ColumnWidth="400" IsOptimalParagraphEnabled="True" IsHyphenationEnabled="True">
+                <Section FontSize="12">
+                    <Paragraph>
+                        <Floater>
+                            <Table>
+                                <Table.Columns>
+                                    <TableColumn />
+                                    <TableColumn />
+                                </Table.Columns>
+
+                                <TableRowGroup>
+                                    <TableRow Foreground="#365F91" FontSize="14" FontWeight="Bold">
+                                        <TableCell>
+                                            <Paragraph>
+                                                <Run Text="{Binding EmployeeReportTitle, Mode=OneTime}" />
+                                                <Button Command="ApplicationCommands.Print" CommandTarget="{Binding ElementName=ReportReader}" Content="Print" HorizontalAlignment="Center" Margin="5,5,0,-2" />
+                                            </Paragraph>
+                                        </TableCell>
+                                        <TableCell TextAlignment="Right">
+                                            <Paragraph>
+                                                <Run Text="{Binding EmployeeCount, StringFormat={}{0}, Mode=OneTime}" />
+                                            </Paragraph>
+                                        </TableCell>
+                                    </TableRow>
+                                </TableRowGroup>
+                            </Table>
+                        </Floater>
+                    </Paragraph>
+                </Section>
+
+                <controls:BindableTable ItemsSource="{Binding Employees}" CellSpacing="0" BorderBrush="#FF4F81BD" BorderThickness="1,1,0,0">
+                    <controls:BindableTable.Columns>
+                        <TableColumn />
+                        <TableColumn />
+                    </controls:BindableTable.Columns>
+                    <controls:BindableTable.HeaderRowGroup>
+                        <TableRowGroup Foreground="White" Background="#FF4F81BD">
+                            <TableRow>
+                                <TableCell Padding="4,2" BorderBrush="#FF4F81BD" BorderThickness="0,0,1,1">
+                                    <Paragraph>
+                                        <Run Text="ID" />
+                                    </Paragraph>
+                                </TableCell>
+                                <TableCell Padding="4,2" BorderBrush="#FF4F81BD" BorderThickness="0,0,1,1">
+                                    <Paragraph>
+                                        <Run Text="First Name" />
+                                    </Paragraph>
+                                </TableCell>
+                                <TableCell Padding="4,2" BorderBrush="#FF4F81BD" BorderThickness="0,0,1,1">
+                                    <Paragraph>
+                                        <Run Text="Job Title" />
+                                    </Paragraph>
+                                </TableCell>
+                                <TableCell Padding="4,2" BorderBrush="#FF4F81BD" BorderThickness="0,0,1,1">
+                                    <Paragraph>
+                                        <Run Text="Start Date" />
+                                    </Paragraph>
+                                </TableCell>
+                            </TableRow>
+                        </TableRowGroup>
+                    </controls:BindableTable.HeaderRowGroup>
+                    <controls:BindableTable.ItemTemplate>
+                        <DataTemplate>
+                            <controls:ContentElement>
+                                <TableRow>
+                                    <TableCell Padding="4,2" BorderBrush="#FF4F81BD" BorderThickness="0,0,1,1">
+                                        <Paragraph>
+                                            <Run Text="{Binding Id}" />
+                                        </Paragraph>
+                                    </TableCell>
+                                    <TableCell Padding="4,2" BorderBrush="#FF4F81BD" BorderThickness="0,0,1,1">
+                                        <Paragraph>
+                                            <Run Text="{Binding FirstName}" />
+                                        </Paragraph>
+                                    </TableCell>
+                                    <TableCell Padding="4,2" BorderBrush="#FF4F81BD" BorderThickness="0,0,1,1">
+                                        <Paragraph>
+                                            <Run Text="{Binding JobTitle}" />
+                                        </Paragraph>
+                                    </TableCell>
+                                    <TableCell Padding="4,2" BorderBrush="#FF4F81BD" BorderThickness="0,0,1,1">
+                                        <Paragraph>
+                                            <Run Text="{Binding StartDate, StringFormat=\{0:MM-dd-yyyy\}}" />
+                                            <!--StringFormat=\{0:MMM-dd-yyyy\-->
+                                        </Paragraph>
+                                    </TableCell>
+                                </TableRow>
+                            </controls:ContentElement>
+                        </DataTemplate>
+                    </controls:BindableTable.ItemTemplate>
+                </controls:BindableTable>
+            </FlowDocument>
+        </FlowDocumentReader>
+    </Grid>
+</UserControl>

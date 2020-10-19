@@ -1,0 +1,284 @@
+﻿@model Playground.Mvc.Models.DynamicControlsViewModel
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<br />
+<br />
+<br />
+@using (Html.BeginForm("Index", "DynamicControls", FormMethod.Post, new { id = "frmMain" }))
+{
+    <div id="mainArea">
+        @Html.ValidationSummary(true)
+        <table id="container" class="table table-hover">
+            <thead>
+                <tr class="success">
+                    <th>Name</th>
+                    <th>Gender</th>
+                    <th>Enum Selection</th>
+                    <th>Skill Count</th>
+                    <th>Current Skills</th>
+                    <th>Active?</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            @Html.EditorFor(x => x.EmployeeData)
+        </table>
+    </div>
+    <br />
+    <p><input type="button" id="btnAdd" value="Add New Item" /></p>
+    <p><input type="button" id="removeRow" value="Remove Row" /></p>
+    <p><input type="button" id="displayValue" value="Display Values" /></p>
+    <p><input type="submit" value="Save" /></p>
+}
+
+<div id="dialog-view" style="display: none">
+    <form>
+        <div id="dialog-content"></div>
+        <div id="messageBox" style="color:red">
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="~/Scripts/jquery-3.2.1.js"></script>
+    @Scripts.Render("~/bundles/jqueryui")
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            var modelCounter, counter;
+            modelCounter = @ViewBag.itemCount
+            counter = modelCounter;
+            var _url = "";
+            var _selectedRow;
+
+            //Adding a row!
+            $("#btnAdd").click(function (e) {
+                if (counter > 10) {
+                    alert("Only 10 rows allowed!");
+                    return false;
+                }
+
+                var newRowDiv = $(document.createElement('Div')).attr("id", 'rowDiv' + counter);
+                var itemIndex = counter;
+                e.preventDefault();
+                var newItem = $("<tr>" +
+                     "<td><input type='text' id='EmployeeData_" + itemIndex + "__Name' name='EmployeeData[" + itemIndex + "].Name' style='width:100px;' /></td>" +
+                     "<td>" +
+                             "<select id='EmployeeData_" + itemIndex + "__Gender' name='EmployeeData[" + itemIndex + "].Gender'>" +
+                             "<option value>--- Select ---</option>" +
+                             "<option>Female</option>" +
+                             "<option>Male</option>" +
+                     "</select></td>" +
+                      "<td>" +
+                            "<select id='EmployeeData_" + itemIndex + "__EnumSelection' name='EmployeeData[" + itemIndex + "].EnumSelection'>" +
+                            "<option value>--- Select ---</option>" +
+                            "<option>EnumChoice1</option>" +
+                            "<option>EnumChoice2</option>" +
+                            "<option>EnumChoice3</option>" +
+                            "<option>EnumChoice4</option>" +
+                     "</select></td>" +
+                     "<td><input type='text' id='EmployeeData_" + itemIndex + "__SkillCount' name='EmployeeData[" + itemIndex + "].SkillCount' style='width:30px;' /></td>" +
+                     "<td><input type='textarea' id='EmployeeData_" + itemIndex + "__CurrentSkills' name='EmployeeData[" + itemIndex + "].CurrentSkills' cols='15' rows='2' /></td>" +
+                     "<td><input type='checkbox' id='EmployeeData_" + itemIndex + "__Active' name='EmployeeData[" + itemIndex + "].Active' value='true' style='width:20px;' /></td>" +
+                     "<td><input type='button' value='UpdateSkills' class='btnDynamicButton' /> </td>" +
+
+                 "</tr>");
+                $("#mainArea tr").last().after(newItem);
+                counter++;
+            });
+
+            //Removing a row!
+            $('#removeRow').click(function () {
+                alert(counter);
+                if (counter == modelCounter) {
+                    alert("All added controls have been deleted.");
+                    return false;
+                }
+                counter--;
+                $("#mainArea tr:last-child").remove();
+            });
+
+            //Displaying values of the form controls
+            $("#displayValue").click(function () {
+                var msg = '';
+                var checkBoxValue = false;
+
+                for (i = 0; i < counter; i++) {
+
+                    checkBoxValue = $('#EmployeeData_' + i + '__Active').is(":checked");
+
+                    msg += "\n" + $('#EmployeeData_' + i + '__Name').val() + " | "
+                                + $('#EmployeeData_' + i + '__Gender').val() + " | "
+                                + $('#EmployeeData_' + i + '__SkillCount').val() + " | "
+                                + $('#EmployeeData_' + i + '__CurrentSkills').val() + " | "
+                                + checkBoxValue
+                }
+                alert(msg);
+            });
+
+            //Capture Parameters for the dialog
+            $('input[value=UpdateSkills]').on("click", function (e) {
+                var _row = $(this).closest('tr').index();
+                _row = _row;
+                _selectedRow = _row;
+                var _employeeName = encodeURIComponent($("#EmployeeData_" + _selectedRow + "__Name").val());
+                var _skillCount = $("#EmployeeData_" + _selectedRow + "__SkillCount").val();
+
+                //Validate for Quantity
+                if (_skillCount != null || _skillCount.length > 0) {
+                    var _isNumericQty = /^[0-9]+$/.test(_skillCount);
+                    if (!_isNumericQty) {
+                        alert('Skills Count must be numeric.');
+                        return false;
+                    }
+                }
+                else{
+                    alert("Invalid Quantity entered!");
+                    return false;
+                }
+
+                if (_employeeName == null || _employeeName == "") {
+                    alert("Invalid Name entered!");
+                    return false;
+                }
+
+                if (_skillCount > 0 && _employeeName != null) {
+                    _url = "@Url.Action("LoadSkillsIntoPartialView", "DynamicControls", new { skillCount = "param-skillCount", employeeName = "param-Name" })";
+                    _url = _url.replace("param-skillCount", _skillCount)
+                               .replace("param-Name", _employeeName)
+                               .replace("&amp;", "&");
+
+                    LoadDialogWithList(_employeeName, _skillCount, _url);
+                }
+            });
+
+            function LoadDialogWithList(empName, skillCount, url){
+
+                alert("Name: " + empName + "\nSkillCount: " + skillCount + "\nURL: " + url);
+
+                $("#dialog-view").dialog({
+                    title: 'Get Skills',
+                    autoOpen: false,
+                    resizable: true,
+                    height: 400,
+                    width: 325,
+                    modal: true,
+                    draggable: true,
+                    show: 'slide',
+                    closeOnEscape: true,
+                    dialogClass: 'alert',
+                    open: function (event, ui) {
+                        //$(this).load(url);
+                        $("#dialog-content").load(url);
+                    },
+                    buttons:{
+                        "OK": function(){
+
+                            if(ValidateData()){
+                                $("#messageBox").empty();
+                                $(this).dialog("close");
+                            }
+                        },
+                        "Cancel": function () {
+                            $("#messageBox").empty();
+                            $(this).dialog("close");
+                        }
+                    }
+                });
+
+                $("#dialog-view").dialog('open');
+                return false;
+            };
+
+            function ValidateData(){
+                var _retVal = true;
+                $("#messageBox").empty();
+                var _selectionCount = $('#selectedSkill :selected').length;
+
+                if (_selectionCount == 0) {
+                    //alert("You must select at least one item!");
+                    $("#messageBox").html("You must select at least one item!");
+                    _retVal = false;
+                }
+                else{
+
+                    var _values = "";
+                    $('#selectedSkill :selected').each(function (i, selected) {
+                        _values += $(selected).text() + " , ";
+                    });
+                    _values = _values.slice(0, -2);
+                    $("#EmployeeData_" + _selectedRow + "__CurrentSkills").val(_values);
+                }
+                return _retVal;
+            };
+
+            //For a DynamicallyAddedRow/Elements Use method below:
+            $(document).on('click', '.btnDynamicButton', function () {
+                var _row = $(this).closest('tr').index();
+                _row = _row;
+                _selectedRow = _row;
+                var _employeeName = encodeURIComponent($("#EmployeeData_" + _selectedRow + "__Name").val());
+                var _skillCount = $("#EmployeeData_" + _selectedRow + "__SkillCount").val();
+
+                //Validate for Quantity
+                if (_skillCount != null || _skillCount.length > 0) {
+                    var _isNumericQty = /^[0-9]+$/.test(_skillCount);
+                    if (!_isNumericQty) {
+                        alert('Skills Count must be numeric.');
+                        return false;
+                    }
+                }
+                else{
+                    alert("Invalid Quantity entered!");
+                    return false;
+                }
+
+                if (_employeeName == null || _employeeName == "") {
+                    alert("Invalid Name entered!");
+                    return false;
+                }
+
+                if (_skillCount > 0 && _employeeName != null) {
+                    _url = "@Url.Action("LoadSkillsIntoPartialView", "DynamicControls", new { skillCount = "param-skillCount", employeeName = "param-Name" })";
+                    _url = _url.replace("param-skillCount", _skillCount)
+                               .replace("param-Name", _employeeName)
+                               .replace("&amp;", "&");
+
+                    LoadDialogWithList(_employeeName, _skillCount, _url);
+                }
+            });
+
+            $("#frmMain").on("submit", function () {
+                var _retVal = true;
+                var _name = "";
+                var _gender = "";
+                var _enumSelection = "";
+                var _skillCount = -1;
+                var _table = document.getElementById("container");
+
+                for (var i = 0, row; row = _table.rows[i]; i++) {
+
+                    _name = $('#EmployeeData_' + i + '__Name').val();
+                    _gender = $('#EmployeeData_' + i + '__Gender').val();
+                    _enumSelection = $('#EmployeeData_' + i + '__EnumSelection').val();
+                    _skillCount = $('#EmployeeData_' + i + '__SkillCount').val();
+
+                    if (_name == "" || _gender == "" || _enumSelection == "" || _skillCount == -1) {
+                        _retVal = false;
+                    }
+                }
+
+                if (_retVal == false)
+                {
+                    alert("Missing fields!");
+                }
+
+                return _retVal;
+            });
+
+        });
+    </script>
+}

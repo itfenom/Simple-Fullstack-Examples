@@ -1,0 +1,136 @@
+﻿@model Playground.Mvc.Models.BookmarkWebGridViewModel
+@using Playground.Mvc.Helpers
+
+@{
+    ViewBag.Title = "Manage Bookmarks - Index";
+    WebGrid grid = new WebGrid(rowsPerPage: Model.Pages);
+
+    grid.Bind(Model.Bookmarks, autoSortAndPage: false, rowCount: Model.Rows);
+}
+
+<style type="text/css">
+    .webgrid-table {
+        font-family: Arial;
+        font-size: small;
+        width: 100%;
+        display: table;
+        border-collapse: separate;
+        border: solid 1px #98BF21;
+        background-color: white;
+    }
+
+        .webgrid-table td, th {
+            border: hidden;
+            padding: 3px 7px 1px;
+        }
+
+    .webgrid-header {
+        background-color: beige;
+        color: black;
+        padding-bottom: 4px;
+        padding-top: 5px;
+        text-align: center;
+    }
+
+    .webgrid-footer {
+    }
+
+    .webgrid-row-style {
+        padding: 10px 7px 2px;
+    }
+
+    .webgrid-alternating-row {
+        background-color: #EBEEF0;
+        padding: 3px 1px 2px;
+    }
+
+    .LinkWidth {
+        width: 500px;
+    }
+
+    .NameWidth {
+        width: 150px;
+    }
+
+    .ActionWidth {
+        width: 100px;
+    }
+</style>
+
+<br />
+<br />
+<br />
+
+<h2>Bookmarks Manager</h2>
+
+@using (Html.BeginForm(null, null, FormMethod.Get, new { id = "TheForm" }))
+{
+    <p>
+        @Html.DropDownList("Categories", (List<SelectListItem>)ViewBag.Categories, string.Format("-- Select a Category --"), new { id = "ddlCategories", onchange = "PerformSearch()" })
+        @Html.Hidden("selectedCategoryID")
+    </p>
+
+    <fieldset>
+        <legend>Search Criteria</legend>
+        @Html.Label("Search", "Filter By:")
+        @Html.TextBox("searchTerm")
+        @Html.DropDownList("filterBy", new List<SelectListItem>
+                            {
+                                new SelectListItem { Text = "Name", Value="Bookmark_Name", Selected = false},
+                                new SelectListItem { Text = "Category", Value="Bookmark_Category", Selected = false}
+                            }, "--- Please Select ---")
+        <br />
+        <br />
+        <input type="submit" value="Search" />
+    </fieldset>
+}
+<br />
+<br />
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+
+<div id="gridContent" style=" padding:20px; ">
+
+    @grid.GetHtml(
+         fillEmptyRows: false,
+         tableStyle: "webgrid-table",
+         headerStyle: "webgrid-header",
+         footerStyle: "webgrid-footer",
+         alternatingRowStyle: "webgrid-alternating-row",
+         selectedRowStyle: "webgrid-selected-row",
+         rowStyle: "webgrid-row-style",
+         mode: WebGridPagerModes.All,
+         firstText: "<< First",
+         previousText: "< Prev",
+         nextText: "Next >",
+         lastText: "Last >>",
+         columns: new[] {
+         grid.Column("", header: "Actions", style: "ActionWidth", format:
+        @<text>
+            @Html.ActionLink("Edit", "Edit", new { bookmarkID = item.Bookmark_ID }) |
+            @Html.ActionLink("Delete", "Delete", new { bookmarkID = item.Bookmark_ID }, new { onclick = "return confirm('Do you really want to delete selected Bookmark?')" })
+        </text>),
+        grid.Column("Bookmark_Name", header: "Name", canSort: true, style: "NameWidth"),
+        grid.Column("Bookmark_Link", header: "Link", canSort: true, style: "LinkWidth",  format:(item) => Html.HyperLink((string)item.Bookmark_Link, (string)item.Bookmark_Link)),
+        grid.Column("Bookmark_Login_ID", header: "Login ID", canSort: false),
+        grid.Column("Bookmark_Login_Password", header: "Password", canSort: false)
+        //grid.Column("CreateDate", header: "Created Date", canSort: false, format: item => ((item.CreateDate == null) ? "" : item.CreateDate.ToString("MM/dd/yyyy")))
+ })
+</div>
+
+<script type="text/javascript">
+
+    function PerformSearch() {
+
+        var categoryVal = $('#ddlCategories').val();
+
+        $('#selectedCategoryID').empty();
+        $('#selectedCategoryID').val(categoryVal);
+
+        $('#filterBy').val("Bookmark_Category");
+        $('#searchTerm').val(categoryVal);
+
+        $('#TheForm').submit();
+    }
+</script>

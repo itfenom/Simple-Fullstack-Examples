@@ -1,0 +1,110 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - Mvc Playground</title>
+    @Styles.Render("~/Content/css", "~/Content/themes/base/css")
+    @Scripts.Render("~/bundles/modernizr")
+
+    <link href="@Url.Content("~/Content/font-awesome.css")" rel="stylesheet" />
+</head>
+<body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                @Html.ActionLink("Mvc Playground", "Index", "Home", null, new { @class = "navbar-brand fa fa-sun-o" })
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle fa fa-home"> Home<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="@Url.Action("Index", "Home")" class="fa fa-home"> Home</a></li>
+                            <li><a href="@Url.Action("About", "Home")" class="fa fa-info"> About</a></li>
+                            <li><a href="@Url.Action("Contact", "Home")" class="fa fa-user"> Contact</a></li>
+                            <li><a href="@Url.Action("HtmlHelper", "Home")" class="fa fa-compass"> HTML Helpers</a></li>
+                            <li><a href="@Url.Action("ViewDataViewBagTempData", "Home")" class="fa fa-briefcase"> ViewData & ViewBag</a></li>
+                            <li><a href="@Url.Action("SendEmail", "Home")" class="fa fa-envelope"> Send Email using Gmail</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle fa fa-th"> Flexigrid<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="@Url.Action("Index", "FlexiGridEmployeeMgr")" class="fa fa-users"> Manage Employees</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle fa fa-th"> Webgrid<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="@Url.Action("Index", "WebGridEmployeeMgr")" class="fa fa-users"> Manage Employees</a></li>
+                            <li><a href="@Url.Action("Index", "Bookmark")" class="fa fa-bookmark"> Manage Bookmarks</a></li>
+                            <li><a href="@Url.Action("Index", "EmployeesWithPhotoMgr")" class="fa fa-users"> Employees with Photos</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle fa fa-paperclip"> Examples ... <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="@Url.Action("Index", "AjaxDemo")" class="fa fa-tag"> Ajax</a></li>
+                            <li><a href="@Url.Action("Index", "AutoComplete")" class="fa fa-edit"> Auto-Complete</a></li>
+                            <li><a href="@Url.Action("Index", "ShowHideRadioButtons")" class="fa fa-external-link"> Show/Hide Radio Buttons</a></li>
+                            <li><a href="@Url.Action("Index", "DynamicControls")" class="fa fa-signal"> Add Controls Dynamically</a></li>
+                            <li><a href="@Url.Action("Index", "DynamicControlsII")" class="fa fa-signal"> Add Controls Dynamically - II</a></li>
+                            <li><a href="@Url.Action("Index", "jQueryAccordion")" class="fa fa-signal"> jQueryAccordion</a></li>
+                            <li><a href="@Url.Action("Index", "CountCharacters")" class="fa fa-sort"> Count Characters in String</a></li>
+                            <li><a href="@Url.Action("Index", "MultiSelectListBox")" class="fa fa-stack-overflow"> Multiple Selection in ListBox</a></li>
+                            <li><a href="@Url.Action("Index", "MultipleDropDowns")" class="fa fa-ticket"> Multiple Drop-Downs </a></li>
+                            <li><a href="@Url.Action("Index", "BlueImpImageGallery")" class="fa fa-camera"> Blue-Imp Image Gallery </a></li>
+                            <li><a href="@Url.Action("Index", "MvcToWebForm")" class="fa fa-archive"> Pass data from MVC View to Web-Form </a></li>
+                            <li><a href="@Url.Action("Index", "DisablePageOnSubmit")" class="fa fa-archive"> Disbale page on submit </a></li>
+                            <li><a href="@Url.Action("Index", "ToolTipAndPrint")" class="fa fa-address-card"> Print-Friendly and ToolTip </a></li>
+                            <li><a href="@Url.Action("Index", "Diff")" class="fa fa-angellist"> Diff Algorithm </a></li>
+                            <li><a href="@Url.Action("Index", "Quiz")" class="fa fa-bug"> Online Quiz </a></li>
+                            <li><a href="@Url.Action("Index", "SelectBoxFiltering")" class="fa fa-flask"> SelectBox/ListBox Filtering </a></li>
+                            <li><a href="~/WebForms/GridViewWithViewState.aspx"><span class="fa fa-archive"></span> Web-Form GridView using ViewState</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle fa fa-arrow-down"> Bootstrap<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="@Url.Action("Accordion", "Bootstrap")" class="fa fa-adjust"> Accordion</a></li>
+                            <li><a href="@Url.Action("Carousel", "Bootstrap")" class="fa fa-eject"> Carousel</a></li>
+                            <li><a href="@Url.Action("TabControls", "Bootstrap")" class="fa fa-tag"> Tab Controls</a></li>
+                            <li><a href="@Url.Action("Alerts", "Bootstrap")" class="fa fa-exclamation"> Alerts</a></li>
+                            <li><a href="@Url.Action("TypeAhead", "Bootstrap")" class="fa fa-exclamation"> Type Ahead (auto-complete)</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle fa fa-briefcase"> Shopping<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="@Url.Action("ShoppingSelection", "Shopping", new { categoryID = 4 })" class="fa fa-warning"> Shopping for Boats</a></li>
+                            <li><a href="@Url.Action("ShoppingSelection", "Shopping", new { categoryID = 1 })" class="fa fa-ambulance"> Shopping for Cars</a></li>
+                            <li><a href="@Url.Action("ShoppingSelection", "Shopping", new { categoryID = 2 })" class="fa fa-plane"> Shopping for Planes</a></li>
+                            <li><a href="@Url.Action("ShoppingSelection", "Shopping", new { categoryID = 3 })" class="fa fa-truck"> Shopping for Trucks</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                @Html.Partial("_LoginPartial")
+                @Html.Partial("_CartSummary")
+            </div>
+        </div>
+    </div>
+    <div class="container body-content">
+        @{ Html.RenderPartial("_Alerts"); }
+        @RenderBody()
+        <hr />
+        <footer>
+            <p>&copy; @DateTime.Now.Year - Mvc Playground</p>
+        </footer>
+    </div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @RenderSection("scripts", required: false)
+</body>
+</html>

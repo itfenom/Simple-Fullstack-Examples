@@ -1,0 +1,23 @@
+﻿@model Playground.Mvc.DAL.Product
+
+@{
+    ViewBag.Title = "Details";
+}
+
+<h2>Details</h2>
+
+<div class="row">
+    <div class="col-md-4 col-xs-12 col-md-offset-2">
+        <a href="#" class="btn btn-primary btn-lg">@Model.ProductName &raquo;</a><br /><br />
+        <img src="~/Catalog/Images/@(Model.ImagePath)" alt="@(Model.ImagePath)" class="img-rounded" /><br />
+    </div>
+    <div class="col-md-6 col-xs-12">
+        <h2>Description:</h2>
+        <p>@Model.Description</p>
+        <strong>Price: $</strong>@Model.UnitPrice<br />
+        <strong>Product Number: </strong>@Model.ProductID
+    </div>
+</div>
+<p>
+    @Html.ActionLink("Back to List", "ShoppingSelection", new { categoryID = @Model.CategoryID })
+</p>

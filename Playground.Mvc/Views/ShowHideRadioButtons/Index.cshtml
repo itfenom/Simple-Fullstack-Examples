@@ -1,0 +1,141 @@
+﻿<!DOCTYPE html>
+@{
+    ViewBag.Title = "Index | Show/Hide Radio buttons";
+}
+
+<br />
+<br />
+<br />
+<br />
+<br />
+
+<h2>Show/Hide Radio Buttons using jQuery</h2>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title></title>
+    <script type="text/javascript" src="@Url.Content("~/Scripts/jquery-3.2.1.js")"></script>
+
+    <script type="text/javascript">
+        var _outputVal = $("#userAnswer").value;
+
+        $(document).ready(function () {
+
+            $(".2nd").hide();
+            $(".3rd").hide();
+            $(".btnSubmit").hide();
+
+            $('input[name="Question1"]').click(function () {
+
+                $(".2nd").hide();
+                $(".3rd").hide();
+                $(".btnSubmit").hide();
+                $(".UserResponses").hide();
+
+                if ($(this).attr("value") == "No") {
+                    _outputVal = "Question1 = No |";
+                    $("#userAnswer").val(_outputVal);
+                    $(".btnSubmit").show();
+                }
+                else if ($(this).attr("value") == "Yes") {
+                    $(".2nd").show();
+                }
+            });
+
+            $('input[name="Question2"]').click(function () {
+                if ($(this).attr("value") == "No") {
+                    //If we reach here, then we know that the question 1 was yes
+                    _outputVal = "Question1 = Yes | Question2 = No";
+                    $("#userAnswer").val(_outputVal);
+                    $(".btnSubmit").show();
+                }
+                else if ($(this).attr("value") == "Yes") {
+                    $(".3rd").show();
+                }
+            });
+
+            $('input[name="Question3"]').click(function () {
+                if ($(this).attr("value") == "No") {
+                    _outputVal = "Question1 = Yes | Question2 = Yes | Question3 = No";
+                    $("#userAnswer").val(_outputVal);
+                    $(".btnSubmit").show();
+                }
+                else if ($(this).attr("value") == "Yes") {
+                    _outputVal = "Question1 = Yes | Question2 = Yes | Question3 = Yes";
+                    $("#userAnswer").val(_outputVal);
+                    $(".btnSubmit").show();
+                }
+            });
+        });
+
+        function Validate() {
+            if (_outputVal == "") {
+                alert("Missing values. Try again.");
+                return false;
+            }
+            else {
+                alert("The output value is: " + _outputVal);
+                return true;
+            }
+        }
+
+        function ResetForm() {
+            $(".2nd").hide();
+            $(".3rd").hide();
+            $(".btnSubmit").hide();
+            $(".UserResponses").hide();
+            _outputVal = "";
+        }
+    </script>
+</head>
+<body>
+    <form name="frmYesNoQuestions" action="" method="post">
+        <div class="1st">
+            <br>
+            Q1: Yes / No?
+        </div>
+        <div>
+            <input type="radio" name="Question1" value="Yes" id="rbQuestion1Yes">Yes<br>
+            <input type="radio" name="Question1" value="No" id="rbQuestion1No">No<br>
+        </div>
+
+        <div class="2nd">
+            <br>
+            Q2:  Yes / No?
+            <div>
+                <input type="radio" name="Question2" value="Yes" id="rbQuestion2Yes">Yes<br>
+                <input type="radio" name="Question2" value="No" id="rbQuestion2No">No<br>
+            </div>
+        </div>
+
+        <div class="3rd">
+            <br>
+            Q3:  Yes / No??
+
+            <div>
+                <input type="radio" name="Question3" value="Yes" id="rbQuestion3Yes">Yes<br>
+                <input type="radio" name="Question3" value="No" id="rbQuestion3No">No<br>
+            </div>
+        </div>
+
+        <br /><br />
+        <div id="answer">
+            <input type="hidden" id="userAnswer" value="" name="userAnswer" />
+        </div>
+
+        <br /><br />
+        <div class="btnSubmit">
+            <input type="submit" value="Submit" id="btnSubmit" onclick="Validate()" />
+            <input type="reset" value="Cancel" onclick="ResetForm()" />
+        </div>
+
+        <div class="UserResponses">
+            @if (ViewBag.UserAnswer != null)
+            {
+                @Html.Raw(ViewBag.UserAnswer)
+            }
+        </div>
+    </form>
+</body>
+</html>

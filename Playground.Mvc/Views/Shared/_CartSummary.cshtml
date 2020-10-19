@@ -1,0 +1,16 @@
+﻿@if (HttpContext.Current.Session["ITEM_COUNT"] == null)
+{
+    <ul class="nav navbar-nav navbar-right">
+        <li>
+            <a href="@Url.Action("Index", "Cart")" class="fa fa-shopping-cart"> View Cart ( 0 )</a>
+        </li>
+    </ul>
+}
+else
+{
+    <ul class="nav navbar-nav navbar-right">
+        <li>
+            <a href="@Url.Action("Index", "Cart")" class="fa fa-shopping-cart"> View Cart ( @HttpContext.Current.Session["ITEM_COUNT"].ToString() )</a>
+        </li>
+    </ul>
+}

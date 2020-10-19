@@ -1,0 +1,115 @@
+﻿<UserControl
+    x:Class="Playground.WpfApp.Forms.TabsEx.TabNavigation.TabNavigationCustomerView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:conv="clr-namespace:Playground.WpfApp.Converters"
+    xmlns:da="clr-namespace:System.ComponentModel.DataAnnotations;assembly=System.ComponentModel.DataAnnotations"
+    mc:Ignorable="d"
+    HorizontalAlignment="Center"
+    VerticalAlignment="Center"
+    Width="400">
+
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="visibilityConvter" />
+
+        <Style x:Key="{x:Type ToolTip}" TargetType="ToolTip">
+            <Setter Property="OverridesDefaultStyle" Value="true" />
+            <Setter Property="HasDropShadow" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border Name="Border" BorderThickness="1" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                    <GradientStop Color="#D5F0F0FF" Offset="0.5" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <ContentPresenter Margin="4" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="HasDropShadow" Value="true">
+                                <Setter TargetName="Border" Property="CornerRadius" Value="4" />
+                                <Setter TargetName="Border" Property="SnapsToDevicePixels" Value="true" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DataTemplate x:Key="validationErrorsTemplate">
+            <StackPanel>
+                <StackPanel.Resources>
+                    <DataTemplate DataType="{x:Type da:ValidationResult}">
+                        <TextBlock Text="{Binding ErrorMessage, Mode=OneWay, StringFormat='• {0}'}" FontSize="10" />
+                    </DataTemplate>
+                </StackPanel.Resources>
+                <Label FontSize="12" FontWeight="Bold" Background="DeepSkyBlue" Foreground="White"  Content="The following errors must be fixed before you can Update:" />
+                <ItemsControl Margin="10,0,0,0" ItemsSource="{Binding AllErrors, Mode=OneWay}" />
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid Margin="4">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="6*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!--FIRST NAME-->
+        <Label Grid.Row="0" Grid.Column="0" Content="First _name:" HorizontalAlignment="Right" />
+        <TextBox Grid.Row="0"
+                 Grid.Column="1"
+                 Text="{Binding Path=FirstName, ValidatesOnNotifyDataErrors=True, ValidatesOnDataErrors=True, NotifyOnValidationError=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 Margin="4" />
+
+        <!--LAST NAME-->
+        <Label Grid.Row="1" Grid.Column="0" Content="Last _name:" HorizontalAlignment="Right" />
+        <TextBox Grid.Row="1"
+                 Grid.Column="1"
+                 Text="{Binding Path=LastName, ValidatesOnNotifyDataErrors=True, ValidatesOnDataErrors=True, NotifyOnValidationError=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 Margin="4" />
+
+        <!--E-MAIL-->
+        <Label Grid.Row="2" Grid.Column="0" Content="Email:" HorizontalAlignment="Right" />
+        <TextBox Grid.Row="2"
+                 Grid.Column="1"
+                 Text="{Binding Path=Email, ValidatesOnNotifyDataErrors=True, ValidatesOnDataErrors=True, NotifyOnValidationError=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 Margin="4" />
+
+        <!--Age-->
+        <Label Grid.Row="3" Grid.Column="0" Content="Age:" HorizontalAlignment="Right" />
+        <TextBox Grid.Row="3"
+                 Grid.Column="1"
+                 Width="30"
+                 HorizontalAlignment="Left"
+                 Text="{Binding Path=Age, ValidatesOnNotifyDataErrors=True, ValidatesOnDataErrors=True, NotifyOnValidationError=True, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 Margin="4" />
+
+        <!--SAVE BUTTON -->
+        <StackPanel Grid.Row="4" Grid.Column="1" Margin="4">
+            <Button Content="_Save"
+                    Command="{Binding SaveCommand}"
+                    HorizontalAlignment="Right"
+                    Margin="4"
+                    MinWidth="60"
+                    ToolTipService.ShowOnDisabled="True">
+                <Button.ToolTip>
+                    <ToolTip Visibility="{Binding HasErrors, Converter={StaticResource visibilityConvter}}">
+                        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource validationErrorsTemplate}" />
+                    </ToolTip>
+                </Button.ToolTip>
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

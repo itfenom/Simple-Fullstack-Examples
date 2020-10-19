@@ -1,0 +1,275 @@
+In Visual Studio, start by blank solution "SeraphWeb"
+	- Add a new MVC Web Project "SeraphWeb.Mvc" and set as a startup project.
+		- Choose no Authentication.
+		- Install the following via NuGet Package Manager:
+			- Update jQuery to latest version.
+			- Install jQuery UI.
+			- Update Bootstrap package.
+			- Install Bootstrap Type ahead.
+			- Install Fontawesome.
+			- Install FlexiGrid.
+			- Install jQuery Unobstrusive Ajax.
+
+---------------------------------------------------------------------------------------------------
+Update Bundle.Config.
+
+              //Flexigrid JS 
+            bundles.Add(new ScriptBundle("~/bundles/flexigrid").Include(
+                "~/Scripts/flexigrid.js"));
+
+            //jQuery UI: JS
+            bundles.Add(new ScriptBundle("~/bundles/jqueryui").Include(
+            "~/Scripts/jquery-ui-{version}.js"));
+
+            //jQuery UI: CSS
+            bundles.Add(new StyleBundle("~/Content/themes/base/css").Include(
+              "~/Content/themes/base/core.css",
+              "~/Content/themes/base/resizable.css",
+              "~/Content/themes/base/selectable.css",
+              "~/Content/themes/base/accordion.css",
+              "~/Content/themes/base/autocomplete.css",
+              "~/Content/themes/base/button.css",
+              "~/Content/themes/base/dialog.css",
+              "~/Content/themes/base/slider.css",
+              "~/Content/themes/base/tabs.css",
+              "~/Content/themes/base/datepicker.css",
+              "~/Content/themes/base/progressbar.css",
+              "~/Content/themes/base/theme.css"));
+			  
+- Reference fontawesome on _Layout page in the head section.:
+			    - <link href="@Url.Content("~/Content/font-awesome.css")" rel="stylesheet" />
+				
+- Include "~/Content/themes/base/css" on _Layout page with content/css:
+				-  @Styles.Render("~/Content/css", "~/Content/themes/base/css")
+---------------------------------------------------------------------------------------------------
+- In the Model Folder add a class "Alert":
+
+	    public class Alert
+		{
+			public const string TempDataKey = "TempDataAlerts";
+
+			public string AlertStyle { get; set; }
+			public string Message { get; set; }
+			public bool Dismissable { get; set; }
+		}
+
+		public enum AlertStyles
+		{
+			success,
+			info,
+			warning,
+			danger
+		}
+
+	- Add a BaseController and inherit it from Controller class.
+	    public class BaseController : Controller
+		{
+			public void Success(string message, bool dismissable = false)
+			{
+				AddAlert(AlertStyles.success.ToString(), message, dismissable);
+			}
+
+			public void Information(string message, bool dismissable = false)
+			{
+				AddAlert(AlertStyles.info.ToString(), message, dismissable);
+			}
+
+			public void Warning(string message, bool dismissable = false)
+			{
+				AddAlert(AlertStyles.warning.ToString(), message, dismissable);
+			}
+
+			public void Danger(string message, bool dismissable = false)
+			{
+				AddAlert(AlertStyles.danger.ToString(), message, dismissable);
+			}
+
+			private void AddAlert(string alertStyle, string message, bool dismissable)
+			{
+				var alerts = TempData.ContainsKey(Alert.TempDataKey)
+					? (List<Alert>)TempData[Alert.TempDataKey]
+					: new List<Alert>();
+
+				alerts.Add(new Alert
+				{
+					AlertStyle = alertStyle,
+					Message = message,
+					Dismissable = dismissable
+				});
+
+				TempData[Alert.TempDataKey] = alerts;
+			}
+		}
+	
+	- In the Views/Shared folder add a partialView "_Alerts":
+	
+	@using SeraphMvcBootstrap.Website.Models
+	@{
+		var alerts = TempData.ContainsKey(Alert.TempDataKey)
+					? (List<Alert>)TempData[Alert.TempDataKey]
+					: new List<Alert>();
+
+		if (alerts.Any())
+		{
+			<hr />
+		}
+
+		foreach (var alert in alerts)
+		{
+			var dismissableClass = alert.Dismissable ? "alert-dismissable" : null;
+			<div class="alert alert-@alert.AlertStyle @dismissableClass">
+				@if (alert.Dismissable)
+				{
+					<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+				}
+				@Html.Raw(alert.Message)
+			</div>
+		}
+	}
+	
+	- Update the _Layout to include  _Alerts Partial View:
+	    <div class="container body-content">
+        @{ Html.RenderPartial("_Alerts"); }
+        @RenderBody()
+        <hr />
+        <footer>
+            <p>&copy; @DateTime.Now.Year - MVC with Bootstrap</p>
+        </footer>
+    </div>
+---------------------------------------------------------------------------------------------------
+Flexigrid:
+		  Copy Add/Update/Delete icons to flexigrid's image folder and include those in the project.
+		  update flexigrid.css file with the followings:
+		  
+		  .flexigrid .add {
+				background: url(images/FG_Add.png) no-repeat left;
+				 height: 20px;
+			}
+
+		  .flexigrid .edit {
+				background: url(images/FG_Edit.png) no-repeat left;
+				 height: 20px;
+			}
+
+		  .flexigrid .delete {
+				background: url(images/FG_Delete.png) no-repeat left;
+				 height: 20px;
+			}
+---------------------------------------------------------------------------------------------------		  
+Add Images folder and add contact images.
+Right click and include all images to project.
+---------------------------------------------------------------------------------------------------
+Setting up Menus on Layout(Main) Page:
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - Mvc Playground</title>
+    @Styles.Render("~/Content/css", "~/Content/themes/base/css")
+    @Scripts.Render("~/bundles/modernizr")
+
+    <link href="@Url.Content("~/Content/font-awesome.css")" rel="stylesheet" />
+
+</head>
+<body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                @Html.ActionLink("Mvc Playground", "Index", "Home", null, new { @class = "navbar-brand fa fa-sun-o" })
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle fa fa-home"> Home<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="@Url.Action("Index", "Home")" class="fa fa-home"> Home</a></li>
+                            <li><a href="@Url.Action("About", "Home")" class="fa fa-info"> About</a></li>
+                            <li><a href="@Url.Action("Contact", "Home")" class="fa fa-user"> Contact</a></li>
+                            <li><a href="@Url.Action("HtmlHelper", "Home")" class="fa fa-compass"> HTML Helpers</a></li>
+                            <li><a href="@Url.Action("ViewDataViewBagTempData", "Home")" class="fa fa-briefcase"> ViewData & ViewBag</a></li>
+                            <li><a href="@Url.Action("SendEmail", "Home")" class="fa fa-envelope"> Send Email using Gmail</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle fa fa-th"> Flexigrid<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="@Url.Action("Index", "FlexiGridEmployeeMgr")" class="fa fa-users"> Manage Employees</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle fa fa-th"> Webgrid<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="@Url.Action("Index", "WebGridEmployeeMgr")" class="fa fa-users"> Manage Employees</a></li>
+                            <li><a href="@Url.Action("Index", "Bookmark")" class="fa fa-bookmark"> Manage Bookmarks</a></li>
+                            <li><a href="@Url.Action("Index", "EmployeesWithPhotoMgr")" class="fa fa-users"> Employees with Photos</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle fa fa-paperclip"> Examples ... <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="@Url.Action("Index", "AjaxDemo")" class="fa fa-tag"> Ajax</a></li>
+                            <li><a href="@Url.Action("Index", "AutoComplete")" class="fa fa-edit"> Auto-Complete</a></li>
+                            <li><a href="@Url.Action("Index", "ShowHideRadioButtons")" class="fa fa-external-link"> Show/Hide Radio Buttons</a></li>
+                            <li><a href="@Url.Action("Index", "DynamicControls")" class="fa fa-signal"> Add Controls Dynamically</a></li>
+                            <li><a href="@Url.Action("Index", "CountCharacters")" class="fa fa-sort"> Count Characters in String</a></li>
+                            <li><a href="@Url.Action("Index", "MultiSelectListBox")" class="fa fa-stack-overflow"> Multiple Selection in ListBox</a></li>
+                            <li><a href="@Url.Action("Index", "MultipleDropDowns")" class="fa fa-ticket"> Multiple Drop-Downs </a></li>
+                            <li><a href="@Url.Action("Index", "BlueImpImageGallery")" class="fa fa-camera"> Blue-Imp Image Gallery </a></li>
+                            <li><a href="@Url.Action("Index", "MvcToWebForm")" class="fa fa-archive"> Pass data from MVC View to Web-Form </a></li>
+                            <li><a href="~/WebForms/GridViewWithViewState.aspx"><span class="fa fa-archive"></span> Web-Form GridView using ViewState</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle fa fa-arrow-down"> Bootstrap<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="@Url.Action("Accordion", "Bootstrap")" class="fa fa-adjust"> Accordion</a></li>
+                            <li><a href="@Url.Action("Carousel", "Bootstrap")" class="fa fa-eject"> Carousel</a></li>
+                            <li><a href="@Url.Action("TabControls", "Bootstrap")" class="fa fa-tag"> Tab Controls</a></li>
+                            <li><a href="@Url.Action("Alerts", "Bootstrap")" class="fa fa-exclamation"> Alerts</a></li>
+                            <li><a href="@Url.Action("TypeAhead", "Bootstrap")" class="fa fa-exclamation"> Type Ahead (auto-complete)</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" data-toggle="dropdown" class="dropdown-toggle fa fa-briefcase"> Shopping<b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="@Url.Action("ShoppingSelection", "Shopping", new { categoryID = 4 })" class="fa fa-warning"> Shopping for Boats</a></li>
+                            <li><a href="@Url.Action("ShoppingSelection", "Shopping", new { categoryID = 1 })" class="fa fa-ambulance"> Shopping for Cars</a></li>
+                            <li><a href="@Url.Action("ShoppingSelection", "Shopping", new { categoryID = 2 })" class="fa fa-plane"> Shopping for Planes</a></li>
+                            <li><a href="@Url.Action("ShoppingSelection", "Shopping", new { categoryID = 3 })" class="fa fa-truck"> Shopping for Trucks</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                @Html.Partial("_LoginPartial")
+                @Html.Partial("_CartSummary")
+            </div>
+        </div>
+    </div>
+    <div class="container body-content">
+        @{ Html.RenderPartial("_Alerts"); }
+        @RenderBody()
+        <hr />
+        <footer>
+            <p>&copy; @DateTime.Now.Year - Mvc Playground</p>
+        </footer>
+    </div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    @RenderSection("scripts", required: false)
+</body>
+</html>
+
+---------------------------------------------------------------------------------------------------
+- Clean up unncessary views and viewModels.
+- Add Helper classes for flexigrid and webgrid.
+- Add Blue-Imp css and javascript.
+- Add Catalog folder with all images.
+- Add EmailTemplates.
+- Add Images in the Image folder.
+- Add Web-Form foler with appropriate webforms.

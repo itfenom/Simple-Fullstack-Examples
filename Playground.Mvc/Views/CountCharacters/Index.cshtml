@@ -1,0 +1,52 @@
+﻿@using System.Text;
+
+@{
+    ViewBag.Title = "Character Counter | Index";
+}
+
+<br />
+<br />
+<br />
+
+<a id="lnkCountCharacters" href="#">Count Characters</a>
+<br />
+
+<div id="area">
+    @using (Html.BeginForm())
+    {
+        <fieldset>
+            <legend>Type anything into text box below</legend>
+            Input Text: <input type="text" name="txtChars" /><br />
+            <input type="submit" value="Count" /><br />
+        </fieldset>
+    }
+</div>
+
+<br />
+
+@if (ViewBag.Output != null)
+{
+    var list = ViewBag.Output as List<string>;
+    <fieldset>
+        <legend>Answer is:</legend>
+        <ul>
+            @foreach (var s in list)
+            {
+                <li>@s</li>
+            }
+        </ul>
+    </fieldset><br />
+}
+
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            //Toggling show/hide advanced search options
+            $('#area').hide();
+            $('a#lnkCountCharacters').click(function () {
+                $('#area').toggle('slow');
+            });
+        });
+    </script>
+}

@@ -1,0 +1,38 @@
+﻿@model Playground.Mvc.Models.Person
+
+@{
+    Layout = null;
+    var _likeMusic = Model.LikesMusic ? "active" : null;
+    var _doesntLikeMusic = !Model.LikesMusic ? "active" : null;
+}
+
+<div>
+    <fieldset>
+        <legend>Details</legend>
+        <p>
+            <strong>ID: @Model.ID</strong>
+            <strong>Name: @Model.Name</strong>
+            <strong>Email: @Model.Email</strong>
+        </p>
+        <p>
+            <strong>Music Likeness:</strong>
+            <div class="btn-group" data-toggle="buttons">
+                <label class="btn btn-success btn-sm @_likeMusic">
+                    <input type="radio" name="options" id="option1" />Likes Music
+                </label>
+                <label class="btn btn-success btn-sm @_doesntLikeMusic">
+                    <input type="radio" name="options" id="option2" />No Music
+                </label>
+            </div>
+        </p>
+        <div>
+            <p>
+                <strong>Skills:</strong>
+                @foreach (var skill in Model.Skills)
+                {
+                    <span class="label label-primary">@skill</span>
+                }
+            </p>
+        </div>
+    </fieldset>
+</div>

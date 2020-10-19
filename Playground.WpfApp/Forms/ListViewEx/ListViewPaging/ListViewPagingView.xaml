@@ -1,0 +1,51 @@
+﻿<Window x:Class="Playground.WpfApp.Forms.ListViewEx.ListViewPaging.ListViewPagingView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:pagingElements="clr-namespace:Playground.WpfApp.Forms.ListViewEx.ListViewPaging"
+        xmlns:converters="clr-namespace:Playground.WpfApp.Converters"
+        mc:Ignorable="d"
+        Title="{Binding Title}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Vertical" Grid.Row="0" Margin="5">
+            <CheckBox Content="Hide/Show Select" x:Name="ChkSelect" IsChecked="{Binding Path=ShowHideSelectColumn, Mode=TwoWay}" Margin="2" />
+            <CheckBox Content="Hide/Show Id" x:Name="ChkId" IsChecked="{Binding Path=ShowHideIdColumn, Mode=TwoWay}" Margin="2" />
+            <CheckBox Content="Hide/Show Name" x:Name="ChkName" IsChecked="{Binding Path=ShowHideNameColumn, Mode=TwoWay}" Margin="2" />
+        </StackPanel>
+        <ListView Grid.Row="1" ItemsSource="{Binding PagingObjectsViewList.View}" Margin="5">
+            <ListView.Resources>
+                <converters:ColumnWidthConverter x:Key="cvColumnWidth" />
+            </ListView.Resources>
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Width="{Binding Path=IsChecked, ElementName=ChkSelect, Converter={StaticResource cvColumnWidth}, ConverterParameter=80}"
+                                    Header="Select">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <CheckBox IsChecked="{Binding Path=IsSelected}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+
+                    <GridViewColumn  Header="Id"
+                                     DisplayMemberBinding="{Binding Id}"
+                                     Width="{Binding Path=IsChecked, ElementName=ChkId, Converter={StaticResource cvColumnWidth}, ConverterParameter=80}" />
+                    <GridViewColumn Header="Name"
+                                    DisplayMemberBinding="{Binding Name}"
+                                    Width="{Binding Path=IsChecked, ElementName=ChkName, Converter={StaticResource cvColumnWidth}, ConverterParameter=200}" />
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <pagingElements:PagingElementsUC Grid.Row="2" Margin="5" />
+    </Grid>
+</Window>

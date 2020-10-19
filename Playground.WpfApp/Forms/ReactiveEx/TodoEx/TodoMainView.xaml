@@ -1,0 +1,39 @@
+﻿<controls:MetroWindow 
+    x:Class="Playground.WpfApp.Forms.ReactiveEx.TodoEx.TodoMainView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="clr-namespace:Playground.WpfApp.Forms.ReactiveEx.TodoEx"
+    xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+    xmlns:converters="clr-namespace:Playground.WpfApp.Converters"
+    mc:Ignorable="d"
+    Title="{Binding Title}"     
+    TitleCharacterCasing="Normal"
+    WindowStartupLocation="CenterScreen"
+    WindowTransitionsEnabled="True"
+    Height="300" Width="350">
+
+    <controls:MetroWindow.Resources>
+        <ResourceDictionary>
+            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="controls:ButtonHelper.PreserveTextCase" Value="True" />
+            </Style>
+
+            <DataTemplate DataType="{x:Type local:TodoListViewModel}">
+                <local:TodoListView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type local:AddItemViewModel}">
+                <local:AddItemView/>
+            </DataTemplate>
+
+            <converters:BoolToVisibilityConverter x:Key="VisibilityConverter"/>
+        </ResourceDictionary>
+    </controls:MetroWindow.Resources>
+
+    <DockPanel LastChildFill="True">
+        <Button Content="Add New Item" DockPanel.Dock="Bottom" Command="{Binding AddNewItemCommand}" Visibility="{Binding IsAddButtonVisible, Converter={StaticResource VisibilityConverter}}" />
+        <ContentControl Content="{Binding Content}"/>
+    </DockPanel>
+</controls:MetroWindow>

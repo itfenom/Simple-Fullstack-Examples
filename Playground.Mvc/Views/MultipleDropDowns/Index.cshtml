@@ -1,0 +1,80 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+
+@section Scripts {
+    <script type="text/javascript">
+    $(document).ready(function () {
+
+        //Dropdownlist Selected Index change event for Countries
+        $("#Countries").change(function () {
+            $("#State").empty();
+            $("#City").empty();
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetStates")', // we are calling json method
+
+                dataType: 'json',
+
+                data: { id: $("#Countries").val() },
+               // here we are get value of selected country and passing same value as input to json method GetStates.
+
+                success: function (states) {
+                    // states contains the JSON formatted list of states passed from the controller
+                    $.each(states, function (i, state) {
+                    $("#State").append('<option value="' + state.Value + '">' +
+                         state.Text + '</option>');
+                    // here we are adding option for States
+
+                    });
+                },
+                error: function (ex) {
+                    alert('Failed to retrieve states.' + ex);
+                }
+            });
+            return false;
+        })
+
+        //Dropdownlist Selected Index change event for State
+        $("#State").change(function () {
+            $("#City").empty();
+            $.ajax({
+                type: 'POST',
+                url: '@Url.Action("GetCities")',
+                dataType: 'json',
+                data: { id: $("#State").val() },
+                success: function (citys) {
+                    // states contains the JSON formatted list of states passed from the controller
+                    $.each(citys, function (i, city) {
+                        $("#City").append('<option value="'
+                                         + city.Value + '">'
+                                         + city.Text + '</option>');
+                    });
+                },
+                error: function (ex) {
+                    alert('Failed to retrieve states.' + ex);
+                }
+            });
+            return false;
+        })
+
+    });
+    </script>
+}
+
+<h2>Multiple Drop-Down list with jQuery</h2>
+
+@using (Html.BeginForm())
+{
+    <br /><br />
+    @Html.DropDownList("Countries", ViewData["countries"] as List<SelectListItem>)<br /><br />
+    <div>
+        State DropDownList<br />
+        @Html.DropDownList("State", new SelectList(string.Empty, "Value", "Text"), "Select State", new { style = "width:250px", @class = "dropdown1" })
+    </div>
+    <br /><br />
+    <div>
+        City DropDownList<br />
+        @Html.DropDownList("City", new SelectList(string.Empty, "Value", "Text"), "Select City", new { style = "width:250px", @class = "dropdown1" })
+    </div>
+}

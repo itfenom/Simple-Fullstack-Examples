@@ -1,0 +1,430 @@
+﻿<controls:MetroWindow   
+    x:Class="Playground.WpfApp.Forms.ReactiveEx.MultipleDataGrids.EntryFormView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="clr-namespace:Playground.WpfApp.Forms.ReactiveEx.MultipleDataGrids"
+    mc:Ignorable="d"
+    xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+    xmlns:behaviors="clr-namespace:Playground.WpfApp.Behaviors"
+    behaviors:DialogCloserDependencyProperty.DialogResult="{Binding CloseWindowFlag}"
+    xmlns:da="clr-namespace:System.ComponentModel.DataAnnotations;assembly=System.ComponentModel.DataAnnotations"
+    xmlns:attributeValidation="clr-namespace:Playground.WpfApp.Mvvm.AttributedValidation"
+    xmlns:converters="clr-namespace:Playground.WpfApp.Converters"
+    BorderBrush="{DynamicResource AccentColorBrush}"
+    BorderThickness="1"
+    GlowBrush="{DynamicResource AccentColorBrush}"
+    ResizeMode="CanResizeWithGrip"
+    UseLayoutRounding="True"
+    WindowStartupLocation="CenterScreen"
+    WindowTransitionsEnabled="True"
+    TitleCharacterCasing="Normal"
+    Title="{Binding Title}" Height="450" Width="600">
+
+    <controls:MetroWindow.Resources>
+        <ResourceDictionary>
+            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="controls:ButtonHelper.PreserveTextCase" Value="True" />
+            </Style>
+
+            <ItemsPanelTemplate x:Key="VirtualizingStackPanel">
+                <VirtualizingStackPanel />
+            </ItemsPanelTemplate>
+
+            <converters:BoolToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        </ResourceDictionary>
+    </controls:MetroWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="50*"/>
+            <ColumnDefinition Width="50*"/>
+        </Grid.ColumnDefinitions>
+
+        <!--1st Row: Name/Current City-->
+        <DockPanel Grid.Row="0" Grid.Column="0" Margin="2">
+            <StackPanel Orientation="Horizontal" Margin="5">
+                <Label Content="Name:" Margin="2"/>
+                <TextBox Text="{Binding Model.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}" Margin="5" Width="170"/>
+            </StackPanel>
+        </DockPanel>
+        <DockPanel Grid.Row="0" Grid.Column="1">
+            <StackPanel Orientation="Horizontal" Margin="5">
+                <Label Content="Current City:" Margin="2"/>
+                <ComboBox Margin="5"
+                          Width="140"
+                          ItemsSource="{Binding AllCities, UpdateSourceTrigger=PropertyChanged}"
+                          SelectedItem="{Binding SelectedCurrentCity, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True, ValidatesOnDataErrors=True, NotifyOnValidationError=True}"
+                          DisplayMemberPath="CityName"
+                          ItemsPanel="{StaticResource VirtualizingStackPanel}"
+                          Text="Select Current City"/>
+            </StackPanel>
+        </DockPanel>
+
+        <!--2nd Row: DataGrids-->
+        <DockPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="2" >
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="25*"/>
+                    <ColumnDefinition Width="35*"/>
+                    <ColumnDefinition Width="35*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!--1st row: Favorite foods-->
+                <DockPanel Grid.Row="0" Grid.Column="0" Margin="5" LastChildFill="True">
+                    <Border Background="White" BorderBrush="LightGray" BorderThickness="1" CornerRadius="4" DockPanel.Dock="Top" Margin="4">
+                        <StackPanel Orientation="Horizontal">
+
+                            <Button Command="{Binding AddNewFoodCommand}" ToolTip="Add new Favorite Food." Margin="2,2,4,2" Content="Add" Width="60" />
+                            <Separator/>
+
+                            <Button Command="{Binding DeleteFoodCommand}" ToolTip="Delete selected Favorite Food." Margin="2,2,4,2" Content="Delete" Width="60" />
+                        </StackPanel>
+                    </Border>
+                </DockPanel>
+
+                <DockPanel Grid.Row="1" Grid.Column="0" Margin="5" VerticalAlignment="Top" >
+                    <DataGrid Name="DgvFoods"
+                              Margin="2"
+                              Height="auto"
+                              Width="140"
+                              HorizontalAlignment="Left"
+                              BorderThickness="2"
+                              ItemsSource="{Binding FoodCollectionView}"
+                              SelectedItem="{Binding SelectedFood}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              SelectionMode="Single"
+                              GridLinesVisibility="All"
+                              VerticalScrollBarVisibility="Visible"
+                              ColumnWidth="*"
+                              RowHeaderWidth="27">
+
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="{x:Type DataGridColumnHeader}">
+                                <Setter Property="FontWeight"  Value="Bold" />
+                                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+
+                        <DataGrid.Resources>
+                            <Style x:Key="CustomCellStyleForFood" TargetType="DataGridCell">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CanEdit}" Value="False">
+                                        <Setter Property="IsEnabled" Value="False" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Resources>
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Foods" Width="130" IsReadOnly="True" Binding="{Binding FoodName}" CellStyle="{StaticResource CustomCellStyleForFood}" />
+                        </DataGrid.Columns>
+
+                    </DataGrid>
+                </DockPanel>
+
+                <DockPanel Grid.Row="2" Grid.Column="0" Margin="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding FoodCountLabel}" HorizontalAlignment="Center" FontSize="14" FontWeight="Bold" FontFamily="Cambria" Width="100"/>
+                </DockPanel>
+
+                <!--2nd row: Visited Cities-->
+                <DockPanel Grid.Row="0" Grid.Column="1" Margin="5" LastChildFill="True">
+                    <Border Background="White" BorderBrush="LightGray" BorderThickness="1" CornerRadius="4" DockPanel.Dock="Top" Margin="2">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                            <CheckBox Content="Checked" IsChecked="{Binding ShowCheckedCities, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="4,2,2,2"  />
+                            <controls:DropDownButton Content=" City Actions" ItemsSource="{Binding CityActionCommands}" Margin="25, 3, 3, 3" >
+                                <controls:DropDownButton.ItemContainerStyle>
+                                    <Style TargetType="MenuItem">
+                                        <Setter Property="Header" Value="{Binding Path=Title}"/>
+                                        <Setter Property="Command" Value="{Binding Path=Command}"/>
+                                        <Setter Property="CommandParameter" Value="{Binding Path=ParameterText}"/>
+                                    </Style>
+                                </controls:DropDownButton.ItemContainerStyle>
+                            </controls:DropDownButton>
+                        </StackPanel>
+                    </Border>
+                </DockPanel>
+
+                <DockPanel Grid.Row="1" Grid.Column="1" Margin="5" VerticalAlignment="Top" >
+                    <DataGrid Name="DgvCities"
+                              Margin="2"
+                              BorderThickness="2"
+                              ItemsSource="{Binding CityCollectionView}"
+                              SelectedItem="{Binding SelectedCity}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              SelectionMode="Single"
+                              GridLinesVisibility="All"
+                              VerticalScrollBarVisibility="Visible"
+                              ColumnWidth="*"
+                              RowHeaderWidth="27">
+
+                        <DataGrid.Resources>
+                            <Style x:Key="CustomCellStyle" TargetType="DataGridCell">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CanEdit}" Value="False">
+                                        <Setter Property="IsEnabled" Value="False" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                            <Style TargetType="{x:Type DataGridCell}">
+                                <Setter Property="SnapsToDevicePixels" Value="true"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="true">
+                                        <Setter Property="Foreground" Value="Black"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Resources>
+
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="{x:Type DataGridColumnHeader}">
+                                <Setter Property="FontWeight"  Value="Bold" />
+                                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CanEdit}" Value="False">
+                                        <Setter Property="Background" Value="#FFDEDCD9"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header=" Check" Width="Auto" >
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate >
+                                        <StackPanel Orientation="Horizontal">
+                                            <CheckBox VerticalAlignment="Center" Margin="3"
+                                                      IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      IsEnabled="{Binding CanEdit, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn Header="Cities"
+                                                Width="130"
+                                                Binding="{Binding CityName}"
+                                                IsReadOnly="True">
+
+                                <DataGridTextColumn.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="ToolTip" Value="{Binding CityName}" />
+                                    </Style>
+                                </DataGridTextColumn.CellStyle>
+
+                                <DataGridTextColumn.HeaderTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Vertical">
+                                            <TextBlock TextAlignment="Center" Text="{Binding Content, RelativeSource={RelativeSource Mode=TemplatedParent}}"/>
+                                            <TextBox Style="{StaticResource FilterTextBoxStyles}" Tag="Filter..." MinWidth="120" Text="{Binding DataContext.CityFilter, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+
+                <DockPanel Grid.Row="2" Grid.Column="1" Margin="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding CityCountLabel}" HorizontalAlignment="Center" FontSize="14" FontWeight="Bold" FontFamily="Cambria" Width="100"/>
+                </DockPanel>
+
+                <!--3rd row: Visited Countries-->
+                <DockPanel Grid.Row="0" Grid.Column="2" Margin="5" LastChildFill="True">
+                    <Border Background="White" BorderBrush="LightGray" BorderThickness="1" CornerRadius="4" DockPanel.Dock="Top" Margin="2">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                            <CheckBox Content="Checked" IsChecked="{Binding ShowCheckedCountries, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Margin="4,2,2,2"  />
+                            <controls:DropDownButton Content="Country Actions" ItemsSource="{Binding CountryActionCommands}" Margin="10, 3, 3, 3" >
+                                <controls:DropDownButton.ItemContainerStyle>
+                                    <Style TargetType="MenuItem">
+                                        <Setter Property="Header" Value="{Binding Path=Title}"/>
+                                        <Setter Property="Command" Value="{Binding Path=Command}"/>
+                                        <Setter Property="CommandParameter" Value="{Binding Path=ParameterText}"/>
+                                    </Style>
+                                </controls:DropDownButton.ItemContainerStyle>
+                            </controls:DropDownButton>
+                        </StackPanel>
+                    </Border>
+                </DockPanel>
+
+                <DockPanel Grid.Row="1" Grid.Column="2" Margin="5" VerticalAlignment="Top" >
+                    <DataGrid Name="DgvCountries"
+                              Margin="2"
+                              BorderThickness="2"
+                              ItemsSource="{Binding CountryCollectionView}"
+                              SelectedItem="{Binding SelectedCountry}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              SelectionMode="Single"
+                              GridLinesVisibility="All"
+                              VerticalScrollBarVisibility="Visible"
+                              ColumnWidth="*"
+                              RowHeaderWidth="27">
+
+                        <DataGrid.Resources>
+                            <Style x:Key="CustomCellStyle" TargetType="DataGridCell">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CanEdit}" Value="False">
+                                        <Setter Property="IsEnabled" Value="False" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                            <Style TargetType="{x:Type DataGridCell}">
+                                <Setter Property="SnapsToDevicePixels" Value="true"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="true">
+                                        <Setter Property="Foreground" Value="Black"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.Resources>
+
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="{x:Type DataGridColumnHeader}">
+                                <Setter Property="FontWeight"  Value="Bold" />
+                                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CanEdit}" Value="False">
+                                        <Setter Property="Background" Value="#FFDEDCD9"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header=" Check" Width="Auto" >
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate >
+                                        <StackPanel Orientation="Horizontal">
+                                            <CheckBox VerticalAlignment="Center" Margin="3"
+                                                      IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                      IsEnabled="{Binding CanEdit, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn Header="Countries"
+                                                Width="130"
+                                                Binding="{Binding CountryName}"
+                                                IsReadOnly="True">
+
+                                <DataGridTextColumn.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="ToolTip" Value="{Binding CountryName}" />
+                                    </Style>
+                                </DataGridTextColumn.CellStyle>
+
+                                <DataGridTextColumn.HeaderTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Vertical">
+                                            <TextBlock TextAlignment="Center" Text="{Binding Content, RelativeSource={RelativeSource Mode=TemplatedParent}}"/>
+                                            <TextBox Style="{StaticResource FilterTextBoxStyles}" Tag="Filter..." MinWidth="120" Text="{Binding DataContext.CountryFilter, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTextColumn>
+
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+
+                <DockPanel Grid.Row="2" Grid.Column="2" Margin="1" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding CountryCountLabel}" HorizontalAlignment="Center" FontSize="14" FontWeight="Bold" FontFamily="Cambria" Width="100"/>
+                </DockPanel>
+
+            </Grid>
+        </DockPanel>
+
+        <!--3rd Row: Status Bar-->
+        <StatusBar HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="2,0,2,2">
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="2*" />
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
+            <StatusBarItem Grid.Row="0" Grid.Column="1">
+                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                    <StackPanel.Resources>
+                        <Style TargetType="{x:Type Image}">
+                            <Setter Property="Margin" Value="0,0,5,0" />
+                            <Style.Triggers>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Resources>
+                    <Button Width="75"
+                        Margin="0,0,10,0"
+                        Command="{Binding OkCommand, Mode=OneTime}"
+                        ToolTipService.ShowOnDisabled="True">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="OK" />
+                        </StackPanel>
+                        <Button.ToolTip>
+                            <ToolTip Visibility="{Binding HasErrors, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <StackPanel>
+                                    <StackPanel.Resources>
+                                        <DataTemplate DataType="{x:Type attributeValidation:CompositeValidationResult}">
+                                            <ItemsControl ItemsSource="{Binding Results, Mode=OneWay}" />
+                                        </DataTemplate>
+
+                                        <DataTemplate DataType="{x:Type da:ValidationResult}">
+                                            <TextBlock Text="{Binding ErrorMessage, Mode=OneWay, StringFormat='• {0}'}" />
+                                        </DataTemplate>
+                                    </StackPanel.Resources>
+
+                                    <TextBlock Text="The following errors must be fixed before you can save:" />
+                                    <ItemsControl Margin="10,0,0,0" ItemsSource="{Binding AllErrors, Mode=OneWay}" />
+                                </StackPanel>
+                            </ToolTip>
+                        </Button.ToolTip>
+                    </Button>
+
+                    <Button Width="75"
+                        Command="{Binding CancelCommand, Mode=OneTime}"
+                        Content="Cancel" />
+                </StackPanel>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</controls:MetroWindow>

@@ -1,0 +1,867 @@
+Add new folder "DAL".
+Add new item "ADO.NET Entity Data Model" to project in the DAL folder.
+Select desired table from the list and save changes.
+
+AccountRepository.cs:
+
+using System;
+using System.Collections.Generic;
+using SeraphWeb.Mvc.Models;
+using System.Linq;
+
+namespace SeraphWeb.Mvc.DAL
+{
+    public interface IAccountRepository : IDisposable
+    {
+        IEnumerable<APP_USER_ROLE> GetAllRoles();
+        IEnumerable<UserViewModel> GetAllUsers();
+        bool IsUserExist(string userName);
+        UserViewModel GetUser(string userName, string password);
+        bool AddNewUser(APP_USER user);
+        bool UpdateUser(APP_USER user);
+        bool DeleteUser(int userID);
+        int GetRoleIDByRoleName(string roleName);
+        UserViewModel GetUserByID(int ID);
+    }
+
+    public class AccountRepository : IAccountRepository, IDisposable
+    {
+        private SeraphEntities _context;
+        private bool _disposed;
+
+        public AccountRepository(SeraphEntities context)
+        {
+            this._context = context;
+        }
+
+        public IEnumerable<APP_USER_ROLE> GetAllRoles()
+        {
+            return _context.APP_USER_ROLE.ToList();
+        }
+
+        public IEnumerable<UserViewModel> GetAllUsers()
+        {
+            var _allUsers = from u in _context.APP_USER
+                            join r in _context.APP_USER_ROLE
+                            on u.ROLE_ID equals r.ROLE_ID
+                            select new UserViewModel
+                            {
+                                ID = u.ID,
+                                UserName = u.USER_NAME,
+                                DisplayName = u.DISPLAY_NAME,
+                                RoleID = (int)u.ROLE_ID,
+                                UserRole = r.ROLE_NAME
+                            };
+
+            return _allUsers.ToList().OrderBy(u => u.UserRole);
+        }
+
+        public UserViewModel GetUser(string userName, string password)
+        {
+            var _user = from u in _context.APP_USER
+                        join r in _context.APP_USER_ROLE
+                        on u.ROLE_ID equals r.ROLE_ID
+                        where u.USER_NAME == userName && u.USER_PASSWORD == password && u.ROLE_ID == r.ROLE_ID
+                        select new UserViewModel
+                        {
+                            ID = u.ID,
+                            UserName = u.USER_NAME,
+                            Password = u.USER_PASSWORD,
+                            DisplayName = u.DISPLAY_NAME,
+                            RoleID = (int)u.ROLE_ID,
+                            UserRole = r.ROLE_NAME
+                        };
+
+            return _user.FirstOrDefault();
+        }
+
+        public bool IsUserExist(string userName)
+        {
+            bool _retVal = false;
+
+            var _user = (from u in _context.APP_USER
+                         where u.USER_NAME.Trim() == userName.Trim()
+                         select u.USER_NAME).FirstOrDefault();
+
+            if (_user != null)
+            {
+                if (_user.ToString() == userName)
+                {
+                    _retVal = true;
+                }
+            }
+
+            return _retVal;
+        }
+
+        public bool AddNewUser(APP_USER user)
+        {
+            bool _retVal = false;
+
+            _context.APP_USER.Add(user);
+            _context.SaveChanges();
+            _retVal = true;
+
+            return _retVal;
+        }
+
+        public bool UpdateUser(APP_USER user)
+        {
+            bool _retVal = false;
+            var _user = _context.APP_USER.Find(user.ID);
+
+            if (_user != null)
+            {
+                _context.Entry(_user).CurrentValues.SetValues(user);
+                _context.SaveChanges();
+                _retVal = true;
+            }
+
+            return _retVal;
+        }
+
+        public bool DeleteUser(int userID)
+        {
+            bool _retVal = false;
+
+            var _user = (from u in _context.APP_USER
+                         where u.ID == userID
+                         select u).FirstOrDefault();
+            _context.APP_USER.Remove(_user);
+            _context.SaveChanges();
+            _retVal = true;
+
+            return _retVal;
+        }
+
+        public int GetRoleIDByRoleName(string roleName)
+        {
+            int _retVal = -1;
+
+            var _r = (from r in _context.APP_USER_ROLE
+                      where r.ROLE_NAME == roleName
+                      select r.ROLE_ID).FirstOrDefault();
+
+            if (_r != null)
+            {
+                _retVal = Convert.ToInt32(_r);
+            }
+
+            return _retVal;
+        }
+
+        public UserViewModel GetUserByID(int ID)
+        {
+            var _user = from u in _context.APP_USER
+                        join r in _context.APP_USER_ROLE
+                        on u.ROLE_ID equals r.ROLE_ID
+                        where u.ID == ID && u.ROLE_ID == r.ROLE_ID
+                        select new UserViewModel
+                        {
+                            ID = u.ID,
+                            UserName = u.USER_NAME,
+                            Password = u.USER_PASSWORD,
+                            DisplayName = u.DISPLAY_NAME,
+                            RoleID = (int)u.ROLE_ID,
+                            UserRole = r.ROLE_NAME
+                        };
+
+            return _user.FirstOrDefault();
+        }
+
+        #region Disposing
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!this._disposed)
+            {
+                if (disposing)
+                {
+                    _context.Dispose();
+                }
+            }
+            this._disposed = true;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
+    }
+}
+------------------------------------------------------------------------------------------------------------
+BookmarkRepository.cs:
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace SeraphWeb.Mvc.DAL
+{
+    public interface IBookmarkRepository : IDisposable
+    {
+        IEnumerable<BOOKMARK_CATEGORY> GetAllBookmarkCategories();
+        IEnumerable<BOOKMARK> GetAllBookmarks();
+        IEnumerable<BOOKMARK> GetBookmarksByCategoryName(string categoryName);
+        IEnumerable<BOOKMARK> GetBookmarksByCategoryID(int categoryID);
+        IEnumerable<BOOKMARK> GetBookmarksByName(string bookmarkName);
+        BOOKMARK GetBookmarkByBookmarkID(int bookmarkID);
+        bool AddNewBookmark(BOOKMARK newBookmarkModel);
+        bool UpdateBookmark(BOOKMARK updatedBookmarkModel);
+        bool DeleteBookmark(int bookmarkID);
+    }
+
+    public class BookmarkRepository : IBookmarkRepository, IDisposable
+    {
+        private bool _disposed = false;
+        private SeraphEntities _context;
+
+        public BookmarkRepository(SeraphEntities context)
+        {
+            this._context = context;
+        }
+
+        public IEnumerable<BOOKMARK_CATEGORY> GetAllBookmarkCategories()
+        {
+            var _query = from _bookmarkCategories in _context.BOOKMARK_CATEGORY
+                         select _bookmarkCategories;
+            return _query.ToList();
+        }
+
+        public IEnumerable<BOOKMARK> GetAllBookmarks()
+        {
+            var _query = from b in _context.BOOKMARKs
+                         select b;
+
+            return _query.ToList();
+        }
+
+        public IEnumerable<BOOKMARK> GetBookmarksByCategoryName(string categoryName)
+        {
+            var _query = from bookmarkCategory in _context.BOOKMARK_CATEGORY
+                         join bookmark in _context.BOOKMARKs
+                         on bookmarkCategory.CATEGORY_ID equals bookmark.BOOKMARK_CATEGORY_ID
+                         where (bookmarkCategory.CATEGORY_NAME.ToLower().StartsWith(categoryName.ToLower()))
+                         select bookmark;
+
+            if (_query != null)
+            {
+                return _query.ToList();
+            }
+            else
+            {
+                return GetAllBookmarks();
+            }
+        }
+
+        public IEnumerable<BOOKMARK> GetBookmarksByCategoryID(int categoryID)
+        {
+            var _query = from b in _context.BOOKMARKs
+                         where b.BOOKMARK_CATEGORY_ID == categoryID
+                         select b;
+
+            return _query.ToList();
+        }
+
+        public IEnumerable<BOOKMARK> GetBookmarksByName(string bookmarkName)
+        {
+            var _query = from b in GetAllBookmarks()
+                         where b.BOOKMARK_NAME.ToLower().StartsWith(bookmarkName.ToLower())
+                         select b;
+
+            return _query.ToList();
+        }
+
+        public BOOKMARK GetBookmarkByBookmarkID(int bookmarkID)
+        {
+            var _query = (from b in _context.BOOKMARKs
+                          where b.BOOKMARK_ID == bookmarkID
+                          select b).FirstOrDefault();
+
+            return _query;
+        }
+
+        public bool AddNewBookmark(BOOKMARK newBookmarkModel)
+        {
+            bool _retVal = false;
+
+            _context.BOOKMARKs.Add(newBookmarkModel);
+            _context.SaveChanges();
+            _retVal = true;
+
+            return _retVal;
+        }
+
+        public bool UpdateBookmark(BOOKMARK updatedBookmarkModel)
+        {
+            bool _retVal = false;
+
+            BOOKMARK _modelToBeUpdated = _context.BOOKMARKs.Find(updatedBookmarkModel.BOOKMARK_ID);
+
+            if (_modelToBeUpdated != null)
+            {
+                _context.Entry(_modelToBeUpdated).CurrentValues.SetValues(updatedBookmarkModel);
+                _context.SaveChanges();
+                _retVal = true;
+            }
+
+            return _retVal;
+        }
+
+        public bool DeleteBookmark(int bookmarkID)
+        {
+            bool _retVal = false;
+            BOOKMARK _modelToBeDeleted = _context.BOOKMARKs.Find(bookmarkID);
+
+            if (_modelToBeDeleted != null)
+            {
+                _context.BOOKMARKs.Remove(_modelToBeDeleted);
+                _context.SaveChanges();
+                _retVal = true;
+            }
+
+            return _retVal;
+        }
+
+        #region Disposing
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!this._disposed)
+            {
+                if (disposing)
+                {
+                    _context.Dispose();
+                }
+            }
+            this._disposed = true;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
+    }
+}
+------------------------------------------------------------------------------------------------------------
+BookRepository.cs:
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace SeraphWeb.Mvc.DAL
+{
+    public interface IBookRepository
+    {
+        List<string> GetAuthors();
+        List<Book> GetBooksByAuthor(string author);
+        List<Book> GetAllBooks();
+    }
+
+    public class Book
+    {
+        public string Author { get; set; }
+        public string Subject { get; set; }
+        public string Title { get; set; }
+    }
+
+    public class BookRepository : IBookRepository
+    {
+        private static List<Book> _Books = new List<Book>();
+
+        static BookRepository()
+        {
+            _Books.Add(new Book { Author = "Charles Petzold", Subject = "Programming Microsoft Technologies", Title = "Some Dummy Title" });
+            _Books.Add(new Book { Author = "Adam Nathan", Subject = "WPF", Title = "Some Dummy Title" });
+            _Books.Add(new Book { Author = "Jesse Liberty", Subject = "Programming C#", Title = "Some Dummy Title" });
+            _Books.Add(new Book { Author = "Bill Wagner", Subject = "Effective C#", Title = "Some Dummy Title" });
+            _Books.Add(new Book { Author = "Charles Petzold", Subject = "LINQ Unleashed", Title = "Some Dummy Title" });
+            _Books.Add(new Book { Author = "Shay Friedman", Subject = "MVC", Title = "Some Dummy Title" });
+            _Books.Add(new Book { Author = "Shay Friedman", Subject = "C#", Title = "Some Dummy Title" });
+            _Books.Add(new Book { Author = "Mike Gunderloy", Subject = "Javascripts / jQuery", Title = "Some Dummy Title" });
+        }
+
+        public List<string> GetAuthors()
+        {
+            var retVal = (from b in _Books
+                          orderby b.Author ascending
+                          select b.Author).Distinct();
+
+            return retVal.ToList();
+        }
+
+        public List<Book> GetBooksByAuthor(string author)
+        {
+            var retVal = (from b in _Books
+                          orderby b.Title ascending
+                          where b.Author == author
+                          select b);
+
+            return retVal.ToList();
+        }
+
+        public List<Book> GetAllBooks()
+        {
+            return _Books.ToList();
+        }
+    }
+}
+-----------------------------------------------------------------------------------------------------------------------------------
+EmployeeRepository.cs:
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using SeraphWeb.Mvc.Models;
+
+namespace SeraphWeb.Mvc.DAL
+{
+    public interface IEmployeeRepository : IDisposable
+    {
+        byte[] GetImage(int employeeID);
+        EmployeeViewModel GetEmployeeByID(int employeeID);
+        EMPLOYEE GetEmployeeWithPhotoByID(int employeeID);
+        IEnumerable<EmployeeViewModel> GetAllEmployeeDataNoPhoto();
+        IEnumerable<EmployeeViewModel> GetEmployeesByNameNoPhoto(string empName);
+        IEnumerable<EmployeeViewModel> GetEmployeesByEmailNoPhoto(string empEmail);
+        EmployeeViewModel GetEmployeeByIDNoPhoto(int empID);
+        bool AddNewEmployee(EMPLOYEE newEmpModel);
+        bool UpdateEmployee(EMPLOYEE updatedEmpModel);
+        bool DeleteEmployee(int empID);
+    }
+
+    public class EmployeeRepository : IEmployeeRepository, IDisposable
+    {
+        private bool _disposed = false;
+        private SeraphEntities _context;
+
+        public EmployeeRepository(SeraphEntities context)
+        {
+            this._context = context;
+        }
+
+        public byte[] GetImage(int employeeID)
+        {
+            byte[] _empPhoto = null;
+
+            var _empPhotoId = (from e in _context.EMPLOYEEs
+                               where e.EMP_ID == employeeID && e.EMP_PHOTO_ID != null
+                               select e.EMP_PHOTO_ID).FirstOrDefault();
+
+            if(_empPhotoId.HasValue)
+            {
+                var _empImg = (from e in _context.EMPLOYEE_PHOTO
+                               where e.EMP_PHOTO_ID == _empPhotoId
+                               select e.PHOTO).FirstOrDefault();
+                _empPhoto = _empImg;
+            }
+
+            return _empPhoto;
+        }
+
+        public EmployeeViewModel GetEmployeeByID(int employeeID)
+        {
+            var _emp = (from e in _context.EMPLOYEEs
+                        where e.EMP_ID == employeeID
+                        select new EmployeeViewModel
+                        {
+                            EmpID = e.EMP_ID,
+                            EmpName = e.EMP_NAME,
+                            EmpEmail = e.EMP_EMAIL,
+                            EmpPhone = e.EMP_PHONE,
+                            EmpSalary = e.EMP_SALARY,
+                            EmpHireDate = e.EMP_HIRE_DATE,
+                            EmpGender = e.EMP_GENDER,
+                            EmpIsActive = e.EMP_IS_ACTIVE
+                        }).FirstOrDefault();
+
+            return _emp;
+        }
+
+        public EMPLOYEE GetEmployeeWithPhotoByID(int employeeID)
+        {
+            var _emp = (from e in _context.EMPLOYEEs
+                        where e.EMP_ID == employeeID
+                        select e).FirstOrDefault();
+            return _emp;
+        }
+
+        public IEnumerable<EmployeeViewModel> GetAllEmployeeDataNoPhoto()
+        {
+            var _employees = from e in _context.EMPLOYEEs
+                             select new EmployeeViewModel
+                             {
+                                 EmpID = e.EMP_ID,
+                                 EmpName = e.EMP_NAME,
+                                 EmpEmail = e.EMP_EMAIL,
+                                 EmpPhone = e.EMP_PHONE,
+                                 EmpSalary = e.EMP_SALARY,
+                                 EmpHireDate = e.EMP_HIRE_DATE,
+                                 EmpGender = e.EMP_GENDER,
+                                 EmpIsActive = e.EMP_IS_ACTIVE
+                             };
+
+            return _employees.ToList();
+        }
+
+        public IEnumerable<EmployeeViewModel> GetEmployeesByNameNoPhoto(string empName)
+        {
+            var _query = from e in GetAllEmployeeDataNoPhoto()
+                         where e.EmpName.ToLower().StartsWith(empName.ToLower())
+                         select e;
+            if (_query != null)
+            {
+                return _query.ToList();
+            }
+            else
+            {
+                return GetAllEmployeeDataNoPhoto();
+            }
+        }
+
+        public IEnumerable<EmployeeViewModel> GetEmployeesByEmailNoPhoto(string empEmail)
+        {
+            var _query = from e in GetAllEmployeeDataNoPhoto()
+                         where e.EmpEmail.ToLower().StartsWith(empEmail.ToLower())
+                         select e;
+            if (_query != null)
+            {
+                return _query.ToList();
+            }
+            else
+            {
+                return GetAllEmployeeDataNoPhoto();
+            }
+        }
+
+        public EmployeeViewModel GetEmployeeByIDNoPhoto(int empID)
+        {
+            var _query = from e in GetAllEmployeeDataNoPhoto()
+                         where e.EmpID == empID
+                         select e;
+            return _query.FirstOrDefault();
+        }
+
+        public bool AddNewEmployee(EMPLOYEE newEmpModel)
+        {
+            bool _retVal = false;
+
+            _context.EMPLOYEEs.Add(newEmpModel);
+            _context.SaveChanges();
+            _retVal = true;
+
+            return _retVal;
+        }
+
+        public bool UpdateEmployee(EMPLOYEE updatedEmpModel)
+        {
+            bool _retVal = false;
+
+            var _empToUpdate = _context.EMPLOYEEs.Find(updatedEmpModel.EMP_ID);
+
+            if (_empToUpdate != null)
+            {
+                _context.Entry(_empToUpdate).CurrentValues.SetValues(updatedEmpModel);
+                _context.SaveChanges();
+                _retVal = true;
+            }
+
+            return _retVal;
+        }
+
+        public bool DeleteEmployee(int empID)
+        {
+            bool _retVal = false;
+            var _empToDelete = _context.EMPLOYEEs.Find(empID);
+
+            if (_empToDelete != null)
+            {
+                _context.EMPLOYEEs.Remove(_empToDelete);
+                _context.SaveChanges();
+                _retVal = true;
+            }
+
+            return _retVal;
+        }
+
+        #region Disposing
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!this._disposed)
+            {
+                if (disposing)
+                {
+                    _context.Dispose();
+                }
+            }
+            this._disposed = true;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
+    }
+}
+------------------------------------------------------------------------------------------------------------------------------------
+
+using SeraphMvcBootstrap.Website.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+namespace SeraphMvcBootstrap.Website.DAL
+{
+    public class ShoppingRepository : IDisposable
+    {
+        private bool _disposed = false;
+        SeraphEntities _context = new SeraphEntities();
+        public const string CartSessionKey = "CartId";
+        string ShoppingCartID { get; set; }
+
+        public static ShoppingRepository GetCart(HttpContextBase context)
+        {
+            var _cart = new ShoppingRepository();
+            _cart.ShoppingCartID = _cart.GetCartID(context);
+            return _cart;
+        }
+
+        public static ShoppingRepository GetCart(Controller controller)
+        {
+            return GetCart(controller.HttpContext);
+        }
+
+        public Product GetProductByProductID(int productID)
+        {
+            return (from p in _context.Products
+                    where p.ProductID == productID
+                    select p).FirstOrDefault();
+        }
+
+        public IEnumerable<Product> GetProductsByCategoryID(int categoryID)
+        {
+            var _products = from p in _context.Products
+                            where p.CategoryID == categoryID
+                            select p;
+            return _products.ToList();
+        }
+
+        public void AddToCart(int id)
+        {
+            //Retrieve the product from the database.
+            var cartItem = _context.CartItems.SingleOrDefault(
+                            c => c.CartId == ShoppingCartID && c.ProductId == id);
+
+            if (cartItem == null)
+            {
+                //Create a new cart item if no cart item exist!
+                cartItem = new CartItem
+                {
+                    ItemId = Guid.NewGuid().ToString(),
+                    ProductId = id,
+                    CartId = ShoppingCartID,
+                    Product = _context.Products.SingleOrDefault(p => p.ProductID == id),
+                    Quantity = 1,
+                    DateCreated = DateTime.Now
+                };
+
+                _context.CartItems.Add(cartItem);
+            }
+            else
+            {
+                cartItem.Quantity++;
+            }
+            _context.SaveChanges();
+
+            UpdateCartCount();
+        }
+
+        // We're using HttpContextBase to allow access to cookies.
+        public string GetCartID(HttpContextBase context)
+        {
+            if (HttpContext.Current.Session[CartSessionKey] == null)
+            {
+                if (System.Web.HttpContext.Current.Session["USER_NAME"] != null)
+                {
+                    HttpContext.Current.Session[CartSessionKey] = System.Web.HttpContext.Current.Session["USER_NAME"].ToString();
+                }
+                else
+                {
+                    // Generate a new random GUID using System.Guid class.     
+                    Guid tempCartId = Guid.NewGuid();
+                    HttpContext.Current.Session[CartSessionKey] = tempCartId.ToString();
+                }
+            }
+
+            return HttpContext.Current.Session[CartSessionKey].ToString();
+        }
+
+        public List<CartItem> GetCartItems()
+        {
+            var _cartItems = _context.CartItems.Where(c => c.CartId == ShoppingCartID).ToList();
+            return _cartItems;
+        }
+
+        public int GetItemCount()
+        {
+            int _retVal = 0;
+            var _query = GetCartItems();
+
+            if (_query != null)
+            {
+                int _count = 0;
+                foreach (var item in _query)
+                {
+                    _count += item.Quantity;
+                }
+
+                _retVal = _count;
+            }
+            return _retVal;
+        }
+
+        public List<ShoppingCartDetails> GetShoppingCartDetails()
+        {
+            var _query = from a in _context.CartItems
+                         where a.CartId == ShoppingCartID
+                         join b in _context.Products
+                         on a.ProductId equals b.ProductID
+                         select new ShoppingCartDetails
+                         {
+                             ProductID = b.ProductID,
+                             ProductName = b.ProductName,
+                             Price = b.UnitPrice,
+                             Quantity = a.Quantity,
+                             ItemID = a.ItemId,
+                             CartID = a.CartId
+                         };
+
+            return _query.ToList();
+        }
+
+        public void RemoveItem(string cartID, int productID)
+        {
+            var _item = (from _i in _context.CartItems
+                         where _i.ItemId == cartID && _i.ProductId == productID
+                         select _i).FirstOrDefault();
+
+            if (_item != null)
+            {
+                _context.CartItems.Remove(_item);
+                _context.SaveChanges();
+
+                UpdateCartCount();
+            }
+        }
+
+        public decimal GetShoppingCartTotal()
+        {
+            // Multiply product price by quantity of that product to get        
+            // the current price for each of those products in the cart.  
+            // Sum all product price totals to get the cart total.   
+            decimal? total = decimal.Zero;
+            total = (decimal?)(from cartItems in _context.CartItems
+                               where cartItems.CartId == ShoppingCartID
+                               select (int?)cartItems.Quantity *
+                               cartItems.Product.UnitPrice).Sum();
+            return total ?? decimal.Zero;
+        }
+
+        public void UpdateCartItems(ShoppingCartDetails model)
+        {
+            var _modelToUpdate = (from a in _context.CartItems
+                                  where a.CartId == model.CartID && a.ProductId == model.ProductID
+                                  select a).FirstOrDefault();
+
+            if (_modelToUpdate != null)
+            {
+                _context.Entry(_modelToUpdate).CurrentValues.SetValues(model);
+                _context.SaveChanges();
+
+                UpdateCartCount();
+            }
+        }
+
+        public void EmptyCart()
+        {
+            var _cart = GetShoppingCartDetails();
+
+            if (_cart != null)
+            {
+                foreach (var item in _cart)
+                {
+                    RemoveItem(item.ItemID, item.ProductID);
+                }
+
+                UpdateCartCount();
+            }
+        }
+
+        public void AddOrder(Order order)
+        {
+            _context.Orders.Add(order);
+            _context.SaveChanges();
+        }
+
+        public void AddOrderDetails(OrderDetail orderDetails)
+        {
+            _context.OrderDetails.Add(orderDetails);
+            _context.SaveChanges();
+        }
+
+        public Order GetOrderByOrderID(int orderID)
+        {
+            var _q = (from o in _context.Orders
+                      where o.OrderId == orderID
+                      select o).FirstOrDefault();
+            return _q;
+        }
+
+        private void UpdateCartCount()
+        {
+            System.Web.HttpContext.Current.Session["ITEM_COUNT"] = GetItemCount();
+        }
+
+        public void MigrateCart(string userName)
+        {
+            var _shoppingCart = _context.CartItems.Where(c => c.CartId == ShoppingCartID);
+
+            if(_shoppingCart != null)
+            {
+                foreach (CartItem item in _shoppingCart)
+                {
+                    item.CartId = userName;
+                }
+                _context.SaveChanges();
+            }
+        }
+
+        #region Disposing
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!this._disposed)
+            {
+                if (disposing)
+                {
+                    _context.Dispose();
+                }
+            }
+            this._disposed = true;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
+    }
+}
+

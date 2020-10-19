@@ -1,0 +1,67 @@
+﻿@model Playground.Mvc.Models.ProcessOrderViewModel
+
+@{
+    ViewBag.Title = "ReviewOrder";
+}
+
+<h2>Review & Place Order</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.HiddenFor(X => Model.Address)
+    @Html.HiddenFor(X => Model.City)
+    @Html.HiddenFor(X => Model.Country)
+    @Html.HiddenFor(X => Model.Email)
+    @Html.HiddenFor(X => Model.FirstName)
+    @Html.HiddenFor(X => Model.LastName)
+    @Html.HiddenFor(X => Model.Phone)
+    @Html.HiddenFor(X => Model.PostalCode)
+    @Html.HiddenFor(X => Model.ShoppingCartDetails)
+    @Html.HiddenFor(X => Model.State)
+    @Html.HiddenFor(X => Model.Total)
+
+    <div class="row">
+        <div class="col-md-4 col-xs-12">
+            <fieldset>
+                <legend>Address Info</legend>
+                <b>Name:</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@Model.FirstName&nbsp;&nbsp;@Model.LastName<br />
+                <b>Address: </b> @Model.Address<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@Model.City&nbsp;&nbsp;@Model.State,&nbsp;&nbsp;@Model.PostalCode<br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@Model.Country<br />
+                <b>Phone: </b> @Model.Phone<br />
+            </fieldset>
+        </div>
+        <div class="col-md-8 col-xs-12">
+            <fieldset>
+                <legend>You Order</legend>
+                <table class="table table-hover table-striped">
+                    <thead>
+                        <tr>
+                            <th>
+                                @Html.DisplayName("Name")
+                            </th>
+                            <th>
+                                @Html.DisplayName("Price (each)")
+                            </th>
+                            <th>
+                                @Html.DisplayName("Quantity")
+                            </th>
+                            <th>
+                                @Html.DisplayName("Item Total")
+                            </th>
+                        </tr>
+                    </thead>
+                    @Html.EditorFor(x => x.ShoppingCartDetails)
+                </table><br /><br />
+                <b>Order Total: $ @Model.Total</b>
+            </fieldset>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group">
+            <div class="col-md-offset-4 col-md-8 pull-right">
+                <input type="submit" value="Submit Order" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}

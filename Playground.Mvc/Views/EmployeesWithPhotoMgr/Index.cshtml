@@ -1,0 +1,150 @@
+﻿@model IEnumerable<Playground.Mvc.Models.EmployeeViewModel>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+<p>
+    @Html.ActionLink("Create New", "Create")
+</p>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayName("Name")
+        </th>
+        <th>
+            @Html.DisplayName("Email")
+        </th>
+        <th>
+            @Html.DisplayName("Phone")
+        </th>
+        <th>
+            @Html.DisplayName("Salary")
+        </th>
+        <th>
+            @Html.DisplayName("Gender")
+        </th>
+        <th>
+            @Html.DisplayName("Hire Date")
+        </th>
+        <th>
+            @Html.DisplayName("Status")
+        </th>
+        <th></th>
+    </tr>
+
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.EmpName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EmpEmail)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EmpPhone)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Salary)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.EmpGender)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.HireDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsActive)
+            </td>
+            <td>
+                @Html.ActionLink("Details", "Details", new { employeeID = item.EmpID }) |
+                @Html.ActionLink("Details-II", "Details", new { employeeID = item.EmpID }, new { @class = "ShowModalDialog" }) |
+                @Html.ActionLink("Delete", "Delete", new { employeeID = item.EmpID }, new { @class = "ConfirmDelete" })
+            </td>
+        </tr>
+    }
+</table>
+
+<div id="dialog-alert" style="display: none">
+    <p>
+        @TempData["msg"]
+    </p>
+</div>
+
+<div id="dialog-confirm" style="display: none">
+    <p>
+        <span class="ui-icon ui-icon-alert" style="float: left; margin: 0 7px 20px 0;"></span>
+        Are you sure to delete ?
+    </p>
+</div>
+<div id="dialog-view" style="display: none">
+</div>
+
+@section Scripts {
+
+    @Scripts.Render("~/bundles/jqueryui")
+
+    <script type="text/javascript">
+
+        //Show Details in a modal Dialog
+        $('.ShowModalDialog').click(function () {
+            var url = $(this).attr('href');
+            $("#dialog-view").dialog({
+                title: 'Employee Detail',
+                autoOpen: false,
+                resizable: true,
+                height: 450,
+                width: 350,
+                show: { effect: 'drop', direction: "up", duration: 500 },
+                hide: { effect: 'explode', duration: 1600 },
+                modal: true,
+                draggable: true,
+                open: function (event, ui) {
+                    $(this).load(url);
+                    $(".ui-dialog-titlebar-close").hide();
+                },
+                buttons: {
+                    "Close": function () {
+                        $(this).dialog("close");
+                    }
+                },
+            });
+            $("#dialog-view").dialog('open');
+            return false;
+        });
+
+        //Confirm Delete in a dialog
+        $('.ConfirmDelete').click(function () {
+            var url = $(this).attr('href');
+            $("#dialog-confirm").dialog({
+                title: 'Confirm Delete',
+                autoOpen: false,
+                resizable: false,
+                height: 200,
+                width: 350,
+                show: { effect: 'shake', direction: "up", duration: 150 },
+                hide: { effect: 'puff', duration: 400 },
+                modal: true,
+                draggable: true,
+                buttons: {
+                    "OK": function () {
+                        $(this).dialog("close");
+                        window.location = url;
+                    },
+                    "Cancel": function () {
+                        $(this).dialog("close");
+                    }
+                }
+            });
+            $("#dialog-confirm").dialog('open');
+            return false;
+        });
+
+        $(document).ready(function () {
+            $.ajaxSetup({ cache: false });
+        });
+    </script>
+}

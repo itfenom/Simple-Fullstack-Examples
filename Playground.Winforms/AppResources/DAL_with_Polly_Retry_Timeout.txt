@@ -1,0 +1,1556 @@
+﻿using BawDataViewer.Core.Diagnostics;
+using BawDataViewer.Core.Utilities;
+using Mindscape.Raygun4Net;
+using Oracle.ManagedDataAccess.Client;
+using Oracle.ManagedDataAccess.Types;
+using Polly;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using BawDataViewer.Core.Matlab;
+using Polly.Timeout;
+using Polly.Wrap;
+
+// ReSharper disable InconsistentNaming
+// ReSharper disable PossibleNullReferenceException
+// ReSharper disable RedundantArgumentDefaultValue
+// ReSharper disable PossibleMultipleEnumeration
+// ReSharper disable RedundantAssignment
+// ReSharper disable RedundantTypeArgumentsOfMethod
+// ReSharper disable RedundantExplicitArraySize
+// ReSharper disable SimplifyConditionalTernaryExpression
+
+namespace BawDataViewer.Core.Oracle
+{
+    public class UdvContext
+    {
+        public string VariableName { get; set; }
+        public string Product { get; set; }
+        public string Lot { get; set; }
+        public string State { get; set; }
+        public string Route { get; set; }
+        public int Oper { get; set; }
+        public string Function { get; set; }
+    }
+
+    public class DAL
+    {
+        private readonly string _developmentConnectionString;
+
+        private readonly string _productionConnectionString;
+
+        public static Func<bool> UsingDevDatabase
+        {
+            get;
+            set;
+        }
+
+        private static Lazy<RaygunClient> Raygun { get; } = new Lazy<RaygunClient>(() => CoreConfiguration.Raygun.RaygunApplication?.GenerateRaygunClient());
+
+        /// <summary>
+        /// Gets a policy that will handle <see cref="OracleException"/>'s and retry once.
+        /// </summary>
+        private static Policy RetryOncePolicy { get; } =
+            Policy
+            .Handle<OracleException>()
+            .Retry(retryCount: 1, onRetry: (oracleError, attemptNumber, context) =>
+            {
+                // log the error and the retry information
+                var errorMessage = $"{context.OperationKey} encountered an error.  Retrying for the {attemptNumber.ToOrdinalString()} time.";
+                Logger.Warn(errorMessage);
+
+                // add the error message if it hasn't already been set
+                if (!context.ContainsKey("extra_message"))
+                {
+                    context["extra_message"] = errorMessage;
+                }
+
+                // log the error to Raygun
+                LogDataLayerError(oracleError, context);
+            })
+            .WithPolicyKey("DataAccess_RetryOncePolicy");
+
+        private static TimeoutPolicy CustomTimeoutPolicy { get; } =
+            Policy.Timeout(
+                TimeSpan.FromSeconds(CoreConfiguration.OracleTimeoutValue == 0? 60 : CoreConfiguration.OracleTimeoutValue),
+                TimeoutStrategy.Pessimistic,
+                (context, timespan, task) =>
+                {
+                    task.ContinueWith(t => { // ContinueWith important!: the abandoned task may very well still be executing, when the caller times out on waiting for it! 
+
+                        if (t.IsFaulted)
+                        {
+                            // log the error to Raygun
+                            LogDataLayerError(t.Exception, context);
+
+                            Logger.Error($"{context.PolicyKey} at {context.OperationKey}: execution timed out after {timespan.TotalSeconds} seconds, eventually terminated with: {t.Exception}.");
+                        }
+                        else if (t.IsCanceled)
+                        {
+                            // log the error to Raygun
+                            LogDataLayerError(t.Exception, context);
+
+                            // (If the executed delegates do not honor cancellation, this IsCanceled branch may never be hit.  It can be good practice however to include, in case a Policy configured with TimeoutStrategy.Pessimistic is used to execute a delegate honouring cancellation.)  
+                            Logger.Error($"{context.PolicyKey} at {context.OperationKey}: execution timed out after {timespan.TotalSeconds} seconds, task cancelled.");
+                        }
+                        else
+                        {
+                            // extra logic (if desired) for tasks which complete, despite the caller having 'walked away' earlier due to timeout.
+                        }
+
+                        // Additionally, clean up any resources ...
+                    }, CancellationToken.None);
+                });
+
+        // ReSharper disable once UnusedMember.Local
+        private static readonly PolicyWrap PoliciesTogether = RetryOncePolicy.Wrap(CustomTimeoutPolicy);
+
+        public static string ConnectionString(string database, string userID, string password)
+        {
+            return "Data Source=" + CustomTNSParser.Instance.GetDatabasesDescription(database) + ";user id=" + userID + ";password=" + password + "; Connection timeout=60; Pooling=true; Min Pool Size=0; Connection Lifetime=180; Max Pool Size=200; Incr Pool Size=5";
+        }
+
+        public static Dictionary<string, DAL> DalList = new Dictionary<string, DAL>();
+
+        public static readonly TqtBawDataLayer TQTBAW = new TqtBawDataLayer(
+            "TQTBAW",
+            ConnectionString("DBAW", "BAWVIEWERTEST", "password"),
+            ConnectionString("TQTBAW", "bawprodcreator", "bawadmintex"));
+
+        public static readonly TqtGaasDataLayer TQTGAAS = new TqtGaasDataLayer(
+            "TQTGAAS",
+            ConnectionString("DEVTST1", "LOADER", "loaddata"),
+            ConnectionString("OREO", "LOADER", "loaddata"));
+
+        public static readonly DAL PORTALPROD = new DAL(
+            "PORTALPROD",
+            ConnectionString("PORTALPROD", "dataviewer", "viewer"),
+            ConnectionString("PORTALPROD", "dataviewer", "viewer"));
+
+        public static readonly DAL ENGRDB = new DAL(
+            "ENGRDB",
+            ConnectionString("ENGRDB", "bawuser", "bawread"),
+            ConnectionString("ENGRDB", "bawuser", "bawread"));
+
+        public static readonly DAL DEVTST1 = new DAL(
+            "DEVTST1",
+            ConnectionString("DEVTST1", "BAWPRODCREATOR", "bawadmintex"),
+            ConnectionString("DEVTST1", "BAWPRODCREATOR", "bawadmintex"));
+
+        public static readonly DAL MESDATA = new DAL(
+            "OREO",
+            ConnectionString("DEVTST1", "MESDATA", "texmes"),
+            ConnectionString("OREO", "MESDATA", "texmes"));
+
+        private protected DAL(string name, string developmentConnectionString, string productionConnectionString)
+        {
+            _developmentConnectionString = developmentConnectionString;
+            _productionConnectionString = productionConnectionString;
+
+            DalList.Add(name, this);
+        }
+
+        private string GetConnectionString()
+        {
+            return GetConnectionString(UsingDevDatabase());
+        }
+
+        private string GetConnectionString(bool useDevDB)
+        {
+            if (useDevDB)
+            {
+                return _developmentConnectionString;
+            }
+            return _productionConnectionString;
+        }
+
+        /// <summary>
+        /// Creates an <see cref="OracleConnection"/> for the database specified.
+        /// </summary>
+        /// <param name="useDevDB"><c>true</c> to use the development database. <c>false</c> to use the production database.</param>
+        /// <returns>The connection.</returns>
+        /// <remarks>
+        /// If you use this method, it is *your* responsibility to handle closing and disposing of the connection!
+        /// </remarks>
+        public OracleConnection CreateConnection(bool useDevDB)
+        {
+            return new OracleConnection(GetConnectionString(useDevDB));
+        }
+
+        /// <summary>
+        /// Remove an <see cref="OracleDependency"/> from the registered dependencies.
+        /// </summary>
+        /// <param name="dependencyId">The id of the dependency to remove.</param>
+        public void RemoveDependencyRegistration(string dependencyId)
+        {
+            RemoveDependencyRegistration(UsingDevDatabase(), dependencyId);
+        }
+
+        /// <summary>
+        /// Remove an <see cref="OracleDependency" /> from the registered dependencies.
+        /// </summary>
+        /// <param name="useDevDatabase">
+        /// <c>true</c> to use the development database; otherwise, the production database will be used.
+        /// </param>
+        /// <param name="dependencyId">The id of the dependency to remove.</param>
+        public void RemoveDependencyRegistration(bool useDevDatabase, string dependencyId)
+        {
+            if (!string.IsNullOrEmpty(dependencyId))
+            {
+                using (var connection = CreateConnection(useDevDatabase))
+                {
+                    try
+                    {
+                        connection.Open();
+
+                        // find the dependency.  If it's enabled, remove it
+                        var dependency = OracleDependency.GetOracleDependency(dependencyId);
+                        if (dependency?.IsEnabled == true)
+                        {
+                            dependency.RemoveRegistration(connection);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error($"Error cleaning up Oracle Dependency ({(useDevDatabase ? "DEVELOPMENT" : "PRODUCTION")} DATABASE)", ex);
+                    }
+                }
+            }
+        }
+
+        public static OracleParameter Parameter(string name, OracleDbType type, object value)
+        {
+            return Parameter(name, ParameterDirection.Input, type, value);
+        }
+
+        public static OracleParameter Parameter(string name, ParameterDirection direction, OracleDbType type)
+        {
+            return new OracleParameter(name, type, direction);
+        }
+
+        public static OracleParameter Parameter(string name, ParameterDirection direction, OracleDbType type, object value)
+        {
+            OracleParameter parameter = Parameter(name, direction, type);
+            parameter.Value = value ?? DBNull.Value;
+            return parameter;
+        }
+
+        public static OracleParameter Parameter(string name, ParameterDirection direction, OracleDbType type, int size, object value)
+        {
+            OracleParameter parameter = Parameter(name, direction, type, value);
+            parameter.Size = size;
+            return parameter;
+        }
+
+        //-------------------------------------------------------------------------------------------------------------------------------
+        /**********************************************************************************************************************************************
+         *  Some notes on Creating Associative arrays Oracle Parameters:                                                                              *
+         * 2 important things to note!!!                                                                                                              *
+         *                                                                                                                                            *
+         *  1) In case of Output or InputOutput direction, the Size has to be set                                                                     *
+         *     to the maximum number of elements you expect to get from the stored procedure (see the CreateAssociativeArray method).                 *
+         *     Specify this maximum number in the maxNumberOfElementsInArray.                                                                         *
+         *     For example, you want to pass 3 elements to the stored procedure and get 10 back (InputOutput direction).                              *
+         *    Set the maxNumberOfElementsInArray to 10, otherwise CreateAssociativeArray will set Size to 3.                                          *
+         *                                                                                                                                            *
+         *  2) The special processing of array of strings (see the CreateStringAssociativeArray method).                                              *
+         *     String is variable-length element type (Varchar2 and so on). So, for strings we need to                                                *
+         *     define the ArrayBindSize property. ArrayBindSize is the collection each element of which                                               *
+         *     specifies the length of the corresponding element in the Value property. Being longer                                                  *
+         *     than specified, the element will be truncated. Pass the maximum allowed length of elements                                             *
+         *     in maxLength, otherwise it will be set to 255 (default) or the maximum length found in the Value property.                             *
+         *                                                                                                                                            *
+         **********************************************************************************************************************************************/
+
+        public static OracleParameter CreateOracleParameter(string parameterName, ParameterDirection direction, OracleDbType oracleDbType, object value, int? size = null)
+        {
+            OracleParameter parameter = Parameter(parameterName, direction, oracleDbType, value);
+
+            if (size != null)
+            {
+                parameter.Size = (int)size;
+            }
+
+            return parameter;
+        }
+
+        public static OracleParameter CreateAssociativeArray<ValueType, OracleType>(string name, List<ValueType> values,
+            ParameterDirection direction, OracleDbType oracleDbType, OracleType nullValue,
+            int? maxNumberOfElementsInArray)
+        {
+            bool isArrayEmpty = values == null || values.Count == 0;
+            OracleParameter array = new OracleParameter(name, oracleDbType, direction);
+            array.CollectionType = OracleCollectionType.PLSQLAssociativeArray;
+            array.Value = !isArrayEmpty ? values.ToArray() :
+                                                    (object)new OracleType[1] { nullValue };
+            array.Size = !isArrayEmpty ? values.Count : 1;
+
+            // if it's Output/InputOutput parameter, set the maximum possible number of elements.
+            if (maxNumberOfElementsInArray != null &&
+               (direction == ParameterDirection.Output || direction == ParameterDirection.InputOutput))
+            {
+                array.Size = Math.Max(array.Size, maxNumberOfElementsInArray.Value);
+            }
+
+            return array;
+        }
+
+        public static OracleParameter CreateInt32AssociativeArray(string name, List<int> values, ParameterDirection direction = ParameterDirection.Input, int? maxNumberOfElementsInArray = null)
+        {
+            return CreateAssociativeArray<int, OracleDecimal>(name, values,
+                     direction, OracleDbType.Int32, OracleDecimal.Null, maxNumberOfElementsInArray);
+        }
+
+        public static OracleParameter CreateDecimalAssociativeArray(string name, List<decimal> values, ParameterDirection direction = ParameterDirection.Input, int? maxNumberOfElementsInArray = null)
+        {
+            return CreateAssociativeArray<decimal, OracleDecimal>(name, values, direction,
+                     OracleDbType.Decimal, OracleDecimal.Null, maxNumberOfElementsInArray);
+        }
+
+        public static OracleParameter CreateStringAssociativeArray(string name, List<string> values, ParameterDirection direction = ParameterDirection.Input, int? maxNumberOfElementsInArray = null, int maxLength = 255)
+        {
+            OracleParameter oracleParameter = CreateAssociativeArray<string, OracleString>(name, values, direction, OracleDbType.Varchar2, OracleString.Null, maxNumberOfElementsInArray);
+
+            if (direction == ParameterDirection.Output || direction == ParameterDirection.InputOutput)
+            {
+                int currentMaxLength = maxLength;
+                if (values != null)
+                {
+                    values.ForEach(s => { if (currentMaxLength < s.Length) currentMaxLength = s.Length; });
+                }
+
+                oracleParameter.ArrayBindSize = new int[oracleParameter.Size];
+                for (int i = 0; i < oracleParameter.Size; i++)
+                    oracleParameter.ArrayBindSize[i] = currentMaxLength;
+            }
+
+            return oracleParameter;
+        }
+
+        //-------------------------------------------------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Creates a Polly execution context.
+        /// </summary>
+        /// <param name="operationKey">The operation key for the context.</param>
+        /// <param name="sql">The query being executed for the data access.</param>
+        /// <returns>The created Polly context.</returns>
+        private static Context CreatePollyContext(string operationKey, string sql)
+        {
+            return new Context(
+                operationKey,
+                new Dictionary<string, object>
+                {
+                    ["query"] = sql
+                });
+        }
+        
+        public object ExecuteScalar(string sql)
+        {
+            lock (this)
+            {
+                using (OracleConnection connection = new OracleConnection(GetConnectionString()))
+                {
+                    connection.Open();
+                    return ExecuteScalar(connection, sql);
+                }
+            }
+        }
+
+        public DataTable ExecuteQuery(string sql)
+        {
+            lock (this)
+            {
+                return ExecuteQuery(GetConnectionString(), sql, null);
+            }
+        }
+
+        public int ExecuteNonQuery(string sql)
+        {
+            lock (this)
+            {
+                using (OracleConnection connection = new OracleConnection(GetConnectionString()))
+                {
+                    connection.Open();
+                    return ExecuteNonQuery(connection, sql);
+                }
+            }
+        }
+
+        public int ExecuteNonQueryWithParameters(string sql, params OracleParameter[] parameters)
+        {
+            lock (this)
+            {
+                using (OracleConnection connection = new OracleConnection(GetConnectionString()))
+                {
+                    connection.Open();
+                    return ExecuteNonQueryWithParameters(connection, sql, parameters);
+                }
+            }
+        }
+
+        public byte[] ExecuteNonQueryWithBlobOutputParameter(string sql, string blobParameterName)
+        {
+            lock (this)
+            {
+                using (OracleConnection connection = new OracleConnection(GetConnectionString()))
+                {
+                    connection.Open();
+                    return ExecuteNonQueryWithBlobOutputParameter(connection, sql, blobParameterName);
+                }
+            }
+        }
+
+        public DataTable ExecuteStoredProcedureQuery(string procedureName, params OracleParameter[] parameters)
+        {
+            lock (this)
+            {
+                using (OracleConnection connection = new OracleConnection(GetConnectionString()))
+                {
+                    connection.Open();
+                    return ExecuteStoredProcedureQuery(connection, procedureName, parameters);
+                }
+            }
+        }
+
+        public object ExecuteStoredProcedureNonQuery(string procedureName, params OracleParameter[] parameters)
+        {
+            lock (this)
+            {
+                using (OracleConnection connection = new OracleConnection(GetConnectionString()))
+                {
+                    connection.Open();
+                    return ExecuteStoredProcedureNonQuery(connection, procedureName, parameters);
+                }
+            }
+        }
+
+        public object GetBawUDVValue(string variable, ref string product, ref string lot, ref string state, ref string route, ref string operation, string function, ref decimal status, ref string message, ref string value, ref string aid)
+        {
+            lock (this)
+            {
+                using (OracleConnection connection = new OracleConnection(GetConnectionString()))
+                {
+                    connection.Open();
+                    GetBawUDVValue(connection, variable, ref product, ref lot, ref state, ref route, ref operation, function, ref status, ref message, ref value, ref aid);
+                    return null;
+                }
+            }
+        }
+
+        public Dictionary<string, string> ExecuteStoredProcedureWithOutParameters(string procedureName, params OracleParameter[] parameters)
+        {
+            lock (this)
+            {
+                using (OracleConnection connection = new OracleConnection(GetConnectionString()))
+                {
+                    connection.Open();
+                    return ExecuteStoredProcedureWithOutParameters(connection, procedureName, parameters);
+                }
+            }
+        }
+
+        /* I'm introducing some overloads of DAL methods that take a boolean parameter.
+         * This parameter lets you manually specify whether to run the query on the development database.
+         */
+
+        public object ExecuteScalar(bool useDevDB, string sql)
+        {
+            lock (this)
+            {
+                using (OracleConnection connection = new OracleConnection(GetConnectionString(useDevDB)))
+                {
+                    connection.Open();
+                    return ExecuteScalar(connection, sql);
+                }
+            }
+        }
+
+        public DataTable ExecuteQuery(bool useDevDB, string sql)
+        {
+            return ExecuteQuery(useDevDB, sql, null);
+        }
+
+        public DataTable ExecuteQueryWithParameters(string sql, params OracleParameter[] parameters)
+        {
+            return ExecuteQueryWithParameters(GetConnectionString(), sql, parameters);
+        }
+
+        /// <summary>
+        /// Executes a query against the database and returns the results.
+        /// </summary>
+        /// <param name="useDevDB">
+        /// <c>true</c> to use the development database; otherwise, the production database will be used.
+        /// </param>
+        /// <param name="sql">The query to execute.</param>
+        /// <param name="dependencyConfiguration">
+        /// If provided, an <see cref="OracleDependency" /> will be created from the given query. The
+        /// action will be invoked to allow additional configuration (eg. setting query type, event
+        /// handlers, etc...).
+        /// </param>
+        /// <returns>The data retrieved from the execution of the query.</returns>
+        public DataTable ExecuteQuery(bool useDevDB, string sql, Action<OracleDependency, OracleNotificationRequest> dependencyConfiguration)
+        {
+            return ExecuteQuery(GetConnectionString(useDevDB), sql, dependencyConfiguration);
+        }
+
+        public int ExecuteNonQuery(bool useDevDB, string sql)
+        {
+            lock (this)
+            {
+                using (OracleConnection connection = new OracleConnection(GetConnectionString(useDevDB)))
+                {
+                    connection.Open();
+                    return ExecuteNonQuery(connection, sql);
+                }
+            }
+        }
+
+        public object ExecuteStoredProcedureNonQuery(bool useDevDB, string procedureName, params OracleParameter[] parameters)
+        {
+            lock (this)
+            {
+                using (OracleConnection connection = new OracleConnection(GetConnectionString(useDevDB)))
+                {
+                    connection.Open();
+                    return ExecuteStoredProcedureNonQuery(connection, procedureName, parameters);
+                }
+            }
+        }
+
+        /*-------------------------------------------------------------*/
+
+        private Dictionary<string, string> ExecuteStoredProcedureWithOutParameters(OracleConnection connection, string procedureName, params OracleParameter[] parameters)
+        {
+            using (OracleCommand cmd = new OracleCommand())
+            {
+                if (Logger.IsInfoEnabled)
+                {
+                    StringBuilder logMessage = new StringBuilder($"ExecuteStoredProcedureWithOutParameters: ({procedureName})").AppendLine();
+
+                    for (int i = 0; i < parameters.Length; i++)
+                    {
+                        string quote = (parameters[i].OracleDbType == OracleDbType.Varchar2 ? "'" : "");
+                        string ending = (i == parameters.Length - 1 ? ")" : ",");
+                        logMessage.AppendLine(quote + Convert.ToString(parameters[i].Value) + quote + ending);
+                    }
+
+                    Logger.Info(logMessage.ToString());
+                }
+
+                cmd.Connection = connection;
+                cmd.CommandText = procedureName;
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddRange(parameters);
+                cmd.BindByName = true;
+                cmd.ExecuteNonQuery();
+
+                var dictionary = new Dictionary<string, string>();
+
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    if (parameters[i].Direction == ParameterDirection.Output)
+                    {
+                        dictionary.Add(parameters[i].ParameterName, parameters[i].Value.ToString());
+                    }
+                }
+
+                return dictionary;
+            }
+        }
+
+        public DataTable ExecuteStoredProcUDVBundle(params OracleParameter[] parameters)
+        {
+            var retVal = new DataTable();
+            var dictionary = new Dictionary<string, string[]>();
+
+            lock (this)
+            {
+                using (var oConn = new OracleConnection(GetConnectionString()))
+                {
+                    oConn.Open();
+                    using (var oCmd = new OracleCommand())
+                    {
+                        oCmd.Connection = oConn;
+                        oCmd.CommandType = CommandType.StoredProcedure;
+                        oCmd.CommandText = "BAW_UDV_BUNDLE_PKG.GET_UDV_BUNDLE_VALUES";
+
+                        for (int i = 0; i < parameters.Length; i++)
+                        {
+                            oCmd.Parameters.Add(parameters[i]);
+                        }
+
+                        oCmd.BindByName = true;
+                        oCmd.ExecuteNonQuery();
+
+                        for (int i = 0; i < oCmd.Parameters.Count; i++)
+                        {
+                            if (oCmd.Parameters[i].ParameterName == "P_VAR_NAMES_OUT" || oCmd.Parameters[i].ParameterName == "P_ASSIGNMENT_VAL_OUT" || oCmd.Parameters[i].ParameterName == "P_ASSIGNMENT_OUT" || oCmd.Parameters[i].ParameterName == "P_VARTYPE_OUT")
+                            {
+                                dictionary.Add(oCmd.Parameters[i].ParameterName, ConvertToStringArray(oCmd.Parameters[i].Value as Array));
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (dictionary.Count > 0)
+            {
+                retVal.Columns.Add("VARIABLE_NAME", typeof(string));
+                retVal.Columns.Add("ASSIGNMENT_VALUE", typeof(string));
+                retVal.Columns.Add("VARIABLE_TYPE", typeof(string));
+                retVal.Columns.Add("ASSIGNMENT_ID", typeof(int));
+
+                for (int i = 0; i < dictionary["P_VAR_NAMES_OUT"].Length; i++)
+                {
+                    DataRow row = retVal.NewRow();
+                    row["VARIABLE_NAME"] = dictionary["P_VAR_NAMES_OUT"][i];
+                    row["VARIABLE_TYPE"] = dictionary["P_VARTYPE_OUT"][i];
+
+                    row["ASSIGNMENT_VALUE"] = dictionary["P_ASSIGNMENT_VAL_OUT"][i];
+                    row["ASSIGNMENT_ID"] = (dictionary["P_ASSIGNMENT_OUT"][i] == "null" ? -99 : Convert.ToInt32(dictionary["P_ASSIGNMENT_OUT"][i]));
+                    retVal.Rows.Add(row);
+                }
+
+                retVal.AcceptChanges();
+            }
+
+            return retVal;
+        }
+
+        public void GetLowestRankInContext(List<string> prodList, List<string> lotList, List<string> funcList, ref int outLowestRank, ref string outMessage)
+        {
+            var userIdParam = CreateOracleParameter("P_USER_ID_IN", ParameterDirection.Input, OracleDbType.Int32, UserInfo.ActiveUser.userID, null);
+            var userDefaultRankParam = CreateOracleParameter("P_DEFAULT_RANK", ParameterDirection.Input, OracleDbType.Int32, UserInfo.ActiveUser.rank, null);
+            var lowestRankParam = CreateOracleParameter("P_LOWEST_RANK_OUT", ParameterDirection.Output, OracleDbType.Int32, null, null);
+            var outMsgParam = CreateOracleParameter("P_STATUS_OUT", ParameterDirection.Output, OracleDbType.Varchar2, null, 255);
+            var prodListParam = CreateStringAssociativeArray("P_PROD_LIST_IN", prodList, ParameterDirection.Input);
+            var lotListParam = CreateStringAssociativeArray("P_LOT_LIST_IN", lotList, ParameterDirection.Input);
+            var funcListParam = CreateStringAssociativeArray("P_FUNC_LIST_IN", funcList, ParameterDirection.Input);
+
+            var outParamVal = TQTBAW.ExecuteStoredProcedureWithOutParameters("BAW_LOWEST_RANK_PKG.GET_LOWEST_RANK_IN_CONTEXT", userIdParam, prodListParam, lotListParam, funcListParam, userDefaultRankParam, lowestRankParam, outMsgParam);
+
+            if (!string.IsNullOrEmpty(outParamVal["P_LOWEST_RANK_OUT"]) && (!string.IsNullOrEmpty(outParamVal["P_STATUS_OUT"])))
+            {
+                outLowestRank = Convert.ToInt32(outParamVal["P_LOWEST_RANK_OUT"]);
+                outMessage = outParamVal["P_STATUS_OUT"];
+            }
+        }
+
+        public Dictionary<string, string[]> ExecuteStoredProcAssociativeArraysOutput(string procName, params OracleParameter[] parameters)
+        {
+            var retVal = new Dictionary<string, string[]>();
+            lock (this)
+            {
+                using (var oConn = new OracleConnection(GetConnectionString()))
+                {
+                    oConn.Open();
+                    using (var oCmd = new OracleCommand())
+                    {
+                        oCmd.Connection = oConn;
+                        oCmd.CommandType = CommandType.StoredProcedure;
+                        oCmd.CommandText = procName;
+
+                        for (int i = 0; i < parameters.Length; i++)
+                        {
+                            oCmd.Parameters.Add(parameters[i]);
+                        }
+
+                        oCmd.BindByName = true;
+                        oCmd.ExecuteNonQuery();
+
+                        for (int i = 0; i < parameters.Length; i++)
+                        {
+                            if (parameters[i].Direction == ParameterDirection.Output && parameters[i].Value != null)
+                            {
+                                retVal.Add(parameters[i].ParameterName, ConvertToStringArray(parameters[i].Value as Array));
+                            }
+                        }
+                    }
+                }
+            }
+
+            return retVal;
+        }
+
+        public static string[] ConvertToStringArray(Array values)
+        {
+            if (values == null)
+            {
+                return new[] { "null" };
+            }
+
+            // create a new string array
+            string[] stringArray = new string[values.Length];
+
+            // loop through  System.Array and populate the 1-D String Array
+            for (int i = 0; i < values.Length; i++)
+            {
+                stringArray[i] = values.GetValue(i).ToString();
+            }
+
+            return stringArray;
+        }
+
+        private object ExecuteScalar(OracleConnection connection, string sql)
+        {
+            using (var cmd = new OracleCommand(sql, connection))
+            {
+                Logger.Info("ExecuteScalar query: " + sql);
+
+                try
+                {
+                    return cmd.ExecuteScalar();
+                }
+                catch (OracleException ex)
+                {
+                    // log any oracle errors
+                    LogDataLayerError(ex, CreatePollyContext(nameof(ExecuteScalar), sql));
+
+                    // NOTE: This was the original behavior before adding the logging.  Just keep that for now...
+                    throw;
+                }
+            }
+        }
+
+        private DataTable ExecuteQuery(string connectionString, string sql, Action<OracleDependency, OracleNotificationRequest> dependencyConfiguration)
+        {
+            var context = CreatePollyContext(nameof(ExecuteQuery), sql);
+
+            try
+            {
+                return PoliciesTogether
+                    .Execute(_ =>
+                    {
+                        using (var connection = new OracleConnection(connectionString))
+                        {
+                            connection.Open();
+                            using (var da = new OracleDataAdapter(sql, connection))
+                            {
+                                Logger.Info($"ExecuteQuery query: {sql}");
+
+                                if (dependencyConfiguration != null)
+                                {
+                                    // add the ROWID to the query to identify the specific rows that have changed
+                                    da.SelectCommand.AddRowid = true;
+
+                                    // create the dependency.  NOTE: It is not registered with the database until the command is executed!
+                                    var dependency = new OracleDependency(da.SelectCommand);
+
+                                    // allow the user to configure the dependency and notification requests, as these
+                                    // will be different depending on what kind of query/notification/... is needed
+                                    dependencyConfiguration(dependency, da.SelectCommand.Notification);
+                                }
+
+                                var dt = new DataTable();
+                                try
+                                {
+                                    da.Fill(dt);
+                                }
+                                catch (OracleException oraEx) when (oraEx.Number == 29972) // user does not have privilege to change/create registration
+                                {
+                                    // TODO: Remove this inner try/catch after get these privileges in production environment...
+                                    /* NOTE: These privileges are currently only granted in the development database.
+                                     * This can cause issues when running against the production database.  For now,
+                                     * we'll handle the specific exception where the user doesn't have the correct
+                                     * privileges to create a notification, and simply reload the data *without* creating the OCN.
+                                    */
+                                    da.SelectCommand.Notification = null;
+                                    da.Fill(dt);
+                                }
+                                catch (InvalidCastException invalidCastEx)
+                                {
+                                    Logger.Error(invalidCastEx.Message, invalidCastEx);
+                                    Logger.Info("Exception will be handled by re-creating DataTable with proper data-column types.");
+
+                                    dt = new DataTable();
+                                    using (OracleCommand oCmd = new OracleCommand(sql, connection))
+                                    {
+                                        OracleDataReader dr = oCmd.ExecuteReader(CommandBehavior.CloseConnection);
+                                        DataTable dtSchema = dr.GetSchemaTable();
+
+                                        List<DataColumn> listCols = new List<DataColumn>();
+                                        if (dtSchema != null)
+                                        {
+                                            foreach (DataRow row in dtSchema.Rows)
+                                            {
+                                                var columnName = Convert.ToString(row["ColumnName"].ToString());
+                                                Type colType = (Type)(row["DataType"]);
+
+                                                if (colType == typeof(decimal))
+                                                {
+                                                    colType = typeof(double);
+                                                }
+
+                                                DataColumn column = new DataColumn(columnName, colType);
+                                                listCols.Add(column);
+                                                dt.Columns.Add(column);
+                                            }
+
+                                            //Read from dataReader
+                                            while (dr.Read())
+                                            {
+                                                DataRow dataRow = dt.NewRow();
+                                                for (var i = 0; i < listCols.Count; i++)
+                                                {
+                                                    if (dr.GetFieldType(i)?.FullName == "System.Decimal")
+                                                    {
+                                                        dataRow[listCols[i]] = dr.GetOracleDecimal(i).ToString();
+                                                    }
+                                                    else
+                                                    {
+                                                        dataRow[listCols[i]] = dr[i];
+                                                    }
+                                                }
+
+                                                dt.Rows.Add(dataRow);
+                                            }
+                                        }
+                                    }
+                                }
+                                return dt;
+                            }
+                        }
+                    },
+                    context);
+            }
+            catch (Exception ex)
+            {
+                LogDataLayerError(ex, context);
+                if (ex.GetType().Name == "TimeoutRejectedException")
+                {
+                    throw new PollyConnectionTimeOutException(ex.Message + $" Query: {sql}");
+                }
+
+                return new DataTable();
+            }
+        }
+
+        private int ExecuteNonQuery(OracleConnection connection, string sql)
+        {
+            using (var cmd = new OracleCommand(sql, connection))
+            {
+                Logger.Info("ExecuteNonQuery query: " + sql);
+
+                try
+                {
+                    return cmd.ExecuteNonQuery();
+                }
+                catch (OracleException ex)
+                {
+                    // log any oracle errors
+                    LogDataLayerError(ex, CreatePollyContext(nameof(ExecuteNonQuery), sql));
+
+                    // NOTE: This was the original behavior before adding the logging.  Just keep that for now...
+                    throw;
+                }
+            }
+        }
+
+        private int ExecuteNonQueryWithParameters(OracleConnection connection, string sql, params OracleParameter[] parameters)
+        {
+            using (var cmd = new OracleCommand(sql, connection))
+            {
+                Logger.Info("ExecuteNonQueryWithParameters query: " + sql);
+
+                cmd.Parameters.AddRange(parameters);
+                cmd.BindByName = true;
+
+                try
+                {
+                    return cmd.ExecuteNonQuery();
+                }
+                catch (OracleException ex)
+                {
+                    // log any oracle errors
+                    LogDataLayerError(ex, CreatePollyContext(nameof(ExecuteNonQueryWithParameters), sql));
+
+                    // NOTE: This was the original behavior before adding the logging.  Just keep that for now...
+                    throw;
+                }
+            }
+        }
+
+        private DataTable ExecuteQueryWithParameters(string connectionString, string sql, params OracleParameter[] parameters)
+        {
+            var context = CreatePollyContext(nameof(ExecuteQuery), sql);
+
+            try
+            {
+                return RetryOncePolicy
+                    .Execute(_ =>
+                    {
+                        using (OracleConnection connection = new OracleConnection(connectionString))
+                        {
+                            connection.Open();
+                            using (OracleCommand cmd = new OracleCommand(sql, connection))
+                            {
+                                cmd.Parameters.AddRange(parameters);
+                                cmd.BindByName = true;
+
+                                using (OracleDataAdapter da = new OracleDataAdapter(cmd))
+                                {
+                                    Logger.Info($"ExecuteQueryWithParameters query: {sql}");
+
+                                    DataTable dt = new DataTable();
+                                    da.Fill(dt);
+                                    return dt;
+                                }
+                            }
+                        }
+                    },
+                    context);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                LogDataLayerError(ex, context);
+                return new DataTable();
+            }
+        }
+
+        private byte[] ExecuteNonQueryWithBlobOutputParameter(OracleConnection connection, string sql, string blobParameterName)
+        {
+            using (var cmd = new OracleCommand(sql, connection))
+            {
+                Logger.Info("ExecuteNonQueryWithBlobOutputParameter query: " + sql);
+
+                cmd.Parameters.Add(Parameter(blobParameterName, ParameterDirection.Output, OracleDbType.Blob));
+                cmd.BindByName = true;
+
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (OracleException ex)
+                {
+                    // log any oracle errors
+                    LogDataLayerError(ex, CreatePollyContext(nameof(ExecuteNonQueryWithBlobOutputParameter), sql));
+
+                    // NOTE: This was the original behavior before adding the logging.  Just keep that for now...
+                    throw;
+                }
+
+                using (OracleBlob lob = (OracleBlob)cmd.Parameters[0].Value)
+                {
+                    return lob.Value;
+                }
+            }
+        }
+
+        private DataTable ExecuteStoredProcedureQuery(OracleConnection connection, string procedureName, params OracleParameter[] parameters)
+        {
+            using (var cmd = new OracleCommand())
+            {
+                Logger.Info("ExecuteStoredProcedureQuery procedureName: " + procedureName);
+
+                cmd.Connection = connection;
+                cmd.CommandText = procedureName;
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.BindByName = true;
+                cmd.Parameters.AddRange(parameters);
+
+                using (OracleDataAdapter da = new OracleDataAdapter(cmd))
+                {
+                    DataTable dt = new DataTable();
+                    try
+                    {
+                        da.Fill(dt);
+                    }
+                    catch (OracleException e)
+                    {
+                        if (e.Message.StartsWith("ORA-01403")) //no data found
+                        {
+                            dt = null;
+                        }
+                    }
+                    return dt;
+                }
+            }
+        }
+
+        private object ExecuteStoredProcedureNonQuery(OracleConnection connection, string procedureName, params OracleParameter[] parameters)
+        {
+            using (var cmd = new OracleCommand())
+            {
+                Logger.Info("ExecuteStoredProcedureNonQuery procedureName: " + procedureName);
+
+                cmd.Connection = connection;
+                cmd.CommandText = procedureName;
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddRange(parameters);
+                cmd.BindByName = true;
+                cmd.ExecuteNonQuery();
+
+                // Rather than return the result of ExecuteNonQuery, which will always be -1 for stored
+                // procedures, let's return the value of the ReturnValue parameter if there is one:
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    if (parameters[i].Direction == ParameterDirection.ReturnValue)
+                    {
+                        return parameters[i].Value;
+                    }
+                }
+
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Log a message from the data layer of the application to both the logger and Raygun.
+        /// </summary>
+        /// <typeparam name="T">The type of the exception being logged.</typeparam>
+        /// <param name="error">The error being logged.</param>
+        /// <param name="additionalData">Additional data to be logged.</param>
+        private static void LogDataLayerError<T>(T error, IDictionary<string, object> additionalData = null)
+            where T : Exception
+        {
+            // log the error using the logger
+            Logger.Error(error.Message, error);
+
+
+            // submit the event
+            Raygun?.Value?.Send(
+                error,
+                new List<string> { "DataLayer" },
+                additionalData?.ToDictionary(x => x.Key, x => x.Value));
+        }
+
+        public static void GetBawUDVValue(OracleConnection connection, string variable, ref string product, ref string lot, ref string state, ref string route, ref string operation, string function, ref decimal status, ref string message, ref string value, ref string aid)
+        {
+            decimal retrievedUdvStatus = 0;
+            string retrievedUdvMsg = string.Empty;
+            string retrievedUdvAssignmentVal = string.Empty;
+            string retrievedUdvAssignmentId = string.Empty;
+
+            if (string.IsNullOrEmpty(operation))
+            {
+                operation = "-1";
+            }
+
+            //Input Parameters
+            var variableNameParam = CreateOracleParameter("IN_VARIABLE_NAME", ParameterDirection.Input, OracleDbType.Varchar2, variable, 100);
+            var oracleParameter = CreateOracleParameter("IN_PRODUCT", ParameterDirection.Input, OracleDbType.Varchar2, product, 100);
+            var lotParam = CreateOracleParameter("IN_LOT", ParameterDirection.Input, OracleDbType.Varchar2, lot, 100);
+            var stateParam = CreateOracleParameter("IN_STATE", ParameterDirection.Input, OracleDbType.Varchar2, state, 100);
+            var routeParam = CreateOracleParameter("IN_ROUTE", ParameterDirection.Input, OracleDbType.Varchar2, route, 100);
+            var operParam = CreateOracleParameter("IN_OPER", ParameterDirection.Input, OracleDbType.Decimal, operation);
+            var funcParam = CreateOracleParameter("IN_FUNCTION", ParameterDirection.Input, OracleDbType.Varchar2, function, 100);
+
+            //Output Parameters
+            var statusParam = CreateOracleParameter("OUT_STATUS", ParameterDirection.Output, OracleDbType.Decimal, null);
+            var msgParam = CreateOracleParameter("OUT_MESSAGE", ParameterDirection.Output, OracleDbType.Varchar2, null, 4000);
+            var assignmentValParam = CreateOracleParameter("OUT_ASSIGNED_VALUE", ParameterDirection.Output, OracleDbType.Varchar2, null, 4000);
+            var assignmentIdParam = CreateOracleParameter("OUT_ASSIGNMENT_ID", ParameterDirection.Output, OracleDbType.Decimal, null);
+
+            try
+            {
+                using (var oCmd = new OracleCommand())
+                {
+                    oCmd.Connection = connection;
+
+                    oCmd.Parameters.Add(variableNameParam);
+                    oCmd.Parameters.Add(oracleParameter);
+                    oCmd.Parameters.Add(lotParam);
+                    oCmd.Parameters.Add(stateParam);
+                    oCmd.Parameters.Add(routeParam);
+                    oCmd.Parameters.Add(operParam);
+                    oCmd.Parameters.Add(funcParam);
+                    oCmd.Parameters.Add(statusParam);
+                    oCmd.Parameters.Add(msgParam);
+                    oCmd.Parameters.Add(assignmentValParam);
+                    oCmd.Parameters.Add(assignmentIdParam);
+
+                    oCmd.CommandType = CommandType.StoredProcedure;
+                    oCmd.CommandText = "UDV_RETRIEVE_VAL.GET_UDV_VALUE";
+                    oCmd.BindByName = true;
+                    oCmd.ExecuteNonQuery();
+
+                    retrievedUdvStatus = Convert.ToDecimal(oCmd.Parameters["OUT_STATUS"].Value.ToString());
+                    retrievedUdvMsg = oCmd.Parameters["OUT_MESSAGE"].Value.ToString();
+                    retrievedUdvAssignmentVal = oCmd.Parameters["OUT_ASSIGNED_VALUE"].Value.ToString();
+                    retrievedUdvAssignmentId = oCmd.Parameters["OUT_ASSIGNMENT_ID"].Value.ToString();
+                }
+            }
+            catch (Exception oEx)
+            {
+                Logger.Error(oEx.Message);
+                MessageBoxWrappers.MessageBox.Show(oEx.Message, "Error", MessageBoxWrappers.MessageBoxButtons.OK, MessageBoxWrappers.MessageBoxIcon.Exclamation);
+            }
+
+            status = retrievedUdvStatus;
+            message = retrievedUdvMsg;
+            value = retrievedUdvAssignmentVal;
+            aid = retrievedUdvAssignmentId;
+
+            if (retrievedUdvStatus <= 0)
+            {
+                aid = "-99";
+            }
+            else if (retrievedUdvStatus > 0)
+            {
+                if (!string.IsNullOrEmpty(retrievedUdvAssignmentVal) && retrievedUdvAssignmentVal.ToLower() == "null")
+                {
+                    value = "";
+                }
+            }
+        }
+
+        public int GeneralTwoStepTransaction(string strSQL1, string strSQL2)
+        {
+            int stat = -1;
+
+            lock (this)
+            {
+                using (var connection = new OracleConnection(GetConnectionString()))
+                {
+                    OracleTransaction transaction = null;
+                    OracleCommand cmd = connection.CreateCommand();
+                    try
+                    {
+                        if (connection.State == ConnectionState.Closed)
+                            connection.Open();
+                        transaction = connection.BeginTransaction();
+                        cmd.Transaction = transaction;
+                        cmd.CommandText = strSQL1;
+                        stat = cmd.ExecuteNonQuery();
+                        cmd.CommandText = strSQL2;
+                        stat = cmd.ExecuteNonQuery();
+
+                        transaction.Commit();
+                        Console.WriteLine("Delete and insert succeeded");
+                    }
+                    catch (OracleException oex2)
+                    {
+                        stat = -99; // error occurred
+                        transaction?.Rollback();
+                        Console.WriteLine(oex2.Message);
+                        Console.WriteLine("Transaction Failed... Rolledback");
+                    }
+                }
+            }
+
+            return stat;
+        }
+
+        /// <summary>
+        /// Executes the commands inside a transaction.
+        /// </summary>
+        /// <param name="commands">The collection of commands to execute within a single transaction.</param>
+        /// <returns><c>true</c> if the commands are executed and the transaction is committed;  otherwise, <c>false</c>.</returns>
+        public bool ExecuteStatementsInTransaction(IEnumerable<string> commands)
+        {
+            // trim the commands down to only those that actually have text
+            commands = commands?.Where(command => !string.IsNullOrWhiteSpace(command));
+            if (commands == null || !commands.Any())
+            {
+                return true;
+            }
+
+            lock (this)
+            {
+                try
+                {
+                    using (var connection = new OracleConnection(GetConnectionString()))
+                    {
+                        connection.Open();
+                        OracleTransaction transaction = null;
+                        try
+                        {
+                            Logger.Info($"Executing {commands.Count()} commands inside a transaction");
+
+                            // begin the transaction that will be used for all commands
+                            transaction = connection.BeginTransaction();
+
+                            // execute each command using the transaction we've started
+                            foreach (var commandText in commands)
+                            {
+                                Logger.Info($"Executing command: {commandText}");
+                                using (var command = new OracleCommand(commandText, connection))
+                                {
+                                    command.Transaction = transaction;
+                                    command.ExecuteNonQuery();
+                                }
+                            }
+
+                            // commit the transaction and let callers know the operation was successful
+                            transaction.Commit();
+                            Logger.Info("Transaction committed");
+                            return true;
+                        }
+                        catch (Exception ex)
+                        {
+                            // roll back the transaction and let callers know the operation failed
+                            transaction?.Rollback();
+                            Logger.Error("Error executing commands in transaction.  Transaction rolled back.", ex);
+                            return false;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // if there's an error opening a connection, just let callers know the operation failed
+                    Logger.Error("Could not open connection.", ex);
+                    return false;
+                }
+            }
+        }
+
+        //For Editing an assignment
+        public DataTable GetFlowFunctionEditableProducts(int userId, int usersDefaultRank, int groupId, bool useAllProductsFlag, bool useFunctionRights)
+        {
+            var dt = new DataTable();
+
+            dt.Columns.Add(new DataColumn("CHECK", typeof(bool)));
+            dt.Columns.Add(new DataColumn("PRODUCT", typeof(string)));
+            dt.Columns.Add(new DataColumn("CAN_EDIT", typeof(bool)));
+
+            var userIdParam = CreateOracleParameter("IN_USER_ID_IN", ParameterDirection.Input, OracleDbType.Decimal, userId);
+            var usersDefaultRankParam = CreateOracleParameter("IN_DEFAULT_RANK", ParameterDirection.Input, OracleDbType.Decimal, usersDefaultRank);
+            var groupIdParam = CreateOracleParameter("IN_GROUP_ID", ParameterDirection.Input, OracleDbType.Decimal, groupId);
+            var useAllProductsFlagParam = CreateOracleParameter("IN_USE_ALL_PRODUCTS", ParameterDirection.Input, OracleDbType.Decimal, useAllProductsFlag ? 1 : 0);
+            var useFunctionRightsParam = CreateOracleParameter("IN_USE_FUNC_RIGHTS", ParameterDirection.Input, OracleDbType.Decimal, useFunctionRights ? 1 : 0);
+            var outCheckParam = CreateStringAssociativeArray("OUT_CHECK", null, ParameterDirection.Output, 2000);
+            var outProductParam = CreateStringAssociativeArray("OUT_PRODUCT", null, ParameterDirection.Output, 2000);
+            var outCanEditParam = CreateStringAssociativeArray("OUT_CAN_EDIT", null, ParameterDirection.Output, 2000);
+
+            lock (this)
+            {
+                using (var connection = new OracleConnection(GetConnectionString()))
+                {
+                    connection.Open();
+                    using (OracleCommand cmd = new OracleCommand())
+                    {
+                        cmd.Connection = connection;
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.CommandText = "BAW_LOWEST_RANK_PKG.GET_EDITABLE_PRODUCTS_EDIT";
+
+                        cmd.Parameters.Add(userIdParam);
+                        cmd.Parameters.Add(usersDefaultRankParam);
+                        cmd.Parameters.Add(groupIdParam);
+                        cmd.Parameters.Add(useAllProductsFlagParam);
+                        cmd.Parameters.Add(useFunctionRightsParam);
+                        cmd.Parameters.Add(outCheckParam);
+                        cmd.Parameters.Add(outProductParam);
+                        cmd.Parameters.Add(outCanEditParam);
+
+                        cmd.BindByName = true;
+
+                        try
+                        {
+                            cmd.ExecuteNonQuery();
+
+                            if (cmd.Parameters["OUT_CHECK"].Value != null && cmd.Parameters["OUT_PRODUCT"].Value != null && cmd.Parameters["OUT_CAN_EDIT"].Value != null)
+                            {
+                                string[] checks = ConvertToStringArray(cmd.Parameters["OUT_CHECK"].Value as Array);
+                                string[] products = ConvertToStringArray(cmd.Parameters["OUT_PRODUCT"].Value as Array);
+                                string[] canEdit = ConvertToStringArray(cmd.Parameters["OUT_CAN_EDIT"].Value as Array);
+
+                                for (int i = 0; i < checks.Length; i++)
+                                {
+                                    DataRow dataRow = dt.NewRow();
+                                    dataRow["CHECK"] = (Convert.ToInt32(checks[i]) == 0 ? false : true);
+                                    dataRow["PRODUCT"] = products[i];
+                                    dataRow["CAN_EDIT"] = (Convert.ToInt32(canEdit[i]) == 0 ? false : true);
+                                    dt.Rows.Add(dataRow);
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBoxWrappers.MessageBox.Show(ex.Message, "Editing Assignment " + groupId, MessageBoxWrappers.MessageBoxButtons.OK, MessageBoxWrappers.MessageBoxIcon.Error);
+                            Logger.Error(ex.Message, ex);
+                        }
+                    }
+                }
+            }
+            dt.AcceptChanges();
+            return dt;
+        }
+
+        //For a new Assignment
+        public DataTable GetFlowFunctionEditableProducts(int userId, int usersDefaultRank, bool useAllProductsFlag, int defaultFuncCategory)
+        {
+            var dt = new DataTable();
+
+            dt.Columns.Add(new DataColumn("CHECK", typeof(bool)));
+            dt.Columns.Add(new DataColumn("PRODUCT", typeof(string)));
+            dt.Columns.Add(new DataColumn("CAN_EDIT", typeof(bool)));
+
+            var userIdParam = CreateOracleParameter("IN_USER_ID_IN", ParameterDirection.Input, OracleDbType.Decimal, userId);
+            var usersDefaultRankParam = CreateOracleParameter("IN_DEFAULT_RANK", ParameterDirection.Input, OracleDbType.Decimal, usersDefaultRank);
+            var useAllProductsFlagParam = CreateOracleParameter("IN_USE_ALL_PRODUCTS", ParameterDirection.Input, OracleDbType.Decimal, useAllProductsFlag ? 1 : 0);
+            var defaultFuncCategoryParam = CreateOracleParameter("IN_FUNC_CATEGORY_RANK", ParameterDirection.Input, OracleDbType.Decimal, defaultFuncCategory);
+            var outCheckParam = CreateStringAssociativeArray("OUT_CHECK", null, ParameterDirection.Output, 2000);
+            var outProductParam = CreateStringAssociativeArray("OUT_PRODUCT", null, ParameterDirection.Output, 2000);
+            var outCanEditParam = CreateStringAssociativeArray("OUT_CAN_EDIT", null, ParameterDirection.Output, 2000);
+
+            lock (this)
+            {
+                using (var connection = new OracleConnection(GetConnectionString()))
+                {
+                    connection.Open();
+                    using (var cmd = new OracleCommand())
+                    {
+                        cmd.Connection = connection;
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.CommandText = "BAW_LOWEST_RANK_PKG.GET_EDITABLE_PRODUCTS_ADD_NEW";
+
+                        cmd.Parameters.Add(userIdParam);
+                        cmd.Parameters.Add(usersDefaultRankParam);
+                        cmd.Parameters.Add(defaultFuncCategoryParam);
+                        cmd.Parameters.Add(useAllProductsFlagParam);
+                        cmd.Parameters.Add(outCheckParam);
+                        cmd.Parameters.Add(outProductParam);
+                        cmd.Parameters.Add(outCanEditParam);
+
+                        cmd.BindByName = true;
+
+                        try
+                        {
+                            cmd.ExecuteNonQuery();
+
+                            if (cmd.Parameters["OUT_CHECK"].Value != null && cmd.Parameters["OUT_PRODUCT"].Value != null && cmd.Parameters["OUT_CAN_EDIT"].Value != null)
+                            {
+                                string[] checks = ConvertToStringArray(cmd.Parameters["OUT_CHECK"].Value as Array);
+                                string[] products = ConvertToStringArray(cmd.Parameters["OUT_PRODUCT"].Value as Array);
+                                string[] canEdit = ConvertToStringArray(cmd.Parameters["OUT_CAN_EDIT"].Value as Array);
+
+                                for (int i = 0; i < checks.Length; i++)
+                                {
+                                    DataRow dataRow = dt.NewRow();
+                                    dataRow["CHECK"] = (Convert.ToInt32(checks[i]) == 0 ? false : true);
+                                    dataRow["PRODUCT"] = products[i];
+                                    dataRow["CAN_EDIT"] = (Convert.ToInt32(canEdit[i]) == 0 ? false : true);
+                                    dt.Rows.Add(dataRow);
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBoxWrappers.MessageBox.Show(ex.Message, "New Assignment ", MessageBoxWrappers.MessageBoxButtons.OK, MessageBoxWrappers.MessageBoxIcon.Error);
+                            Logger.Error(ex.Message, ex);
+                        }
+                    }
+                }
+            }
+            dt.AcceptChanges();
+            return dt;
+        }
+
+        public bool CanDeleteFlowFunctionAssignment(int userId, int usersDefaultRank, int groupId)
+        {
+            lock (this)
+            {
+                using (var connection = new OracleConnection(GetConnectionString()))
+                {
+                    connection.Open();
+                    using (var cmd = new OracleCommand())
+                    {
+                        cmd.Connection = connection;
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.CommandText = "BAW_LOWEST_RANK_PKG.CAN_DELETE_FLOW_ASSIGNMENT";
+                        cmd.BindByName = true;
+
+                        cmd.Parameters.Add(CreateOracleParameter("IN_USER_ID", ParameterDirection.Input, OracleDbType.Decimal, userId));
+                        cmd.Parameters.Add(CreateOracleParameter("IN_DEFAULT_RANK", ParameterDirection.Input, OracleDbType.Decimal, usersDefaultRank));
+                        cmd.Parameters.Add(CreateOracleParameter("IN_GROUP_ID", ParameterDirection.Input, OracleDbType.Decimal, groupId));
+
+                        var resultParameter = new OracleParameter
+                        {
+                            Direction = ParameterDirection.ReturnValue,
+                            OracleDbType = OracleDbType.Decimal
+                        };
+                        cmd.Parameters.Add(resultParameter);
+
+                        try
+                        {
+                            cmd.ExecuteNonQuery();
+                            if (resultParameter.Value != null && resultParameter.Value != DBNull.Value)
+                            {
+                                return Convert.ToBoolean(((OracleDecimal)resultParameter.Value).Value);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBoxWrappers.MessageBox.Show(ex.Message, "Checking Delete Rights: " + groupId, MessageBoxWrappers.MessageBoxButtons.OK, MessageBoxWrappers.MessageBoxIcon.Error);
+                            Logger.Error(ex.Message, ex);
+                        }
+                    }
+                }
+            }
+
+            // return false by default for safety :)
+            return false;
+        }
+
+        public UDVCopyTranslationObject GetUDVCopyTranslationObject(int assignmentId, string srcProd, string destProd)
+        {
+            var retVal = new UDVCopyTranslationObject();
+            retVal.ActionType = UDVCopyActionType.DoNotCopy;
+            retVal.AssignmentId = -99;
+            retVal.ListOfSansToCopy = new List<decimal>();
+
+            lock (this)
+            {
+                using (var oConn = new OracleConnection(GetConnectionString()))
+                {
+                    using (var oCmd = new OracleCommand())
+                    {
+                        var assignmentIdInParam = CreateOracleParameter("IN_ASSIGNMENT_ID_FROM", ParameterDirection.Input, OracleDbType.Decimal, assignmentId);
+                        var srcProductInParam = CreateOracleParameter("IN_SRC_PRODUCT", ParameterDirection.Input, OracleDbType.Varchar2, srcProd, 30);
+                        var destProductInParam = CreateOracleParameter("IN_DEST_PRODUCT", ParameterDirection.Input, OracleDbType.Varchar2, destProd, 30);
+                        var statusMsgOutParam = CreateOracleParameter("OUT_STATUS_MSG", ParameterDirection.Output, OracleDbType.Varchar2, null, 4000);
+                        var actionTypeOutParam = CreateOracleParameter("OUT_ACTION_TYPE", ParameterDirection.Output, OracleDbType.Varchar2, null, 4000);
+                        var assignmentIdOutParam = CreateOracleParameter("OUT_ASSIGNMENT_ID", ParameterDirection.Output, OracleDbType.Decimal, null, null);
+                        var sanListOutParam = CreateDecimalAssociativeArray("OUT_SAN_LIST", null, ParameterDirection.Output, 3000);
+
+                        oCmd.Connection = oConn;
+                        oCmd.CommandType = CommandType.StoredProcedure;
+                        oCmd.CommandText = "UDV_RETRIEVE_VAL.GET_SANS_LIST_FOR_UDV_COPY";
+                        oCmd.Parameters.Add(assignmentIdInParam);
+                        oCmd.Parameters.Add(srcProductInParam);
+                        oCmd.Parameters.Add(destProductInParam);
+                        oCmd.Parameters.Add(statusMsgOutParam);
+                        oCmd.Parameters.Add(actionTypeOutParam);
+                        oCmd.Parameters.Add(assignmentIdOutParam);
+                        oCmd.Parameters.Add(sanListOutParam);
+                        oCmd.BindByName = true;
+
+                        try
+                        {
+                            oConn.Open();
+                            oCmd.ExecuteNonQuery();
+
+                            retVal.Status = statusMsgOutParam.Value.ToString();
+
+                            if (statusMsgOutParam.Value.ToString() == "SUCCESS")
+                            {
+                                if (actionTypeOutParam.Value.ToString() == "ADD_PRODUCT_TO_EXISTING_ASSIGNMENT")
+                                {
+                                    retVal.ActionType = UDVCopyActionType.AddProductToExistingAssignment;
+                                    retVal.AssignmentId = Convert.ToInt32(assignmentIdOutParam.Value);
+                                }
+                                else if (actionTypeOutParam.Value.ToString() == "CREATE_NEW_ASSIGNMENT")
+                                {
+                                    retVal.ActionType = UDVCopyActionType.CreateNewAssignment;
+                                    foreach (var item in sanListOutParam.Value as Array)
+                                    {
+                                        retVal.ListOfSansToCopy.Add(decimal.Parse(item.ToString()));
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Error(ex.Message, ex);
+                            retVal.Status = ex.Message;
+                        }
+                    }
+                }
+            }
+
+            return retVal;
+        }
+
+        public static void LogUdvAssignment(int assignmentId, string lotList, string productList, string stateList, string routeOperList, string callLabelList, string variableName, string udvValue, string transactionType)
+        {
+            const int maxStringLength = 3980;
+
+            if (productList.Length > maxStringLength || stateList.Length > maxStringLength || routeOperList.Length > maxStringLength || callLabelList.Length > maxStringLength)
+            {
+                var slicedProductVal = HelperTools.SplitLargeStringIntoSmallerChunks(productList, maxStringLength).ToList();
+                var slicedStatesVal = HelperTools.SplitLargeStringIntoSmallerChunks(stateList, maxStringLength).ToList();
+                var slicedRouteOperVal = HelperTools.SplitLargeStringIntoSmallerChunks(routeOperList, maxStringLength).ToList();
+                var slicedFunctionsVal = HelperTools.SplitLargeStringIntoSmallerChunks(callLabelList, maxStringLength).ToList();
+
+                var maxCount = (new List<List<string>> { slicedProductVal, slicedStatesVal, slicedRouteOperVal, slicedFunctionsVal })
+                                .OrderByDescending(x => x.Count())
+                                .First().Count;
+
+                for (int i = 0; i < maxCount; i++)
+                {
+                    var itemExistsInProdList = slicedProductVal.ElementAtOrDefault(i) != null;
+                    var itemExistsInStateList = slicedStatesVal.ElementAtOrDefault(i) != null;
+                    var itemExistsInRouteOperList = slicedRouteOperVal.ElementAtOrDefault(i) != null;
+                    var itemExistsInFuncList = slicedFunctionsVal.ElementAtOrDefault(i) != null;
+
+                    var prodItem = string.Empty;
+                    var stateItem = string.Empty;
+                    var routeOperItem = string.Empty;
+                    var funcItem = string.Empty;
+
+                    if (itemExistsInProdList)
+                    {
+                        prodItem = slicedProductVal[i];
+                    }
+
+                    if (itemExistsInStateList)
+                    {
+                        stateItem = slicedStatesVal[i];
+                    }
+
+                    if (itemExistsInRouteOperList)
+                    {
+                        routeOperItem = slicedRouteOperVal[i];
+                    }
+
+                    if (itemExistsInFuncList)
+                    {
+                        funcItem = slicedFunctionsVal[i];
+                    }
+
+                    InsertIntoUdvLogTable(assignmentId, lotList, prodItem, stateItem, routeOperItem, funcItem, variableName, udvValue, transactionType);
+                }
+            }
+            else
+            {
+                InsertIntoUdvLogTable(assignmentId, lotList, productList, stateList, routeOperList, callLabelList, variableName, udvValue, transactionType);
+            }
+        }
+
+        private static void InsertIntoUdvLogTable(int assignmentId, string lotVal, string prodVal, string stateVal, string routeOperVal, string funcVal, string variableName, string assignmentValue, string transactionType)
+        {
+            try
+            {
+                TQTBAW.ExecuteNonQuery(@"
+                INSERT INTO LOG_UDV_ASSIGNMENT (ASSIGNMENT_ID, USERNAME, MACHINE, LOT, PRODUCT, STATE, RTE_OPER, FUNCTION, VARIABLE_NAME, VALUE, ADD_DELETE_MODIFY, TIME_STAMP, DV_VERSION) VALUES ("
+                + assignmentId + ", '"
+                + UserInfo.ActiveUser.userName + "', '"
+                + Environment.MachineName + "', "
+                + (string.IsNullOrEmpty(lotVal) ? "NULL" : "'" + lotVal + "'") + ", "
+                + (string.IsNullOrEmpty(prodVal) ? "NULL" : "'" + prodVal + "'") + ", "
+                + (string.IsNullOrEmpty(stateVal) ? "NULL" : "'" + stateVal + "'") + ", "
+                + (string.IsNullOrEmpty(routeOperVal) ? "NULL" : "'" + routeOperVal + "'") + ", "
+                + (string.IsNullOrEmpty(funcVal) ? "NULL" : "'" + funcVal + "'") + ", "
+                + (string.IsNullOrEmpty(variableName) ? "NULL" : "'" + variableName + "'") + ", "
+                + (string.IsNullOrEmpty(assignmentValue) ? "NULL" : "'" + HelperTools.FormatSQLString(assignmentValue) + "'") + ", '"
+                + transactionType + "', SYSTIMESTAMP, '"
+                + System.Reflection.Assembly.GetExecutingAssembly().GetName().Version + "')"
+                );
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex.Message, ex);
+            }
+        }
+    }
+
+    public enum UDVCopyActionType
+    {
+        DoNotCopy,
+        CreateNewAssignment,
+        AddProductToExistingAssignment
+    }
+
+    public class UDVCopyTranslationObject
+    {
+        public UDVCopyActionType ActionType { get; set; }
+        public int AssignmentId { get; set; }
+        public List<decimal> ListOfSansToCopy { get; set; }
+        public string Status { get; set; }
+    }
+}

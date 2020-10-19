@@ -1,0 +1,1541 @@
+HomeController.cs
+
+using SeraphWeb.Mvc.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Mail;
+using System.Web;
+using System.Web.Mvc;
+
+namespace SeraphWeb.Mvc.Controllers
+{
+    public class HomeController : BaseController
+    {
+        [HttpGet]
+        public ActionResult Index()
+        {
+            IslamicDateAndPrayerTimes _islamicDateAndPrayTimeModel = new IslamicDateAndPrayerTimes();
+            _islamicDateAndPrayTimeModel = GetPrayerTimesAndDateModel();
+
+            ViewBag.IslamicDate = _islamicDateAndPrayTimeModel.TodayDate + " | " + _islamicDateAndPrayTimeModel.HijriDay + " " + _islamicDateAndPrayTimeModel.HijriMonthInEnglish + ", " + _islamicDateAndPrayTimeModel.HijriYear + " Hijri";
+
+            return View();
+        }
+
+        private string Convert24HrsTo12Hrs(string timeIn24Hrs)
+        {
+            string _retVal = string.Empty;
+            string[] _parts = timeIn24Hrs.Split(':');
+            DateTime _dateTime = new DateTime();
+
+            _dateTime = DateTime.ParseExact(timeIn24Hrs, "HH:mm", System.Globalization.CultureInfo.CurrentCulture);
+
+            _retVal = Convert.ToDateTime(_dateTime).ToString("hh:mm tt");
+
+            return _retVal.TrimStart('0');
+        }
+
+        private IslamicDateAndPrayerTimes GetPrayerTimesAndDateModel()
+        {
+            IslamicDateAndPrayerTimes _retVal = new IslamicDateAndPrayerTimes();
+
+            PrayTime _prayerTimes = new PrayTime();
+            double _longitude = 32.91; // 96.48; //25;
+            double _lattitude = -96.64; // 32.47; // 55;
+            int _year = 0;
+            int _month = 0;
+            int _day = 0;
+            int _timeZone = 0;
+
+            DateTime _currentDateTime = DateTime.Now;
+            _year = _currentDateTime.Year;
+            _month = _currentDateTime.Month;
+            _day = _currentDateTime.Day;
+            _timeZone = TimeZone.CurrentTimeZone.GetUtcOffset(new DateTime(_year, _month, _day)).Hours;
+            String[] _prayers;
+
+            _prayerTimes.setCalcMethod(3);
+            _prayerTimes.setAsrMethod(1);
+            _prayers = _prayerTimes.getDatePrayerTimes(_year, _month, _day, _longitude, _lattitude, _timeZone);
+
+            _retVal.FajrTime = Convert24HrsTo12Hrs(_prayers[0]);
+            _retVal.DuhrTime = Convert24HrsTo12Hrs(_prayers[2]);
+            _retVal.AsrTime = Convert24HrsTo12Hrs(_prayers[3]);
+            _retVal.MaghribTime = Convert24HrsTo12Hrs(_prayers[4]);
+            _retVal.IshaTime = Convert24HrsTo12Hrs(_prayers[6]);
+
+            //Get Hijri Date
+            DateTime _dt = DateTime.Today.Date.AddDays(0);
+            System.Globalization.DateTimeFormatInfo _hijriDTFI; //Hijri Date Format Info
+            _hijriDTFI = new System.Globalization.CultureInfo("ar-SA", false).DateTimeFormat;
+            _hijriDTFI.Calendar = new System.Globalization.UmAlQuraCalendar();
+
+            _retVal.HijriYear = _dt.Date.ToString("yyyy", _hijriDTFI);            // Gets the Year i.e., 1436 etc.
+            _retVal.HijriDay = _dt.Date.ToString("dd", _hijriDTFI);               // Gets the date i.e., 25th of the month etc.
+            _retVal.DayOfTheWeekInArabic = _dt.Date.ToString("dddd", _hijriDTFI); // Gets the day of the week in Arabic i.e., Khamees (Thursday) etc.
+            _retVal.HijriMonthInArabic = _dt.Date.ToString("MMMM", _hijriDTFI);   // Gets the Month in Arabic i.e., Rajab etc.
+
+            for (int i = 0; i <= _hijriDTFI.MonthGenitiveNames.Count(); i++)
+            {
+                if (_retVal.HijriMonthInArabic == _hijriDTFI.MonthGenitiveNames[i].ToString())
+                {
+                    _retVal.HijriMonthInEnglish = GetHijriMonthInEnglish(i + 1); // Gets the Month in English i.e., Rajab etc.
+                    break;
+                }
+            }
+
+            return _retVal;
+        }
+
+        private string GetHijriMonthInEnglish(int monthNumber)
+        {
+            string _retVal = string.Empty;
+
+            switch (monthNumber)
+            {
+                case 1:
+                    _retVal = "Muharram";
+                    break;
+                case 2:
+                    _retVal = "Safar";
+                    break;
+                case 3:
+                    _retVal = "Rabi‘ al-Awwal";
+                    break;
+                case 4:
+                    _retVal = "Rabi‘ ath-Thani";
+                    break;
+                case 5:
+                    _retVal = "Jumadá al-Ulá";
+                    break;
+                case 6:
+                    _retVal = "Jumadá ath-Thaniyah";
+                    break;
+                case 7:
+                    _retVal = "Rajab";
+                    break;
+                case 8:
+                    _retVal = "Sha'ban";
+                    break;
+                case 9:
+                    _retVal = "Ramadan";
+                    break;
+                case 10:
+                    _retVal = "Shawwal";
+                    break;
+                case 11:
+                    _retVal = "Dhu al-Qa'dah";
+                    break;
+                case 12:
+                    _retVal = "Dhu al-Hijjah";
+                    break;
+            }
+
+            return _retVal;
+        }
+
+        [HttpGet]
+        public ActionResult About()
+        {
+            ViewBag.Message = "My MVC Playground using Entity Framework 5.0.";
+
+            return View();
+        }
+
+        [HttpGet]
+        public ActionResult Contact()
+        {
+            ContactViewModel _model = new ContactViewModel()
+            {
+                Name = "Kashif Mubarak",
+                Address = new ContactAddress()
+                {
+                    StreetAddress = "123 Main St.",
+                    City = "Somewhere",
+                    State = "XX",
+                    Zip = "#####"
+                },
+                Email = "mubarak.kashif@gmail.com",
+                Phone = "(###) ###-####"
+            };
+            return View(_model);
+        }
+
+        [HttpPost]
+        public ActionResult Contact(ContactViewModel model)
+        {
+            if (string.IsNullOrEmpty(model.Msg))
+            {
+                ModelState.AddModelError("Msg", "Message is required!");
+                return View(model);
+            }
+
+            ViewBag.Message = "Thank you for the message!";
+            return PartialView("_ContactThanks");
+        }
+
+        public ActionResult ViewDataViewBagTempData()
+        {
+            List<string> latestTechnology = new List<string>();
+            latestTechnology.Add("C#");
+            latestTechnology.Add("Visual Basic");
+            latestTechnology.Add("ASP.NET");
+            latestTechnology.Add("MVC");
+            latestTechnology.Add("Entity Framework");
+            latestTechnology.Add("SQL Server");
+            latestTechnology.Add("Oracle");
+
+            ViewBag.LatestTechnologies = latestTechnology;
+            ViewData["LatestTechnologies"] = latestTechnology;
+
+            return View();
+        }
+
+        public ActionResult HtmlHelper()
+        {
+            List<DepartmentViewModel> _model = new List<DepartmentViewModel>();
+            List<SelectListItem> _selectListItems = new List<SelectListItem>();
+
+            _model = GetDepartmentList();
+            foreach (DepartmentViewModel _department in _model)
+            {
+                SelectListItem _selectListItem = new SelectListItem()
+                {
+                    Text = _department.DepartmentName,
+                    Value = _department.DepartmentID.ToString(),
+                    Selected = _department.IsSelectedDepartment.HasValue ? _department.IsSelectedDepartment.Value : false
+                };
+                _selectListItems.Add(_selectListItem);
+            }
+            ViewBag.Departments = _selectListItems;
+            return View();
+        }
+
+        private List<DepartmentViewModel> GetDepartmentList()
+        {
+            List<DepartmentViewModel> _retVal = new List<DepartmentViewModel>();
+            _retVal.Add(new DepartmentViewModel { DepartmentID = 1, DepartmentName = "IT", IsSelectedDepartment = false });
+            _retVal.Add(new DepartmentViewModel { DepartmentID = 2, DepartmentName = "HR", IsSelectedDepartment = true });
+            _retVal.Add(new DepartmentViewModel { DepartmentID = 3, DepartmentName = "Payroll", IsSelectedDepartment = false });
+            return _retVal;
+        }
+
+        [HttpGet]
+        public ActionResult SendEmail()
+        {
+            EmailViewModel _model = new EmailViewModel();
+            _model.EmailTemplates = GetEmailTemplateValues();
+            return View(_model);
+        }
+
+        private List<EmailTemplate> GetEmailTemplateValues()
+        {
+            List<EmailTemplate> _retVal = new List<EmailTemplate>();
+
+            _retVal.Add(new EmailTemplate { TemplateID = 1001, TemplateName = "Ezaan-Rayyan Template", IsSelected = false });
+            _retVal.Add(new EmailTemplate { TemplateID = 1002, TemplateName = "Simple Template", IsSelected = false });
+            _retVal.Add(new EmailTemplate { TemplateID = 1003, TemplateName = "None", IsSelected = true });
+
+            return _retVal;
+        }
+
+        [HttpPost]
+        public ActionResult SendEmail(EmailViewModel requestModel)
+        {
+            requestModel.EmailTemplates = GetEmailTemplateValues();
+
+            if (!ModelState.IsValid)
+            {
+                return View(requestModel);
+            }
+            else
+            {
+                using (var client = new SmtpClient("smtp.gmail.com", 587))
+                {
+                    string _msgBody = string.Empty;
+                    string _mailTemplateToUse = string.Empty;
+                    client.EnableSsl = true;
+                    client.Credentials = new NetworkCredential(requestModel.EmailFrom, requestModel.EmailFromPassword);
+
+                    var mail = new MailMessage();
+                    mail.From = new MailAddress(requestModel.EmailFrom);
+                    mail.To.Add(requestModel.EmailTo);
+                    mail.Subject = requestModel.EmailSubject;
+
+                    if (requestModel.SelectedTemplate != "1003")
+                    {
+                        string[] _parts;
+                        requestModel.EmailBody = requestModel.EmailBody.Replace(Environment.NewLine, "<br/>");
+                        mail.IsBodyHtml = true;
+                        using (StreamReader reader = new StreamReader(System.Web.HttpContext.Current.Server.MapPath(SelectMailTemplate(requestModel.SelectedTemplate))))
+                        {
+                            _msgBody = reader.ReadToEnd();
+                        }
+
+                        if (requestModel.SelectedTemplate == "1001")
+                        {
+                            _parts = requestModel.EmailTo.ToString().Split('.');
+                            _msgBody = _msgBody.Replace("{Name}", _parts[0]);
+                            _msgBody = _msgBody.Replace("{messageBody}", requestModel.EmailBody);
+                        }
+                        else if (requestModel.SelectedTemplate == "1002")
+                        {
+                            _parts = requestModel.EmailTo.ToString().Split('@');
+                            _msgBody = _msgBody.Replace("{Name}", _parts[0]);
+                            _msgBody = _msgBody.Replace("{messageBody}", requestModel.EmailBody);
+                        }
+
+                        mail.Body = _msgBody;
+                    }
+                    else if (requestModel.SelectedTemplate == "1003")
+                    {
+                        mail.Body = requestModel.EmailBody;
+                    }
+
+                    if (requestModel.File[0] != null)
+                    {
+                        foreach (HttpPostedFileBase item in requestModel.File)
+                        {
+                            var attachment = new Attachment(item.InputStream, item.FileName);
+                            mail.Attachments.Add(attachment);
+                        }
+                    }
+
+                    client.Send(mail);
+                    Success(string.Format("<b>{0}</b> Message sent succcessfully!.", "SUCCESS"), true);
+                }
+            }
+            return RedirectToAction("SendEmail");
+        }
+
+        private string SelectMailTemplate(string selectedTemplateVal)
+        {
+            string _retVal = string.Empty;
+
+            if (selectedTemplateVal == "1001")
+            {
+                _retVal = @"~/EmailTemplates/Ezaan_Rayyan_Mail_Template.htm";
+            }
+            else if (selectedTemplateVal == "1002")
+            {
+                _retVal = @"~/EmailTemplates/Simple_Mail_Template.htm";
+            }
+
+            return _retVal;
+        }
+    }
+}
+
+---------------------------------------------------------------------------------------------------------------------------
+HomeViewModels.cs:
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Web;
+
+namespace SeraphWeb.Mvc.Models
+{
+    public class EmailViewModel
+    {
+        [Required(ErrorMessage = "To email address is required")]
+        [StringLength(50, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 4)]
+        [Display(Name = "Email Address:")]
+        [EmailAddress(ErrorMessage = "Invalid Email Address")]
+        public string EmailTo { get; set; }
+
+        [Required]
+        [StringLength(50, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 4)]
+        [Display(Name = "Subject:")]
+        public string EmailSubject { get; set; }
+
+        [Required(ErrorMessage = "From email address is required")]
+        [StringLength(50, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 4)]
+        [Display(Name = "Email Address:")]
+        [EmailAddress(ErrorMessage = "Invalid Email Address")]
+        public string EmailFrom { get; set; }
+
+        [Required]
+        [StringLength(50, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 4)]
+        [DataType(DataType.Password)]
+        [Display(Name = "Password")]
+        public string EmailFromPassword { get; set; }
+
+        [Required]
+        [StringLength(1000, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 4)]
+        [Display(Name = "Body:")]
+        [DataType(DataType.MultilineText)]
+        public string EmailBody { get; set; }
+
+        [Display(Name = "Attachment")]
+        public List<HttpPostedFileBase> File { get; set; }
+
+        public string SelectedTemplate { get; set; }
+
+        public List<EmailTemplate> EmailTemplates { get; set; }
+    }
+
+    public class EmailTemplate
+    {
+        public int TemplateID { get; set; }
+        public string TemplateName { get; set; }
+        public bool? IsSelected { get; set; }
+    }
+
+    public class DepartmentViewModel
+    {
+        public int DepartmentID { get; set; }
+        public string DepartmentName { get; set; }
+        public bool? IsSelectedDepartment { get; set; }
+    }
+
+    public class ContactViewModel
+    {
+        public string Name { get; set; }
+        public ContactAddress Address { get; set; }
+        public string Email { get; set; }
+        public string Phone { get; set; }
+        public string Msg { get; set; }
+    }
+
+    public class ContactAddress
+    {
+        public string StreetAddress { get; set; }
+        public string City { get; set; }
+        public string State { get; set; }
+        public string Zip { get; set; }
+    }
+
+    public class IslamicDateAndPrayerTimes
+    {
+        public string FajrTime { get; set; }
+        public string DuhrTime { get; set; }
+        public string AsrTime { get; set; }
+        public string MaghribTime { get; set; }
+        public string IshaTime { get; set; }
+        public string HijriMonthInEnglish { get; set; }
+        public string HijriMonthInArabic { get; set; }
+        public string HijriDay { get; set; }
+        public string HijriYear { get; set; }
+        public string DayOfTheWeekInArabic { get; set; }
+
+        public string TodayDate
+        {
+            get
+            {
+                return string.Format("{0} | {1}", DateTime.Now.DayOfWeek.ToString(), DateTime.Now.ToString("MMMM dd, yyyy"));
+            }
+        }
+    }
+}
+---------------------------------------------------------------------------------------------------------------------------
+EmailTemplates.Ezaan_Rayyan_Mail_Template.html:
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Mail</title>
+    <style type="text/css">
+        body
+        {
+            margin: 0 auto;
+            padding: 10px;
+            width: 500;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        img
+        {
+            border: none;
+        }
+        ul, li, h1, h2, h3, h4, h5, h6
+        {
+            margin: 0px;
+            padding: 0px;
+        }
+        a, a:hover
+        {
+            text-decoration: none;
+            color: #c45535;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <table border="0" align="center" cellpadding="0" cellspacing="0">
+        <tr>
+            <td align="left" valign="top" style="background: #CEE3F6; padding: 10px;">
+			<strong>Assalam-O-Alaikum {Name},</strong>
+			</td>
+        </tr>
+        <tr>
+            <td>
+                <div style="padding: 20px;">
+					<p style="color:green">
+                    {messageBody}
+					</p>
+                    <br />
+                    <br />
+                    <br />
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td align="left" valign="top" style="background: #222; padding: 10px;">
+                <table width="500" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td width="454" align="left" valign="top" style="font-size: 12px; font-weight: normal;
+                            color: #CEE3F6; padding: 20px 0px 20px 32px;">
+							Regards,<br>
+							Your dad Kashif Mubarak<br>
+							May ALLAH belss you always.<br>
+							Take Care!
+							<br>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+
+
+Simple_Mail_Template.htm
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Mail</title>
+    <style type="text/css">
+        body
+        {
+            margin: 0 auto;
+            padding: 10px;
+            width: 500;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        img
+        {
+            border: none;
+        }
+        ul, li, h1, h2, h3, h4, h5, h6
+        {
+            margin: 0px;
+            padding: 0px;
+        }
+        a, a:hover
+        {
+            text-decoration: none;
+            color: #c45535;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <table border="0" align="center" cellpadding="0" cellspacing="0">
+        <tr>
+            <td align="left" valign="top" style="background: #CEE3F6; padding: 10px;">
+			<strong>Hello {Name},</strong>
+			</td>
+        </tr>
+        <tr>
+            <td>
+                <div style="padding: 20px;">
+					<p style="color:green">
+                    {messageBody}
+					</p>
+                    <br />
+                    <br />
+                    <br />
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td align="left" valign="top" style="background: #222; padding: 10px;">
+                <table width="500" border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td width="454" align="left" valign="top" style="font-size: 12px; font-weight: normal;
+                            color: #CEE3F6; padding: 20px 0px 20px 32px;">							
+							Thanks & Regards,<br>
+							Kashif Mubarak<br>
+							<br>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+
+---------------------------------------------------------------------------------------------------------------------------
+PrayTime.cs:
+
+using System;
+
+namespace SeraphWeb.Mvc.Models
+{
+    public class PrayTime
+    {
+        // Calculation Methods
+        public static int Jafari = 0;    // Ithna Ashari
+        public static int Karachi = 1;    // University of Islamic Sciences, Karachi
+        public static int ISNA = 2;    // Islamic Society of North America (ISNA)
+        public static int MWL = 3;    // Muslim World League (MWL)
+        public static int Makkah = 4;    // Umm al-Qura, Makkah
+        public static int Egypt = 5;    // Egyptian General Authority of Survey
+        public static int Custom = 6;    // Custom Setting
+        public static int Tehran = 7;    // Institute of Geophysics, University of Tehran
+
+        // Juristic Methods
+        public static int Shafii = 0;    // Shafii (standard)
+        public static int Hanafi = 1;    // Hanafi
+
+        // Adjusting Methods for Higher Latitudes
+        public static int None = 0;    // No adjustment
+        public static int MidNight = 1;    // middle of night
+        public static int OneSeventh = 2;    // 1/7th of night
+        public static int AngleBased = 3;    // angle/60th of night
+
+
+        // Time Formats
+        public static int Time24 = 0;    // 24-hour format
+        public static int Time12 = 1;    // 12-hour format
+        public static int Time12NS = 2;    // 12-hour format with no suffix
+        public static int Floating = 3;    // floating point number
+
+        // Time Names
+        public static String[] timeNames = { "Fajr", "Sunrise", "Dhuhr", "Asr", "Sunset", "Maghrib", "Isha" };
+        static String InvalidTime = "----";	 // The string used for inv
+
+
+        //---------------------- Global Variables --------------------
+
+
+        private int calcMethod = 3;		// caculation method
+        private int asrJuristic;		// Juristic method for Asr
+        private int dhuhrMinutes = 0;		// minutes after mid-day for Dhuhr
+        private int adjustHighLats = 1;	// adjusting method for higher latitudes
+
+        private int timeFormat = 0;		// time format
+
+        private double lat;        // latitude
+        private double lng;        // longitude
+        private int timeZone;   // time-zone
+        private double JDate;      // Julian date
+
+        private int[] times;
+
+
+        //--------------------- Technical Settings --------------------
+
+
+        private int numIterations = 1;		// number of iterations needed to compute times
+
+
+
+        //------------------- Calc Method Parameters --------------------
+
+        private double[][] methodParams;
+        public PrayTime()
+        {
+            times = new int[7];
+            methodParams = new double[8][];
+            this.methodParams[Jafari] = new double[] { 16, 0, 4, 0, 14 };
+            this.methodParams[Karachi] = new double[] { 18, 1, 0, 0, 18 };
+            this.methodParams[ISNA] = new double[] { 15, 1, 0, 0, 15 };
+            this.methodParams[MWL] = new double[] { 18, 1, 0, 0, 17 };
+            this.methodParams[Makkah] = new double[] { 18.5, 1, 0, 1, 90 };
+            this.methodParams[Egypt] = new double[] { 19.5, 1, 0, 0, 17.5 };
+            this.methodParams[Tehran] = new double[] { 17.7, 0, 4.5, 0, 14 };
+            this.methodParams[Custom] = new double[] { 18, 1, 0, 0, 17 };
+        }
+
+
+        // return prayer times for a given date
+        public String[] getPrayerTimes(int year, int month, int day, double latitude, double longitude, int timeZone)
+        {
+            return this.getDatePrayerTimes(year, month + 1, day, latitude, longitude, timeZone);
+        }
+
+        // set the calculation method
+        public void setCalcMethod(int methodID)
+        {
+            this.calcMethod = methodID;
+        }
+
+        // set the juristic method for Asr
+        public void setAsrMethod(int methodID)
+        {
+            if (methodID < 0 || methodID > 1)
+                return;
+            this.asrJuristic = methodID;
+        }
+
+        // set the angle for calculating Fajr
+        public void setFajrAngle(double angle)
+        {
+            this.setCustomParams(new int[] { (int)angle, -1, -1, -1, -1 });
+        }
+
+        // set the angle for calculating Maghrib
+        public void setMaghribAngle(double angle)
+        {
+            this.setCustomParams(new int[] { -1, 0, (int)angle, -1, -1 });
+        }
+
+        // set the angle for calculating Isha
+        public void setIshaAngle(double angle)
+        {
+            this.setCustomParams(new int[] { -1, -1, -1, 0, (int)angle });
+        }
+
+        // set the minutes after mid-day for calculating Dhuhr
+        public void setDhuhrMinutes(int minutes)
+        {
+            this.dhuhrMinutes = minutes;
+        }
+
+        // set the minutes after Sunset for calculating Maghrib
+        public void setMaghribMinutes(int minutes)
+        {
+            this.setCustomParams(new int[] { -1, 1, minutes, -1, -1 });
+        }
+
+        // set the minutes after Maghrib for calculating Isha
+        public void setIshaMinutes(int minutes)
+        {
+            this.setCustomParams(new int[] { -1, -1, -1, 1, minutes });
+        }
+
+        // set custom values for calculation parameters
+        public void setCustomParams(int[] param)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                if (param[i] == -1)
+                    this.methodParams[Custom][i] = this.methodParams[this.calcMethod][i];
+                else
+                    this.methodParams[Custom][i] = param[i];
+            }
+            this.calcMethod = Custom;
+        }
+
+        // set adjusting method for higher latitudes
+        public void setHighLatsMethod(int methodID)
+        {
+            this.adjustHighLats = methodID;
+        }
+
+        // set the time format
+        public void setTimeFormat(int timeFormat)
+        {
+            this.timeFormat = timeFormat;
+        }
+
+        // convert float hours to 24h format
+        public String floatToTime24(double time)
+        {
+            if (time < 0)
+                return InvalidTime;
+            time = this.FixHour(time + 0.5 / 60);  // add 0.5 minutes to round
+            double hours = Math.Floor(time);
+            double minutes = Math.Floor((time - hours) * 60);
+            return this.twoDigitsFormat((int)hours) + ":" + this.twoDigitsFormat((int)minutes);
+        }
+
+        // convert float hours to 12h format
+        public String floatToTime12(double time, bool noSuffix)
+        {
+            if (time < 0)
+                return InvalidTime;
+            time = this.FixHour(time + 0.5 / 60);  // add 0.5 minutes to round
+            double hours = Math.Floor(time);
+            double minutes = Math.Floor((time - hours) * 60);
+            String suffix = hours >= 12 ? " pm" : " am";
+            hours = (hours + 12 - 1) % 12 + 1;
+            return ((int)hours) + ":" + this.twoDigitsFormat((int)minutes) + (noSuffix ? "" : suffix);
+        }
+
+        // convert float hours to 12h format with no suffix
+        public String floatToTime12NS(double time)
+        {
+            return this.floatToTime12(time, true);
+        }
+
+        //---------------------- Compute Prayer Times -----------------------
+
+
+        // return prayer times for a given date
+        public String[] getDatePrayerTimes(int year, int month, int day, double latitude, double longitude,
+
+        int timeZone)
+        {
+            this.lat = latitude;
+            this.lng = longitude;
+            this.timeZone = timeZone;
+            this.JDate = this.JulianDate(year, month, day) - longitude / (15 * 24);
+
+            return this.computeDayTimes();
+        }
+
+        // compute declination angle of sun and equation of time
+        public double[] sunPosition(double jd)
+        {
+            double D = jd - 2451545.0;
+            double g = this.FixAngle(357.529 + 0.98560028 * D);
+            double q = this.FixAngle(280.459 + 0.98564736 * D);
+            double L = this.FixAngle(q + 1.915 * this.dsin(g) + 0.020 * this.dsin(2 * g));
+
+            double R = 1.00014 - 0.01671 * this.dcos(g) - 0.00014 * this.dcos(2 * g);
+            double e = 23.439 - 0.00000036 * D;
+
+            double d = this.darcsin(this.dsin(e) * this.dsin(L));
+            double RA = this.darctan2(this.dcos(e) * this.dsin(L), this.dcos(L)) / 15;
+            RA = this.FixHour(RA);
+            double EqT = q / 15 - RA;
+
+            return new double[] { d, EqT };
+        }
+
+        // compute equation of time
+        public double equationOfTime(double jd)
+        {
+            return this.sunPosition(jd)[1];
+        }
+
+        // compute declination angle of sun
+        public double sunDeclination(double jd)
+        {
+            return this.sunPosition(jd)[0];
+        }
+
+        // compute mid-day (Dhuhr, Zawal) time
+        public double computeMidDay(double t)
+        {
+            double T = this.equationOfTime(this.JDate + t);
+            double Z = this.FixHour(12 - T);
+            return Z;
+        }
+
+        // compute time for a given angle G
+        public double computeTime(double G, double t)
+        {
+            //System.out.println("G: "+G);
+
+            double D = this.sunDeclination(this.JDate + t);
+            double Z = this.computeMidDay(t);
+            double V = ((double)1 / 15) * this.darccos((-this.dsin(G) - this.dsin(D) * this.dsin(this.lat)) /
+                    (this.dcos(D) * this.dcos(this.lat)));
+            return Z + (G > 90 ? -V : V);
+        }
+
+        // compute the time of Asr
+        public double computeAsr(int step, double t)  // Shafii: step=1, Hanafi: step=2
+        {
+            double D = this.sunDeclination(this.JDate + t);
+            double G = -this.darccot(step + this.dtan(Math.Abs(this.lat - D)));
+            return this.computeTime(G, t);
+        }
+
+        //---------------------- Compute Prayer Times -----------------------
+
+        // compute prayer times at given julian date
+        public double[] computeTimes(double[] times)
+        {
+            double[] t = this.dayPortion(times);
+
+
+            double Fajr = this.computeTime(180 - this.methodParams[this.calcMethod][0], t[0]);
+            double Sunrise = this.computeTime(180 - 0.833, t[1]);
+            double Dhuhr = this.computeMidDay(t[2]);
+            double Asr = this.computeAsr(1 + this.asrJuristic, t[3]);
+            double Sunset = this.computeTime(0.833, t[4]); ;
+            double Maghrib = this.computeTime(this.methodParams[this.calcMethod][2], t[5]);
+            double Isha = this.computeTime(this.methodParams[this.calcMethod][4], t[6]);
+
+            return new double[] { Fajr, Sunrise, Dhuhr, Asr, Sunset, Maghrib, Isha };
+        }
+
+        // adjust Fajr, Isha and Maghrib for locations in higher latitudes
+        public double[] adjustHighLatTimes(double[] times)
+        {
+            double nightTime = this.GetTimeDifference(times[4], times[1]); // sunset to sunrise
+
+            // Adjust Fajr
+            double FajrDiff = this.nightPortion(this.methodParams[this.calcMethod][0]) * nightTime;
+            if (this.GetTimeDifference(times[0], times[1]) > FajrDiff)
+                times[0] = times[1] - FajrDiff;
+
+            // Adjust Isha
+            double IshaAngle = (this.methodParams[this.calcMethod][3] == 0) ? this.methodParams
+
+        [this.calcMethod][4] : 18;
+            double IshaDiff = this.nightPortion(IshaAngle) * nightTime;
+            if (this.GetTimeDifference(times[4], times[6]) > IshaDiff)
+                times[6] = times[4] + IshaDiff;
+
+            // Adjust Maghrib
+            double MaghribAngle = (methodParams[this.calcMethod][1] == 0) ? this.methodParams
+
+        [this.calcMethod][2] : 4;
+            double MaghribDiff = this.nightPortion(MaghribAngle) * nightTime;
+            if (this.GetTimeDifference(times[4], times[5]) > MaghribDiff)
+                times[5] = times[4] + MaghribDiff;
+
+            return times;
+        }
+
+        // the night portion used for adjusting times in higher latitudes
+        public double nightPortion(double angle)
+        {
+            double val = 0;
+            if (this.adjustHighLats == AngleBased)
+                val = 1.0 / 60.0 * angle;
+            if (this.adjustHighLats == MidNight)
+                val = 1.0 / 2.0;
+            if (this.adjustHighLats == OneSeventh)
+                val = 1.0 / 7.0;
+
+            return val;
+        }
+
+        public double[] dayPortion(double[] times)
+        {
+            for (int i = 0; i < times.Length; i++)
+            {
+                times[i] /= 24;
+            }
+            return times;
+        }
+
+        // compute prayer times at given julian date
+        public String[] computeDayTimes()
+        {
+            double[] times = { 5, 6, 12, 13, 18, 18, 18 }; //default times
+
+            for (int i = 0; i < this.numIterations; i++)
+            {
+                times = this.computeTimes(times);
+            }
+
+            times = this.adjustTimes(times);
+            return this.adjustTimesFormat(times);
+        }
+
+
+        // adjust times in a prayer time array
+        public double[] adjustTimes(double[] times)
+        {
+            for (int i = 0; i < 7; i++)
+            {
+                times[i] += this.timeZone - this.lng / 15;
+            }
+            times[2] += this.dhuhrMinutes / 60; //Dhuhr
+            if (this.methodParams[this.calcMethod][1] == 1) // Maghrib
+                times[5] = times[4] + this.methodParams[this.calcMethod][2] / 60.0;
+            if (this.methodParams[this.calcMethod][3] == 1) // Isha
+                times[6] = times[5] + this.methodParams[this.calcMethod][4] / 60.0;
+
+            if (this.adjustHighLats != None)
+            {
+                times = this.adjustHighLatTimes(times);
+            }
+
+            return times;
+        }
+
+        public String[] adjustTimesFormat(double[] times)
+        {
+            String[] formatted = new String[times.Length];
+
+            if (this.timeFormat == Floating)
+            {
+                for (int i = 0; i < times.Length; ++i)
+                {
+                    formatted[i] = times[i] + "";
+                }
+                return formatted;
+            }
+            for (int i = 0; i < 7; i++)
+            {
+                if (this.timeFormat == Time12)
+                    formatted[i] = this.floatToTime12(times[i], true);
+                else if (this.timeFormat == Time12NS)
+                    formatted[i] = this.floatToTime12NS(times[i]);
+                else
+                    formatted[i] = this.floatToTime24(times[i]);
+            }
+            return formatted;
+        }
+
+        //---------------------- Misc Functions -----------------------
+
+        // compute the difference between two times
+        public double GetTimeDifference(double c1, double c2)
+        {
+            double diff = this.FixHour(c2 - c1); ;
+            return diff;
+        }
+
+        // add a leading 0 if necessary
+        public String twoDigitsFormat(int num)
+        {
+
+            return (num < 10) ? "0" + num : num + "";
+        }
+
+        //---------------------- Julian Date Functions -----------------------
+
+        // calculate julian date from a calendar date
+        public double JulianDate(int year, int month, int day)
+        {
+            if (month <= 2)
+            {
+                year -= 1;
+                month += 12;
+            }
+            double A = (double)Math.Floor(year / 100.0);
+            double B = 2 - A + Math.Floor(A / 4);
+
+            double JD = Math.Floor(365.25 * (year + 4716)) + Math.Floor(30.6001 * (month + 1)) + day + B - 1524.5;
+            return JD;
+        }
+
+
+        //---------------------- Time-Zone Functions -----------------------
+
+
+        // detect daylight saving in a given date
+        public bool UseDayLightaving(int year, int month, int day)
+        {
+            return TimeZone.CurrentTimeZone.IsDaylightSavingTime(new DateTime(year, month, day));
+        }
+
+        // ---------------------- Trigonometric Functions -----------------------
+
+        // degree sin
+        public double dsin(double d)
+        {
+            return Math.Sin(this.DegreeToRadian(d));
+        }
+
+        // degree cos
+        public double dcos(double d)
+        {
+            return Math.Cos(this.DegreeToRadian(d));
+        }
+
+        // degree tan
+        public double dtan(double d)
+        {
+            return Math.Tan(this.DegreeToRadian(d));
+        }
+
+        // degree arcsin
+        public double darcsin(double x)
+        {
+            return this.RadianToDegree(Math.Asin(x));
+        }
+
+        // degree arccos
+        public double darccos(double x)
+        {
+            return this.RadianToDegree(Math.Acos(x));
+        }
+
+        // degree arctan
+        public double darctan(double x)
+        {
+            return this.RadianToDegree(Math.Atan(x));
+        }
+
+        // degree arctan2
+        public double darctan2(double y, double x)
+        {
+            return this.RadianToDegree(Math.Atan2(y, x));
+        }
+
+        // degree arccot
+        public double darccot(double x)
+        {
+            return this.RadianToDegree(Math.Atan(1 / x));
+        }
+
+
+        // Radian to Degree
+        public double RadianToDegree(double radian)
+        {
+            return (radian * 180.0) / Math.PI;
+        }
+
+        // degree to radian
+        public double DegreeToRadian(double degree)
+        {
+            return (degree * Math.PI) / 180.0;
+        }
+
+        public double FixAngle(double angel)
+        {
+            angel = angel - 360.0 * (Math.Floor(angel / 360.0));
+            angel = angel < 0 ? angel + 360.0 : angel;
+            return angel;
+        }
+
+        // range reduce hours to 0..23
+        public double FixHour(double hour)
+        {
+            hour = hour - 24.0 * (Math.Floor(hour / 24.0));
+            hour = hour < 0 ? hour + 24.0 : hour;
+            return hour;
+        }
+    }
+}
+---------------------------------------------------------------------------------------------------------------------------
+Views.Home._ContactThanks.cshtml:
+<h3>@ViewBag.Message</h3>
+
+<div>
+    @Html.ActionLink("Home", "Index")
+</div>
+---------------------------------------------------------------------------------------------------------------------------
+Views.Home.About.cshtml:
+@{
+    ViewBag.Title = "About";
+}
+<h2>@ViewBag.Title.</h2>
+
+<p>
+    <h3 class="text-primary">Home</h3>
+    <strong>Home:</strong> Main Page!<br />
+    <strong>About:</strong> About SeraphBootstrapMVC Website<br />
+    <strong>Contact:</strong> Contact Info.<br />
+    <strong>HTML Helpers:</strong> Examples of commons HTML Helpers in Razor and jQuery Date Picker<br />
+    <strong>ViewBag-ViewData-TempData:</strong> Examples/definition of ViewBag, ViewData and TempData<br />
+    <strong>Contact:</strong> Contact page with home address, phone number and email address.<br />
+    <strong>Send Email:</strong>Send Email using Gmail account with attachment. Counts characters as user type using jQuery<br />
+</p>
+<p>
+    <h3 class="text-primary">Flexigrid</h3>
+    <strong>Flexigrid Employee Manager:</strong> Employee Manager using famous FlexiGrid in MVC.<br />
+</p>
+<p>
+    <h3 class="text-primary">Webgrid</h3>
+    <strong>Webgrid Employee Manager:</strong> Employee Manager using MVC Web Grid. Add/Update/Delete and paging, sorting and Search<br />
+    <strong>Webgrid Bookmark Manager:</strong> Bookmark Manager using WebGrid with add/update/delete and search/sort.<br />
+    <strong>Employees with Photo:</strong> User of jQuery Modal Dialog to display employee details and confirmation dialog box before delete.<br />
+</p>
+<p>
+    <h3 class="text-primary">Other Examples</h3>
+    <strong>Ajax:</strong> Ajax using jQuery.<br />
+    <strong>Auto-Complete:</strong> Auto-complete text box for Employee First name.<br />
+    <strong>Radio Buttons - jQuery:</strong> Show/Hide radio buttons based on user's response using jQuery.<br />
+    <strong>Add Controls Dynamically:</strong> Add multiple controls to page using jQuery and getting inputs from user using jQuery dialog.<br />
+    <strong>Count Characters:</strong> Count occurrences of each letter/element in the given string including spaces.<br />
+    <strong>Multi-Selection List Box:</strong> Selecting multiple items in a List-Box.<br />
+    <strong>Multiple Drop-downs:</strong> Populate multiple drop-downs on changing values in one drop-down box. <br />
+    <strong>BlueImp Photo Gallery:</strong> Photo Gallery using BlueImp tool.<br />
+</p>
+<p>
+    <h3 class="text-primary">Bootstrap Examples</h3>
+    <strong>Accordion:</strong> Accordion control using Bootstrap.<br />
+    <strong>Carousel:</strong> Carousel with a static modal dialog using Bootstrap.<br />
+    <strong>Tab Controls:</strong> 2 types of tab controls using Bootstrap.<br />
+    <strong>Alerts:</strong> Alerts using using Bootstrap.<br />
+    <strong>Typeahead (Auto-Complete):</strong> Auto-Complete and loading data into Bootstrap Modal dialog.<br />
+</p>
+
+---------------------------------------------------------------------------------------------------------------------------
+Views.Home.Contact.cshtml:
+
+@model SeraphWeb.Mvc.Models.ContactViewModel
+
+@{
+    ViewBag.Title = "Contact";
+}
+<br />
+<br />
+<div id="result">
+
+    @using (Ajax.BeginForm(new AjaxOptions { HttpMethod = "post", InsertionMode = System.Web.Mvc.Ajax.InsertionMode.Replace, UpdateTargetId = "result" }))
+    {
+        @Html.AntiForgeryToken()
+
+        @Html.HiddenFor(model => model.Name)
+        @Html.HiddenFor(model => model.Address.StreetAddress)
+        @Html.HiddenFor(model => model.Address.City)
+        @Html.HiddenFor(model => model.Address.State)
+        @Html.HiddenFor(model => model.Address.Zip)
+        @Html.HiddenFor(model => model.Email)
+        @Html.HiddenFor(model => model.Phone)
+
+        <div class="form-horizontal">
+            <p>
+                <strong>Name:</strong> @Model.Name <br />
+            </p>
+            <p>
+                <strong>Address:</strong> @Model.Address.StreetAddress <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                @Model.Address.City, @Model.Address.State @Model.Address.Zip<br />
+            </p>
+            <p>
+                <strong>Email:</strong> @Model.Email <br />
+                <strong>Phone:</strong> @Model.Phone <br /><br />
+                <strong>Message:</strong><br />
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                @Html.TextAreaFor(model => model.Msg, 5, 20, new { title = "Enter Message!" })<br />
+                @Html.ValidationMessageFor(model => model.Msg)<br />
+                <div class="row">
+                    <div class="col-md-6 col-md-offset-1">
+                        <input type="submit" value="Submit" class="btn btn-default" />
+                    </div>
+                </div>
+            </p>
+        </div>
+    }
+</div>
+
+@section scripts{
+
+    <script src="@Url.Content("~/Scripts/jquery.unobtrusive-ajax.min.js")"></script>
+
+}
+
+---------------------------------------------------------------------------------------------------------------------------
+Views.Home.Index.cshtml:
+@{
+    ViewBag.Title = "Home Page";
+}
+
+<div class="jumbotron">
+    <p class="text-success">
+        @Html.Raw(ViewBag.IslamicDate)
+    </p>
+    <h1>Mvc Playground</h1>
+    <p class="lead">Featuring:</p>
+    <p>
+        <a href="#" class="btn btn-primary btn-large">jQuery &raquo;</a>
+        <a href="#" class="btn btn-default btn-large">Bootstrap &raquo;</a>
+        <a href="#" class="btn btn-danger btn-large">Razor &raquo;</a>
+        <a href="#" class="btn btn-info btn-large">HTML &raquo;</a>
+        <a href="#" class="btn btn-success btn-large">Javascript &raquo;</a>
+        <a href="#" class="btn btn-warning btn-large">C# &raquo;</a>
+        <a href="#" class="btn btn-primary btn-large">MVC Filters &raquo;</a>
+        <a href="#" class="btn btn-default btn-large">ViewBag &raquo;</a>
+        <a href="#" class="btn btn-danger btn-large">Entity Framework 5.0 &raquo;</a>
+    </p>
+    <p>
+        <a href="#" class="btn btn-primary btn-large">SQL Server &raquo;</a>
+        <a href="#" class="btn btn-default btn-large">Font Awesome &raquo;</a>
+        <a href="#" class="btn btn-danger btn-large">jQuery Flexigrid &raquo;</a>
+        <a href="#" class="btn btn-info btn-large">MVC WebGrid &raquo;</a>
+        <a href="#" class="btn btn-success btn-large">Bootstrap Type-ahead &raquo;</a>
+        <a href="#" class="btn btn-warning btn-large">Bootstrap Tabs &raquo;</a>
+    </p>
+    <p>
+        <a href="#" class="btn btn-primary btn-large">Bootstrap Carousel &raquo;</a>
+        <a href="#" class="btn btn-default btn-large">Bootstrap Dialog &raquo;</a>
+        <a href="#" class="btn btn-danger btn-large">Bootstrap Alert &raquo;</a>
+        <a href="#" class="btn btn-info btn-large">Bootstrap Accordion &raquo;</a>
+        <a href="#" class="btn btn-success btn-large">Image Gallery &raquo;</a>
+        <a href="#" class="btn btn-warning btn-large">jQuery Dialog &raquo;</a>
+    </p>
+    <p>
+        <a href="#" class="btn btn-primary btn-large">jQuery Auto-Complete &raquo;</a>
+        <a href="#" class="btn btn-default btn-large">AJAX &raquo;</a>
+    </p>
+
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <h2>Getting started</h2>
+        <p>
+            My self-learning MVC with Bootstrap and all web technologies.
+        </p>
+        <p><a class="btn btn-default" href="#">Learn more &raquo;</a></p>
+    </div>
+    <div class="col-md-4">
+        <h2>Get more libraries</h2>
+        <p>Download all packages using NuGet Package Manage within Visual Studio.</p>
+        <p><a class="btn btn-default" href="#">Learn more &raquo;</a></p>
+    </div>
+    <div class="col-md-4">
+        <h2>Web Hosting</h2>
+        <p>Deployed on <a href="http://www.appharbor.com">AppHarbor.com</a> AppHarbor is a great place to host a .NET Website!</p>
+        <p><a class="btn btn-default" href="#">Learn more &raquo;</a></p>
+    </div>
+</div>
+---------------------------------------------------------------------------------------------------------------------------
+Views.Home.HtmlHelper.cshtml:
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>HtmlHelper</title>
+</head>
+<body>
+    <br />
+    <br />
+    <br />
+    <br />Label with TextBox with ToolTip(Read-only)<br />
+    @Html.Label("firstName", "First Name:")
+    @Html.TextBox("firstName", "John Smith", new { style = "background-color:Red; color:white, font-wieght:bold", title = "Please enter your first name.", @readonly = "true" })<br /><br />
+
+    Password masked text box<br />
+    @Html.Label("password", "Password:")
+    @Html.Password("Password", "", new { title = "Please enter your password." })<br /><br />
+
+
+    Multiline TextBox<br />
+    @Html.Label("comments", "Comments:")
+    @Html.TextArea("Comments", "", 5, 20, new { title = "Type comments." })<br /><br />
+
+
+    Hidden text box to store values (11001)<br />
+    @Html.Label("id", "ID to store in hidden field:")
+    @Html.Hidden("ID", 11001)<br /><br />
+
+    @* The drop-down list helper class has three overloaded methods. we are using the one
+        that takes three arguments [The name, the list of contenets to be displayed and selected property]. *@
+
+    Generating drop-down list (hard-coded, No item was pre-selected!!!)<br />
+    @Html.Label("Departments:")
+    @Html.DropDownList("Departments", new List<SelectListItem>
+    {
+        new SelectListItem { Text = "IT", Value="IT"},
+        new SelectListItem { Text ="HR", Value="HR"},
+        new SelectListItem {Text ="Payroll", Value="Payroll"}
+    }, "Select Departments")<br /><br />
+
+    Generating drop-down list (hard-coded, 3rd item is pre-selected!!!)<br />
+    @Html.Label("Departments:")
+    @Html.DropDownList("Select Departments", new List<SelectListItem>
+    {
+        new SelectListItem { Text = "IT", Value="IT"},
+        new SelectListItem { Text ="HR", Value="HR"},
+        new SelectListItem {Text ="Payroll", Value="Payroll", Selected=true}
+    }, "Select Departments")<br /><br />
+
+
+    Generating drop-down list (from collection: HR is pre-selected as its value was set to true!)<br />
+    @Html.Label("Departments:")
+    @Html.DropDownList("Departments", "Select Departments")<br /><br />
+
+    Date-Picker using jQuery!<br />
+    <div class="editor-label">
+        @Html.Label("Click in the text Box to pick a Date:")
+    </div>
+    <div class="editor-field">
+        <input type="text" id="datePicker" value="@DateTime.Today.Date.ToString("MM/dd/yyyy")" />
+    </div>
+
+</body>
+</html>
+
+@section Scripts{
+    @Scripts.Render("~/bundles/jqueryui")
+    <script type="text/javascript">
+        $(function () {
+            $('#datePicker').datepicker();
+        });
+    </script>
+}
+
+---------------------------------------------------------------------------------------------------------------------------
+Views.Home.SendEmail.cshtml:
+
+@model SeraphMvcBootstrap.Website.Models.EmailViewModel
+
+@{
+    ViewBag.Title = "Send Email | Index";
+}
+
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("input:text,form").attr("autocomplete", "off");
+        })
+
+        function LimtCharacters(txtMsg, CharLength, indicator) {
+            chars = txtMsg.value.length;
+            document.getElementById(indicator).innerHTML = CharLength - chars;
+            if (chars > CharLength) {
+                txtMsg.value = txtMsg.value.substring(0, CharLength);
+            }
+        }
+    </script>
+}
+
+<br />
+<br />
+<br />
+
+<h5>Send Email using 'Gmail Account'</h5>
+<h6>Attachment field is optional!</h6>
+
+@using (Html.BeginForm("SendEmail", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        @Html.ValidationSummary(true)
+        <fieldset>
+            <legend>From(Gmail account):</legend>
+            <div class="form-group">
+                @Html.LabelFor(model => model.EmailFrom, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.EmailFrom)
+                    @Html.ValidationMessageFor(model => model.EmailFrom)
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.EmailFromPassword, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.EmailFromPassword)
+                    @Html.ValidationMessageFor(model => model.EmailFromPassword)
+                </div>
+            </div>
+        </fieldset>
+
+        <br />
+
+        <fieldset>
+            <legend>Choose Email Template</legend>
+            @foreach(var _template in Model.EmailTemplates)
+            {
+                @Html.RadioButtonFor(m => m.SelectedTemplate, _template.TemplateID, 
+                (_template.IsSelected.HasValue && _template.IsSelected.Value)? new { @checked="checked"}: null) @_template.TemplateName
+                <br />
+            }
+        </fieldset>
+
+        <br />
+
+        <fieldset>
+            <legend>To(Any valid email address):</legend>
+            <div class="form-group">
+                @Html.LabelFor(model => model.EmailTo, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.EmailTo)
+                    @Html.ValidationMessageFor(model => model.EmailTo)
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(model => model.EmailSubject, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.EditorFor(model => model.EmailSubject)
+                    @Html.ValidationMessageFor(model => model.EmailSubject)
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(model => model.EmailBody, new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    @Html.TextAreaFor(model => model.EmailBody, new { cols = "20", rows = "4", onkeyup = "LimtCharacters(this,1000,'lblcount');" })
+                    @Html.ValidationMessageFor(model => model.EmailBody)
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.Label("Characters Remaining:", new { @class = "control-label col-md-2" })
+                <div class="col-md-10">
+                    <label id="lblcount" style="background-color:#E2EEF1;color:Red;font-weight:bold;">1000</label>
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(model => model.File, new { @class = "control-label col-md-2", title = "Hold-down control key to select multiple files..." })
+                <div class="col-md-10">
+                    <input type="file" id="fileToUpload" name="file" multiple />
+                    @Html.ValidationMessageFor(model => model.File)
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Send" class="btn btn-default" />
+            </div>
+        </div>
+    </div>
+}
+
+---------------------------------------------------------------------------------------------------------------------------
+Views.Home.ViewDataViewBagTempData.cshtml:
+
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>ViewDataViewBagTempData</title>
+</head>
+<body>
+    <br />
+    <br />
+    <br />
+    <h2>ViewBag, ViewData and TempData Example</h2>
+
+    <div>
+        Ex. 1: ViewBag. It is dynamic bag on the fly to pass data from contorller to view. Don't need to cast the object to its original type. <br />
+        <ul>
+            @foreach (var item in ViewBag.LatestTechnologies)
+            {
+                <li>
+                    @item
+                </li>
+            }
+        </ul>
+    </div>
+
+    <div>
+        Ex. 2: ViewData. Object stored in ViewData need to be cast back to its original data type. <br />
+        <ul>
+            @foreach (var item in ViewData["LatestTechnologies"] as List<string>)
+            {
+                <li>
+                    @item
+                </li>
+            }
+        </ul>
+    </div>
+
+    <div>
+        <p>
+            Ex. 3: TempData.  Helps to maintain data when you move from one controller to other controller <br />
+            or from one action to an other action. It internally uses session variables. Temp data use <br />
+            during the current and subsequent request only. Meaning, it is used when you are sure that next <br />
+            request will be redirecting to next view. It’s life is very short and lies only till the target view is fully loaded.
+            <br />
+            <br />
+            public ActionResult Index()<br />
+            {<br />
+            var model = new Review()<br />
+            {<br />
+            Body = "Start",<br />
+            Rating=5<br />
+            };<br />
+            <br />
+            TempData["ModelName"] = model;<br />
+            return RedirectToAction("About");<br />
+            }<br />
+            <br />
+            public ActionResult About()<br />
+            {<br />
+            var model= TempData["ModelName"];<br />
+            return View(model);<br />
+            }<br />
+            <br />
+        </p>
+
+    </div>
+</body>
+</html>

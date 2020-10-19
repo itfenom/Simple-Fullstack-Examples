@@ -1,0 +1,399 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{8CB32E24-B884-4190-BA7C-48EE3B2D525C}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Playground.Winforms</RootNamespace>
+    <AssemblyName>Playground.Winforms</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Forms\Admin\AccountHistory.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Admin\AccountHistory.Designer.cs">
+      <DependentUpon>AccountHistory.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Admin\AccountMgr.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Admin\AccountMgr.Designer.cs">
+      <DependentUpon>AccountMgr.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Admin\FreeTextForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Admin\FreeTextForm.Designer.cs">
+      <DependentUpon>FreeTextForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Admin\ManageUsers.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Admin\ManageUsers.Designer.cs">
+      <DependentUpon>ManageUsers.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\BasicAsyncAwaitEx\AsyncAndAwaitEx.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\BasicAsyncAwaitEx\AsyncAndAwaitEx.Designer.cs">
+      <DependentUpon>AsyncAndAwaitEx.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Examples\DataGridColumnFilters.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Examples\DataGridColumnFilters.Designer.cs">
+      <DependentUpon>DataGridColumnFilters.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Examples\DataGridComboBox.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Examples\DataGridComboBox.Designer.cs">
+      <DependentUpon>DataGridComboBox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Examples\DataGridToExcel.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Examples\DataGridToExcel.Designer.cs">
+      <DependentUpon>DataGridToExcel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Examples\DownloadUploadBlob.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Examples\DownloadUploadBlob.Designer.cs">
+      <DependentUpon>DownloadUploadBlob.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Examples\ListViewEx.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Examples\ListViewEx.Designer.cs">
+      <DependentUpon>ListViewEx.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Examples\ListViewSearchDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Examples\ListViewSearchDialog.Designer.cs">
+      <DependentUpon>ListViewSearchDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Examples\LoadExcelFile.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Examples\LoadExcelFile.Designer.cs">
+      <DependentUpon>LoadExcelFile.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Examples\OracleDb.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Examples\OracleDb.Designer.cs">
+      <DependentUpon>OracleDb.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Examples\WorldTreeView.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Examples\WorldTreeView.Designer.cs">
+      <DependentUpon>WorldTreeView.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Examples\WorldTreeViewEx\TreeDataObject.cs" />
+    <Compile Include="Forms\Examples\WorldTreeViewEx\WorldTreeNode.cs" />
+    <Compile Include="Forms\Examples\WorldTreeViewEx\WorldTreeView.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Forms\Examples\WorldTreeViewEx\WorldTreeViewFilters.cs" />
+    <Compile Include="Forms\Examples\WorldTreeViewEx\WorldTreeViewRepository.cs" />
+    <Compile Include="Forms\LoginStuff\ChangePassword.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\LoginStuff\ChangePassword.Designer.cs">
+      <DependentUpon>ChangePassword.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\LoginStuff\Login.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\LoginStuff\Login.Designer.cs">
+      <DependentUpon>Login.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Main.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Main.Designer.cs">
+      <DependentUpon>Main.cs</DependentUpon>
+    </Compile>
+    <Compile Include="BaseForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Misc\EncryptDecrypt.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Misc\EncryptDecrypt.Designer.cs">
+      <DependentUpon>EncryptDecrypt.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\Examples\ReadAndWriteToTxtFile.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Examples\ReadAndWriteToTxtFile.Designer.cs">
+      <DependentUpon>ReadAndWriteToTxtFile.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ProgramExceptionManager.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="HelperForms\ExceptionForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="HelperForms\ExceptionForm.Designer.cs">
+      <DependentUpon>ExceptionForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Utilities\AppShutDownChecker.cs" />
+    <Compile Include="Utilities\Config.cs" />
+    <Compile Include="Utilities\FileCleanup.cs" />
+    <Compile Include="Utilities\Helpers.cs" />
+    <Compile Include="HelperForms\InputBox.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="HelperForms\InputBox.Designer.cs">
+      <DependentUpon>InputBox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="HelperForms\MessageBoxWithTextBox.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="HelperForms\MessageBoxWithTextBox.Designer.cs">
+      <DependentUpon>MessageBoxWithTextBox.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Utilities\TreeViewExtensions.cs" />
+    <EmbeddedResource Include="Forms\Admin\AccountHistory.resx">
+      <DependentUpon>AccountHistory.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Admin\AccountMgr.resx">
+      <DependentUpon>AccountMgr.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Admin\FreeTextForm.resx">
+      <DependentUpon>FreeTextForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Admin\ManageUsers.resx">
+      <DependentUpon>ManageUsers.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\BasicAsyncAwaitEx\AsyncAndAwaitEx.resx">
+      <DependentUpon>AsyncAndAwaitEx.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Examples\DataGridColumnFilters.resx">
+      <DependentUpon>DataGridColumnFilters.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Examples\DataGridComboBox.resx">
+      <DependentUpon>DataGridComboBox.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Examples\DataGridToExcel.resx">
+      <DependentUpon>DataGridToExcel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Examples\DownloadUploadBlob.resx">
+      <DependentUpon>DownloadUploadBlob.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Examples\ListViewEx.resx">
+      <DependentUpon>ListViewEx.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Examples\ListViewSearchDialog.resx">
+      <DependentUpon>ListViewSearchDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Examples\LoadExcelFile.resx">
+      <DependentUpon>LoadExcelFile.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Examples\OracleDb.resx">
+      <DependentUpon>OracleDb.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Examples\WorldTreeView.resx">
+      <DependentUpon>WorldTreeView.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\LoginStuff\ChangePassword.resx">
+      <DependentUpon>ChangePassword.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\LoginStuff\Login.resx">
+      <DependentUpon>Login.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Main.resx">
+      <DependentUpon>Main.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Misc\EncryptDecrypt.resx">
+      <DependentUpon>EncryptDecrypt.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\Examples\ReadAndWriteToTxtFile.resx">
+      <DependentUpon>ReadAndWriteToTxtFile.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <EmbeddedResource Include="HelperForms\ExceptionForm.resx">
+      <DependentUpon>ExceptionForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="HelperForms\InputBox.resx">
+      <DependentUpon>InputBox.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="HelperForms\MessageBoxWithTextBox.resx">
+      <DependentUpon>MessageBoxWithTextBox.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="AppResources\InstallWindowsService_PowerShell.ps1" />
+    <None Include="AppResources\Sample_Excel_Data_File.xlsx" />
+    <None Include="AppResources\sourceFile.nfo" />
+    <None Include="OracleSqls\PLSQL_Fundamental_1.1_ActivityGuide.pdf" />
+    <None Include="OracleSqls\PLSQL_Fundamental_1.1_StudentGuide.pdf" />
+    <None Include="OracleSqls\PLSQL_Program_Units_ActivityGuide.pdf" />
+    <None Include="OracleSqls\PLSQL_Program_Units_StudentGuide_Vol_1.pdf" />
+    <None Include="OracleSqls\PLSQL_Program_Units_StudentGuide_Vol_2.pdf" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Playground.Core\Playground.Core.csproj">
+      <Project>{8fc1bb41-d2b3-403e-8c23-7abebc35906c}</Project>
+      <Name>Playground.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="AppResources\AccMgr.sql" />
+    <Content Include="AppResources\Blob_Tbl.sql" />
+    <Content Include="AppResources\AppUsers.sql" />
+    <Content Include="AppResources\Blob_Download_08_30_15 16521293.txt" />
+    <Content Include="AppResources\Create_Java_Class_Oracle.sql" />
+    <Content Include="AppResources\DAL_with_Polly_Retry_Timeout.txt" />
+    <Content Include="AppResources\Kashif_PL_SQL.SQL" />
+    <Content Include="AppResources\Oracle_Job_Scheduler.SQL" />
+    <Content Include="AppResources\SQL Queries.sql" />
+    <Content Include="OracleSqls\DAY03_05_03_2017.sql" />
+    <Content Include="OracleSqls\Kashif_PL_SQL.SQL" />
+    <Content Include="OracleSqls\TEST_PKG.sql" />
+    <None Include="Resources\State.ico" />
+    <None Include="Resources\SaveButton.png" />
+    <None Include="Resources\OpenFolder.png" />
+    <None Include="Resources\Object.png" />
+    <None Include="Resources\File_Icon.png" />
+    <None Include="Resources\down-icon.png" />
+    <None Include="Resources\down-bottom-icon.png" />
+    <None Include="Resources\DeleteButton.png" />
+    <None Include="Resources\Country.ico" />
+    <None Include="Resources\Continent.ico" />
+    <None Include="Resources\ClosedFolder.png" />
+    <None Include="Resources\City.ico" />
+    <None Include="Resources\Attribute.png" />
+    <None Include="Resources\Array.png" />
+    <None Include="Resources\Application.ico" />
+    <None Include="Resources\AddButton.png" />
+    <None Include="Resources\World.ico" />
+    <None Include="Resources\Wafer_Icon.png" />
+    <None Include="Resources\up-top-icon.png" />
+    <None Include="Resources\up-icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.7.2 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="Microsoft.Office.Core">
+      <Guid>{2DF8D04C-5BFA-101B-BDE5-00AA0044DE52}</Guid>
+      <VersionMajor>2</VersionMajor>
+      <VersionMinor>7</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>primary</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
+    <COMReference Include="Microsoft.Office.Interop.Excel">
+      <Guid>{00020813-0000-0000-C000-000000000046}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>8</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>primary</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
+    <COMReference Include="VBIDE">
+      <Guid>{0002E157-0000-0000-C000-000000000046}</Guid>
+      <VersionMajor>5</VersionMajor>
+      <VersionMinor>3</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>primary</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
