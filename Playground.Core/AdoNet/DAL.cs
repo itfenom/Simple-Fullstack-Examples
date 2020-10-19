@@ -897,6 +897,28 @@ namespace Playground.Core.AdoNet
                 return InsertOracleBlob(oConn, sql, fileData);
             }
         }
+
+        /// <summary>
+        /// Usage:string sql = $@"SELECT COUNT(*) FROM EMPLOYEES WHERE FIRST_NAME = '{Kashif}'";
+        /// return IsCount(sql, x => x > 0);
+        /// </summary>
+        /// <param name="sql"></param>
+        /// <param name="countEvaluator"></param>
+        /// <returns></returns>
+
+        private bool IsCount(string sql, Func<int, bool> countEvaluator)
+        {
+            var connectionString = GetConnectionString();
+            using (OracleConnection conn = new OracleConnection(connectionString))
+            {
+                conn.Open();
+                using (OracleCommand cmd = new OracleCommand(sql, conn))
+                {
+                    var count = Convert.ToInt32(cmd.ExecuteScalar());
+                    return countEvaluator(count);
+                }
+            }
+        }
         #endregion
 
         public DataTable RetrieveAppUsersAsAssociativeArrays()

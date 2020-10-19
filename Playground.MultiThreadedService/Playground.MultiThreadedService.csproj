@@ -70,6 +70,7 @@
     </Compile>
     <Compile Include="Threads\HeartBeatThread.cs" />
     <Compile Include="Threads\MainWorkerThread.cs" />
+    <Compile Include="Threads\UpgraderThread.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

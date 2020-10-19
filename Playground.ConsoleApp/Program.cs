@@ -12,6 +12,7 @@ using Playground.ConsoleApp.DotNetInterview;
 using Playground.ConsoleApp.FinalProject;
 using Playground.ConsoleApp.GenericEx;
 using Playground.ConsoleApp.Grades;
+using Playground.Core.Diagnostics;
 using Playground.Core.Utilities;
 
 namespace Playground.ConsoleApp
@@ -22,7 +23,8 @@ namespace Playground.ConsoleApp
 
         private static void InitializeSetting()
         {
-            Core.CoreConfig.CreateApplicationRelatedFolders("ConsoleApp");
+            Logger.Initialize(new DILogger("ConsoleAppLogs.txt"));
+            Logger.Info("Hi, from Console App!");
 
             if (useProdDB)
             {
@@ -155,7 +157,9 @@ namespace Playground.ConsoleApp
             //DictionaryDelegates();
             #endregion
 
+
             //End
+            Logger.Info("End: Press any key to continue...");
             Console.WriteLine("Press any key to continue...");
             Console.ReadLine();
         }
@@ -181,7 +185,7 @@ namespace Playground.ConsoleApp
             var oConn = new SqlConnection();
             // ReSharper disable once UnusedVariable
             var oCmd = new SqlCommand();
-            oConn.ConnectionString = "Data Source=DFWKMUBARAK-L;Initial Catalog=Seraph;Persist Security Info=True;User ID=test;Password=Superman123$";
+            oConn.ConnectionString = "Data Source=DESKTOP-05EK4V3;Initial Catalog=Seraph;Persist Security Info=True;User ID=test;Password=Superman123$";
             oConn.Open();
 
             //for (int i = 1; i < 6001; i++)

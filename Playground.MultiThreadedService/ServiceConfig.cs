@@ -29,6 +29,11 @@ namespace Playground.MultiThreadedService
 
         public static int FileCleanupInterval => GetConfigurationInt32("FileCleanup.Interval");
 
+        public static int ServiceRestartCount { get; internal set; }
+        public static bool IsFirstRun { get; internal set; }
+        public static int RetryBeforeReboot { get; internal set; }
+        public static bool UseDevDB { get; internal set; }
+
         #endregion Service Settings from App.config
 
         #region Global Variables
