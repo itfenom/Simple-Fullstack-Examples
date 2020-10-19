@@ -4,7 +4,7 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="0f18760edd1144f98f2027d09240c863" Name="Diagram1">
+      <Diagram DiagramId="4b41cc6031d5440c8fe0fe21c3a1737e" Name="Diagram1">
         <EntityTypeShape EntityType="SeraphModel.APP_USER" Width="1.5" PointX="8" PointY="8.875" IsExpanded="true" />
         <EntityTypeShape EntityType="SeraphModel.APP_USER_ROLE" Width="1.5" PointX="5.75" PointY="9.25" IsExpanded="true" />
         <EntityTypeShape EntityType="SeraphModel.BOOKMARK" Width="1.5" PointX="10" PointY="1" IsExpanded="true" />

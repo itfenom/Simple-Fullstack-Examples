@@ -158,55 +158,55 @@
     <Compile Include="Controllers\WebGridEmployeeMgrController.cs" />
     <Compile Include="DAL\AccountRepository.cs" />
     <Compile Include="DAL\APP_USER.cs">
-      <DependentUpon>SeraphDbContext.tt</DependentUpon>
+      <DependentUpon>SeraphDBContext.tt</DependentUpon>
     </Compile>
     <Compile Include="DAL\APP_USER_ROLE.cs">
-      <DependentUpon>SeraphDbContext.tt</DependentUpon>
+      <DependentUpon>SeraphDBContext.tt</DependentUpon>
     </Compile>
     <Compile Include="DAL\BOOKMARK.cs">
-      <DependentUpon>SeraphDbContext.tt</DependentUpon>
+      <DependentUpon>SeraphDBContext.tt</DependentUpon>
     </Compile>
     <Compile Include="DAL\BookmarkRepository.cs" />
     <Compile Include="DAL\BOOKMARK_CATEGORY.cs">
-      <DependentUpon>SeraphDbContext.tt</DependentUpon>
+      <DependentUpon>SeraphDBContext.tt</DependentUpon>
     </Compile>
     <Compile Include="DAL\BookRepository.cs" />
     <Compile Include="DAL\CartItem.cs">
-      <DependentUpon>SeraphDbContext.tt</DependentUpon>
+      <DependentUpon>SeraphDBContext.tt</DependentUpon>
     </Compile>
     <Compile Include="DAL\Category.cs">
-      <DependentUpon>SeraphDbContext.tt</DependentUpon>
+      <DependentUpon>SeraphDBContext.tt</DependentUpon>
     </Compile>
     <Compile Include="DAL\EMPLOYEE.cs">
-      <DependentUpon>SeraphDbContext.tt</DependentUpon>
+      <DependentUpon>SeraphDBContext.tt</DependentUpon>
     </Compile>
     <Compile Include="DAL\EmployeeRepository.cs" />
     <Compile Include="DAL\EMPLOYEE_PHOTO.cs">
-      <DependentUpon>SeraphDbContext.tt</DependentUpon>
+      <DependentUpon>SeraphDBContext.tt</DependentUpon>
     </Compile>
     <Compile Include="DAL\Order.cs">
-      <DependentUpon>SeraphDbContext.tt</DependentUpon>
+      <DependentUpon>SeraphDBContext.tt</DependentUpon>
     </Compile>
     <Compile Include="DAL\OrderDetail.cs">
-      <DependentUpon>SeraphDbContext.tt</DependentUpon>
+      <DependentUpon>SeraphDBContext.tt</DependentUpon>
     </Compile>
     <Compile Include="DAL\Product.cs">
-      <DependentUpon>SeraphDbContext.tt</DependentUpon>
+      <DependentUpon>SeraphDBContext.tt</DependentUpon>
     </Compile>
-    <Compile Include="DAL\SeraphDbContext.Context.cs">
+    <Compile Include="DAL\SeraphDBContext.Context.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>SeraphDbContext.Context.tt</DependentUpon>
+      <DependentUpon>SeraphDBContext.Context.tt</DependentUpon>
     </Compile>
-    <Compile Include="DAL\SeraphDbContext.cs">
+    <Compile Include="DAL\SeraphDBContext.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>SeraphDbContext.tt</DependentUpon>
+      <DependentUpon>SeraphDBContext.tt</DependentUpon>
     </Compile>
-    <Compile Include="DAL\SeraphDbContext.Designer.cs">
+    <Compile Include="DAL\SeraphDBContext.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>SeraphDbContext.edmx</DependentUpon>
+      <DependentUpon>SeraphDBContext.edmx</DependentUpon>
     </Compile>
     <Compile Include="DAL\ShoppingRepository.cs" />
     <Compile Include="Global.asax.cs">
@@ -391,15 +391,15 @@
     <Content Include="Content\themes\base\tabs.css" />
     <Content Include="Content\themes\base\theme.css" />
     <Content Include="Content\themes\base\tooltip.css" />
-    <Content Include="DAL\SeraphDbContext.Context.tt">
+    <Content Include="DAL\SeraphDBContext.Context.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <DependentUpon>SeraphDbContext.edmx</DependentUpon>
-      <LastGenOutput>SeraphDbContext.Context.cs</LastGenOutput>
+      <DependentUpon>SeraphDBContext.edmx</DependentUpon>
+      <LastGenOutput>SeraphDBContext.Context.cs</LastGenOutput>
     </Content>
-    <Content Include="DAL\SeraphDbContext.tt">
+    <Content Include="DAL\SeraphDBContext.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <DependentUpon>SeraphDbContext.edmx</DependentUpon>
-      <LastGenOutput>SeraphDbContext.cs</LastGenOutput>
+      <DependentUpon>SeraphDBContext.edmx</DependentUpon>
+      <LastGenOutput>SeraphDBContext.cs</LastGenOutput>
     </Content>
     <Content Include="EmailTemplates\Ezaan_Rayyan_Mail_Template.html" />
     <Content Include="EmailTemplates\Simple_Mail_Template.html" />
@@ -435,14 +435,14 @@
     <Content Include="Catalog\Images\Thumbs\Thumbs.db" />
     <Content Include="WebForms\GridViewWithViewState.aspx" />
     <Content Include="WebForms\WebFormTest.aspx" />
-    <EntityDeploy Include="DAL\SeraphDbContext.edmx">
+    <EntityDeploy Include="DAL\SeraphDBContext.edmx">
       <Generator>EntityModelCodeGenerator</Generator>
-      <LastGenOutput>SeraphDbContext.Designer.cs</LastGenOutput>
+      <LastGenOutput>SeraphDBContext.Designer.cs</LastGenOutput>
     </EntityDeploy>
-    <Content Include="DAL\SeraphDbContext.edmx.diagram">
-      <DependentUpon>SeraphDbContext.edmx</DependentUpon>
+    <Content Include="DAL\SeraphDBContext.edmx.diagram">
+      <DependentUpon>SeraphDBContext.edmx</DependentUpon>
     </Content>
-    <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
+    <None Include="Properties\PublishProfiles\Playground.pubxml" />
     <None Include="Scripts\jquery-3.3.1.intellisense.js" />
     <Content Include="Scripts\bootstrap3-typeahead.js" />
     <Content Include="Scripts\bootstrap3-typeahead.min.js" />
