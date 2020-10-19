@@ -73,6 +73,7 @@
     <Compile Include="DelegateEx\DelagatedEvent.cs" />
     <Compile Include="DelegateEx\DelegateExample.cs" />
     <Compile Include="DelegateEx\EventPublisher.cs" />
+    <Compile Include="DelegateEx\EventPublisherAndSubscriber.cs" />
     <Compile Include="DelegateEx\Reporter.cs" />
     <Compile Include="DotNetInterview\InterviewQuestions.cs" />
     <Compile Include="FinalProject\Account.cs" />
