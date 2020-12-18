@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Text;
 using Playground.Core.AdoNet;
 using Playground.Core.Utilities;
 using Playground.WpfApp.Forms.DataGridsEx.AccountMgr;
@@ -13,17 +14,19 @@ namespace Playground.WpfApp.Repositories
 
         List<AccountModel> GetAccountsByCategoryId(int categoryId);
 
-        void InsertNewAccountCategory(string newCategoryName);
+        int InsertNewAccountCategory(string newCategoryName);
 
         void UpdateAccountCategory(int categoryId, string newCategoryName);
 
         void DeleteAccountCategory(int categoryId);
 
+        bool IsCategoryAlreadyExist(string categoryName);
+
         bool CategoryHasChildren(int categoryId);
 
         AccountModel GetAccountByAccountId(int accountId);
 
-        void InsertNewAccount(AccountModel newAcctModel);
+        int InsertNewAccount(AccountModel newAcctModel);
 
         void DeleteAccount(int accountId);
 
@@ -57,20 +60,43 @@ namespace Playground.WpfApp.Repositories
 
         public void DeleteAccountCategory(int categoryId)
         {
-            DAL.Seraph.ExecuteNonQuery("DELETE FROM ACCT_CATEGORY WHERE CATEGORY_ID = " + categoryId);
+            var anonymousBlock = new StringBuilder();
+            anonymousBlock.AppendLine("DECLARE");
+            anonymousBlock.AppendLine($@"V_CATEGORY_ID NUMBER := {categoryId};");
+            anonymousBlock.AppendLine("BEGIN");
+            anonymousBlock.AppendLine("DELETE FROM ACCT_MGR WHERE CATEGORY_ID = V_CATEGORY_ID;");
+            anonymousBlock.AppendLine("DELETE FROM ACCT_CATEGORY WHERE CATEGORY_ID = V_CATEGORY_ID;");
+            anonymousBlock.AppendLine("COMMIT;");
+            anonymousBlock.AppendLine("END;");
+
+            DAL.Seraph.ExecuteNonQuery(anonymousBlock.ToString());
+        }
+
+        public bool IsCategoryAlreadyExist(string categoryName)
+        {
+            var count = Convert.ToInt32(DAL.Seraph.ExecuteScalar($@"
+                        SELECT COUNT(*) 
+                        FROM 
+                            ACCT_CATEGORY
+                        WHERE CATEGORY_NAME = '{categoryName.Trim()}'"));
+            return count > 0;
         }
 
         public AccountModel GetAccountByAccountId(int accountId)
         {
             var retVal = new AccountModel();
-            var dt = DAL.Seraph.ExecuteQuery("SELECT * FROM ACCT_MGR WHERE ID = " + accountId);
+            var dt = DAL.Seraph.ExecuteQuery($"SELECT * FROM ACCT_MGR WHERE ID = {accountId} ORDER BY ACCT_NAME");
 
             if (dt.Rows.Count == 0) return null;
+
+            var decryptedPassword = Encryption.Decrypt(dt.Rows[0]["ACCT_PASSWORD"].ToString());
 
             retVal.AccountId = Convert.ToInt32(dt.Rows[0]["ID"]);
             retVal.AccountName = dt.Rows[0]["ACCT_NAME"].ToString();
             retVal.AccountLoginId = dt.Rows[0]["ACCT_LOGIN_ID"].ToString();
-            retVal.AccountPassword = dt.Rows[0]["ACCT_PASSWORD"].ToString();
+            retVal.AccountPassword = string.IsNullOrEmpty(decryptedPassword)
+                ? dt.Rows[0]["ACCT_PASSWORD"].ToString()
+                : decryptedPassword;
             retVal.Notes = dt.Rows[0]["ACCT_NOTES"].ToString();
             retVal.CategoryId = Convert.ToInt32(dt.Rows[0]["CATEGORY_ID"]);
 
@@ -92,20 +118,26 @@ namespace Playground.WpfApp.Repositories
         public List<AccountModel> GetAccountsByCategoryId(int categoryId)
         {
             var retVal = new List<AccountModel>();
-            var dt = DAL.Seraph.ExecuteQuery("SELECT * FROM ACCT_MGR WHERE CATEGORY_ID = " + categoryId);
+            var dt = DAL.Seraph.ExecuteQuery($"SELECT * FROM ACCT_MGR WHERE CATEGORY_ID = {categoryId} ORDER BY ACCT_NAME");
 
             if (dt.Rows.Count == 0) return null;
 
             foreach (DataRow row in dt.Rows)
             {
-                var model = new AccountModel();
+                var model = new AccountModel
+                {
+                    AccountId = Convert.ToInt32(row["ID"]),
+                    AccountName = row["ACCT_NAME"].ToString(),
+                    AccountLoginId = row["ACCT_LOGIN_ID"].ToString(),
+                    Notes = row["ACCT_NOTES"].ToString(),
+                    CategoryId = Convert.ToInt32(row["CATEGORY_ID"])
+                };
 
-                model.AccountId = Convert.ToInt32(row["ID"]);
-                model.AccountName = row["ACCT_NAME"].ToString();
-                model.AccountLoginId = row["ACCT_LOGIN_ID"].ToString();
-                model.AccountPassword = row["ACCT_PASSWORD"].ToString();
-                model.Notes = row["ACCT_NOTES"].ToString();
-                model.CategoryId = Convert.ToInt32(row["CATEGORY_ID"]);
+                var decryptedPassword = Encryption.Decrypt(row["ACCT_PASSWORD"].ToString());
+
+                model.AccountPassword = string.IsNullOrEmpty(decryptedPassword)
+                    ? row["ACCT_PASSWORD"].ToString()
+                    : decryptedPassword;
 
                 if (row["DATE_CREATED"] != null && row["DATE_CREATED"] != DBNull.Value)
                 {
@@ -128,7 +160,7 @@ namespace Playground.WpfApp.Repositories
         public List<CategoryModel> GetAllCategories()
         {
             var retVal = new List<CategoryModel>();
-            var dt = DAL.Seraph.ExecuteQuery("SELECT * FROM ACCT_CATEGORY");
+            var dt = DAL.Seraph.ExecuteQuery("SELECT * FROM ACCT_CATEGORY ORDER BY CATEGORY_NAME");
 
             if (dt.Rows.Count == 0) return null;
 
@@ -149,44 +181,64 @@ namespace Playground.WpfApp.Repositories
             return DAL.Seraph.ExecuteScalar("SELECT ACCT_PASSWORD FROM ACCT_MGR WHERE ID = " + accountId).ToString();
         }
 
-        public void InsertNewAccount(AccountModel newAcctModel)
+        public int InsertNewAccount(AccountModel newAcctModel)
         {
-            _sql = "INSERT INTO ACCT_MGR(ID, ACCT_NAME, ACCT_LOGIN_ID, ACCT_PASSWORD, ACCT_NOTES, DATE_CREATED, DATE_MODIFIED, CATEGORY_ID, IS_PASSWORD_ENCRYPTED) VALUES("
-                 + "ACCT_SEQ.NEXTVAL, '"
-                 + newAcctModel.AccountName + "', '"
-                 + newAcctModel.AccountLoginId + "', '"
-                 + newAcctModel.AccountPassword + "', '"
-                 + HelperTools.FormatSqlString(newAcctModel.Notes) + "', SYSDATE, NULL, "
-                 + newAcctModel.CategoryId + ", '"
-                 + newAcctModel.IsPasswordEncrypted + "')";
-            DAL.Seraph.ExecuteNonQuery(_sql);
-        }
+            var encryptedPassword = Encryption.Encrypt(newAcctModel.AccountPassword);
+            var notesVal = string.IsNullOrEmpty(newAcctModel.Notes) ? "NULL" : $"'{HelperTools.FormatSqlString(newAcctModel.Notes)}'";
+            var acctId = Convert.ToInt32(DAL.Seraph.ExecuteScalar("SELECT ACCT_SEQ.NEXTVAL FROM DUAL"));
 
-        public void InsertNewAccountCategory(string newCategoryName)
-        {
-            _sql = "INSERT INTO ACCT_CATEGORY(CATEGORY_ID, CATEGORY_NAME) VALUES("
-                 + "(SELECT ACCT_SEQ.NEXTVAL FROM DUAL), '" + newCategoryName + "')";
+            _sql = $@"INSERT INTO ACCT_MGR
+                      (ID, ACCT_NAME, ACCT_LOGIN_ID, ACCT_PASSWORD, ACCT_NOTES, DATE_CREATED, DATE_MODIFIED, CATEGORY_ID, IS_PASSWORD_ENCRYPTED) 
+                      VALUES(
+                      {acctId},
+                     '{HelperTools.FormatSqlString(newAcctModel.AccountName)}',
+                     '{HelperTools.FormatSqlString(newAcctModel.AccountLoginId)}',
+                     '{encryptedPassword}',
+                      {notesVal},
+                      SYSDATE,
+                      NULL,
+                      {newAcctModel.CategoryId},  
+                      'Y')";
 
             DAL.Seraph.ExecuteNonQuery(_sql);
+
+            return acctId;
         }
 
         public void UpdateAccount(AccountModel updatedAcctModel)
         {
-            _sql = "UPDATE ACCT_MGR SET ACCT_NAME = '" + updatedAcctModel.AccountName
-                 + "', ACCT_LOGIN_ID = '" + updatedAcctModel.AccountName
-                 + "', ACCT_PASSWORD = '" + updatedAcctModel.AccountPassword
-                 + "', ACCT_NOTES = '" + HelperTools.FormatSqlString(updatedAcctModel.Notes)
-                 + "', DATE_MODIFIED = SYSDATE, CATEGORY_ID = " + updatedAcctModel.CategoryId
-                 + ", IS_PASSWORD_ENCRYPTED = '" + updatedAcctModel.IsPasswordEncrypted
-                 + "' WHERE ID = " + updatedAcctModel.AccountId;
+            var encryptedPassword = Encryption.Encrypt(updatedAcctModel.AccountPassword);
+            var notesVal = string.IsNullOrEmpty(updatedAcctModel.Notes) ? "NULL" : $"'{HelperTools.FormatSqlString(updatedAcctModel.Notes)}'";
+
+            _sql = $@"UPDATE ACCT_MGR
+                      SET ACCT_NAME = '{HelperTools.FormatSqlString(updatedAcctModel.AccountName)}', 
+                          ACCT_LOGIN_ID  = '{HelperTools.FormatSqlString(updatedAcctModel.AccountLoginId)}', 
+                          ACCT_PASSWORD  = '{encryptedPassword}',     
+                          ACCT_NOTES = {notesVal}, 
+                          CATEGORY_ID = {updatedAcctModel.CategoryId},
+                          DATE_MODIFIED = SYSDATE, 
+                          IS_PASSWORD_ENCRYPTED = 'Y'
+                      WHERE ID = {updatedAcctModel.AccountId}";
 
             DAL.Seraph.ExecuteNonQuery(_sql);
         }
 
+        public int InsertNewAccountCategory(string newCategoryName)
+        {
+            var categoryId = Convert.ToInt32(DAL.Seraph.ExecuteScalar("SELECT ACCT_SEQ.NEXTVAL FROM DUAL"));
+            _sql = $@"INSERT INTO ACCT_CATEGORY(CATEGORY_ID, CATEGORY_NAME)
+                        VALUES({categoryId}, '{HelperTools.FormatSqlString(newCategoryName)}')";
+
+            DAL.Seraph.ExecuteNonQuery(_sql);
+
+            return categoryId;
+        }
+
         public void UpdateAccountCategory(int categoryId, string newCategoryName)
         {
-            _sql = "UPDATE ACCT_CATEGORY SET CATEGORY_NAME = '" + newCategoryName
-                 + "' WHERE CATEGORY_ID = " + categoryId;
+            _sql = $@"UPDATE ACCT_CATEGORY 
+                        SET CATEGORY_NAME = '{HelperTools.FormatSqlString(newCategoryName)}'
+                        WHERE CATEGORY_ID = {categoryId}";
 
             DAL.Seraph.ExecuteNonQuery(_sql);
         }

@@ -109,6 +109,7 @@
     <Compile Include="Behaviors\DialogCloser.cs" />
     <Compile Include="Behaviors\DialogCloserDependencyProperty.cs" />
     <Compile Include="Behaviors\NumberOnlyDependencyProperty.cs" />
+    <Compile Include="Behaviors\WindowCloser.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="Controls\FadingContentControl.cs" />
     <Compile Include="Controls\ScrollingContentControl.cs" />
@@ -127,12 +128,20 @@
     <Compile Include="Forms\AsyncEx\BasicAsyncAwaitEx\BasicAsyncAwaitExView.xaml.cs">
       <DependentUpon>BasicAsyncAwaitExView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Forms\DataGridsEx\AccountMgr\AccountEditorView.xaml.cs">
+      <DependentUpon>AccountEditorView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\DataGridsEx\AccountMgr\AccountEditorViewModel.cs" />
     <Compile Include="Forms\DataGridsEx\AccountMgr\AccountMgrView.xaml.cs">
       <DependentUpon>AccountMgrView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Forms\DataGridsEx\AccountMgr\AccountMgrViewModel.cs" />
     <Compile Include="Forms\DataGridsEx\AccountMgr\AccountModel.cs" />
     <Compile Include="Forms\DataGridsEx\AccountMgr\AccountNode.cs" />
+    <Compile Include="Forms\DataGridsEx\AccountMgr\CategoryEditorView.xaml.cs">
+      <DependentUpon>CategoryEditorView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\DataGridsEx\AccountMgr\CategoryEditorViewModel.cs" />
     <Compile Include="Forms\DataGridsEx\NavigationEx\AddEditEmployeeView.xaml.cs">
       <DependentUpon>AddEditEmployeeView.xaml</DependentUpon>
     </Compile>
@@ -480,9 +489,17 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="Forms\DataGridsEx\AccountMgr\AccountEditorView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Forms\DataGridsEx\AccountMgr\AccountMgrView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Forms\DataGridsEx\AccountMgr\CategoryEditorView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Forms\DataGridsEx\CheckBoxDataGrid\CheckBoxDataGridView.xaml">
       <Generator>MSBuild:Compile</Generator>

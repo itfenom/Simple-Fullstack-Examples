@@ -23,7 +23,11 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
         public string AccountName
         {
             get => _accountName;
-            set => SetPropertyValue(ref _accountName, value);
+            set
+            {
+                SetPropertyValue(ref _accountName, value);
+                ValidateProperty(value);
+            }
         }
 
         private string _accountLoginId;
@@ -32,7 +36,11 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
         public string AccountLoginId
         {
             get => _accountLoginId;
-            set => SetPropertyValue(ref _accountLoginId, value);
+            set
+            {
+                SetPropertyValue(ref _accountLoginId, value);
+                ValidateProperty(value);
+            }
         }
 
         private string _accountPassword;
@@ -41,7 +49,11 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
         public string AccountPassword
         {
             get => _accountPassword;
-            set => SetPropertyValue(ref _accountPassword, value);
+            set
+            {
+                SetPropertyValue(ref _accountPassword, value);
+                ValidateProperty(value);
+            }
         }
 
         private string _notes;

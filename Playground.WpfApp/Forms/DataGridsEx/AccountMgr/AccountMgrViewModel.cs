@@ -11,9 +11,17 @@ using System.Windows.Input;
 using MahApps.Metro.Controls.Dialogs;
 using Playground.WpfApp.Mvvm;
 using Playground.WpfApp.Repositories;
+// ReSharper disable PossibleNullReferenceException
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 
 namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
 {
+    public enum AccountActionType
+    {
+        Edit,
+        New
+    }
+
     public class AccountMgrViewModel : PropertyChangedBase
     {
         public override string Title => "Account Mgr: TreeView with GridView";
@@ -22,7 +30,6 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
         private List<CategoryModel> _allCategories;
         private List<CategoryNode> _expandedCategoryNodes;
         private List<AccountNode> _expandedAccountNodes;
-        public bool UserAgreesToClose;
 
         private ObservableCollection<CategoryNode> _categoryNodes;
 
@@ -40,7 +47,7 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
             set => SetPropertyValue(ref _selectedObject, value);
         }
 
-        private int _selectedTabIndex; //Setting tab value to 0 by Default so that window opens to this-Tab
+        private int _selectedTabIndex;
 
         public int SelectedTabIndex
         {
@@ -49,10 +56,7 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
         }
 
         private List<Predicate<CategoryModel>> CategoryFilterCriteria;
-        private List<CategoryModel> _deletedCategoryObjects;
-
         private List<Predicate<AccountModel>> AccountFilterCriteria;
-        private List<AccountModel> _deletedAccountObjects;
 
         private string _accountCategorySearchText;
 
@@ -67,19 +71,16 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
             _dialogCoordinator = dialogCoordinator;
             _repository = new AccountRepository();
 
-            _selectedTabIndex = 0;
+            _selectedTabIndex = 0; //Setting tab value to 0 by Default so that window opens to this-Tab
             _selectedObject = null;
 
-            _allCategories = _repository.GetAllCategories();
             _expandedCategoryNodes = new List<CategoryNode>();
             _expandedAccountNodes = new List<AccountNode>();
 
             CategoryFilterCriteria = new List<Predicate<CategoryModel>>();
-            _deletedCategoryObjects = new List<CategoryModel>();
             _categoryNameFilter = string.Empty;
 
             AccountFilterCriteria = new List<Predicate<AccountModel>>();
-            _deletedAccountObjects = new List<AccountModel>();
             _accountNameFilter = string.Empty;
 
             //Initialize commands
@@ -87,20 +88,30 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
             ReloadTreeViewCommand = new DelegateCommand(() => LoadTreeView());
             ClearSearchCommand = new DelegateCommand(() => ClearSearch());
             SearchAccountCategoryCommand = new DelegateCommand(() => PerformAccountCategorySearch());
-            ClearAccountFilterCommand = new DelegateCommand(() => ClearAccountFilters());
-            ClearCategoriesFilterCommand = new DelegateCommand(() => ClearCategoryFilters());
+
+            //TreeView Context-Menu Commands
             AccountContextMenuCommand = new DelegateCommand<object>(param => AccountContextMenu_Click(param));
             CategoryContextMenuCommand = new DelegateCommand<object>(param => CategoryContextMenu_Click(param));
 
-            //Account Commands
-            AddNewAccountCommand = new DelegateCommand(() => AddNewAccount());
-            _deleteAccountCommand = new DelegateCommand(() => DeleteAccount(), () => (SelectedAccount != null));
-            _saveAccountCommand = new DelegateCommand(() => SaveAccounts(), () => CanSaveAccount);
+            //Account DataGrid-Commands
+            AddNewAccountCommand = new DelegateCommand(() => AddOrEditAccount(AccountActionType.New));
+            _deleteAccountCommand = new DelegateCommand(() => DeleteAccount(), () => SelectedAccount != null);
+            _editAccountCommand = new DelegateCommand(() => AddOrEditAccount(AccountActionType.Edit), () => SelectedAccount != null);
 
-            //Category Commands
-            AddNewCategoryCommand = new DelegateCommand(() => AddNewCategory());
+            //Category DataGridCommands
+            AddNewCategoryCommand = new DelegateCommand(() => AddOrEditCategory(AccountActionType.New));
             _deleteCategoryCommand = new DelegateCommand(() => DeleteCategory(), () => (SelectedCategory != null));
-            _saveCategoryCommand = new DelegateCommand(() => SaveCategories(), () => CanSaveCategory);
+            _editCategoryCommand = new DelegateCommand(() => AddOrEditCategory(AccountActionType.Edit), () => (SelectedCategory != null));
+
+            LoadData();
+            LoadTreeView();
+
+            PropertyChanged += AccountMgrViewModel_PropertyChanged;
+        }
+
+        private void LoadData()
+        {
+            _allCategories = _repository.GetAllCategories();
 
             //Load Categories for comboBox
             _categoriesComboBox = new ObservableCollection<CategoryModel>();
@@ -114,10 +125,6 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
             }
 
             CategoriesComboBox = _categoriesComboBox;
-
-            LoadTreeView();
-
-            PropertyChanged += AccountMgrViewModel_PropertyChanged;
         }
 
         private void AccountMgrViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -126,11 +133,11 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
             {
                 //Categories
                 _deleteCategoryCommand.RaiseCanExecuteChanged();
-                _saveCategoryCommand.RaiseCanExecuteChanged();
+                _editCategoryCommand.RaiseCanExecuteChanged();
 
                 //Accounts
                 _deleteAccountCommand.RaiseCanExecuteChanged();
-                _saveAccountCommand.RaiseCanExecuteChanged();
+                _editAccountCommand.RaiseCanExecuteChanged();
             }
         }
 
@@ -474,31 +481,6 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
             return CategoryFilterCriteria.TrueForAll(x => x(cat));
         }
 
-        private void ClearCategoryFilters()
-        {
-            try
-            {
-                CategoryFilterCriteria.Clear();
-                RefreshCategoriesView();
-
-                CategoryNameFilter = string.Empty;
-
-                // Bring the current record back into view in case it moved
-                if (SelectedCategory != null && (SelectedCategory.IsDeleted == false))
-                {
-                    CategoryModel current = SelectedCategory;
-                    CategoriesView.MoveCurrentToFirst();
-                    CategoriesView.MoveCurrentTo(current);
-                }
-
-                RefreshCategoriesView();
-            }
-            catch (Exception oEx)
-            {
-                _dialogCoordinator.ShowMessageAsync(this, "Exception", oEx.Message);
-            }
-        }
-
         // ReSharper disable once UnusedMethodReturnValue.Local
         private object RefreshCategoriesView()
         {
@@ -619,32 +601,6 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
             return AccountFilterCriteria.TrueForAll(x => x(acct));
         }
 
-        private void ClearAccountFilters()
-        {
-            try
-            {
-                if (AccountsView == null || AccountsView.Filter == null) return;
-
-                AccountFilterCriteria.Clear();
-
-                AccountNameFilter = string.Empty;
-
-                // Bring the current record back into view in case it moved
-                if (SelectedAccount != null && (SelectedAccount.IsDeleted == false))
-                {
-                    AccountModel current = SelectedAccount;
-                    AccountsView.MoveCurrentToFirst();
-                    AccountsView.MoveCurrentTo(current);
-                }
-
-                RefreshAccountsView();
-            }
-            catch (Exception oEx)
-            {
-                _dialogCoordinator.ShowMessageAsync(this, "Exception", oEx.Message);
-            }
-        }
-
         // ReSharper disable once UnusedMethodReturnValue.Local
         private object RefreshAccountsView()
         {
@@ -682,39 +638,74 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
             LoadTreeView();
         }
 
-        public ICommand ClearAccountFilterCommand { get; }
-
         public ICommand AddNewAccountCommand { get; }
 
-        private void AddNewAccount()
+        private DelegateCommand _editAccountCommand;
+
+        public DelegateCommand EditAccountCommand
         {
-            var accountModel = new AccountModel
+            get => _editAccountCommand;
+            set => _editAccountCommand = value;
+        }
+
+        private void AddOrEditAccount(AccountActionType actionType)
+        {
+            var accountModel = new AccountModel();
+
+            if (actionType == AccountActionType.New)
             {
-                AccountId = -99,
-                AccountName = string.Empty,
-                AccountLoginId = string.Empty,
-                AccountPassword = string.Empty,
-                Notes = string.Empty,
-                // ReSharper disable once MergeConditionalExpression
-                CategoryId = (SelectedCategory == null ? 0 : SelectedCategory.CategoryId),
-                IsPasswordEncrypted = "N",
-                IsDirty = true,
-                IsNew = true
-            };
-
-            accountModel.PropertyChanged += AccountMgrViewModel_PropertyChanged;
-            SelectedAccount = accountModel;
-
-            if (_accounts == null)
+                accountModel.AccountId = -999;
+                accountModel.AccountName = string.Empty;
+                accountModel.AccountLoginId = string.Empty;
+                accountModel.AccountPassword = string.Empty;
+            }
+            else if (actionType == AccountActionType.Edit)
             {
-                _accounts = new ObservableCollection<AccountModel>();
-
-                AccountsView = (CollectionView)new CollectionViewSource { Source = Accounts }.View;
-                NotifyPropertyChanged("AccountsView");
-                Accounts.CollectionChanged += Accounts_CollectionChanged;
+                accountModel = SelectedAccount;
             }
 
-            _accounts.Add(accountModel);
+            var viewModel = new AccountEditorViewModel(_repository, accountModel, _allCategories, actionType);
+            var view = new AccountEditorView { DataContext = viewModel };
+            view.ShowDialog();
+
+            if (viewModel.SaveSuccessful)
+            {
+                accountModel.PropertyChanged -= AccountMgrViewModel_PropertyChanged;
+                accountModel = viewModel.Model;
+                accountModel.PropertyChanged += AccountMgrViewModel_PropertyChanged;
+
+                if (actionType == AccountActionType.New)
+                {
+                    if (_accounts == null)
+                    {
+                        _accounts = new ObservableCollection<AccountModel>();
+
+                        AccountsView = (CollectionView)new CollectionViewSource { Source = Accounts }.View;
+                        NotifyPropertyChanged("AccountsView");
+                        Accounts.CollectionChanged += Accounts_CollectionChanged;
+                    }
+                    _accounts.Add(accountModel);
+                }
+                else if (actionType == AccountActionType.Edit)
+                {
+                    var itemToUpdate = _accounts.FirstOrDefault(a => a.AccountId == accountModel.AccountId);
+                    itemToUpdate.AccountName = accountModel.AccountName;
+                    itemToUpdate.AccountLoginId = accountModel.AccountLoginId;
+                    itemToUpdate.AccountPassword = accountModel.AccountPassword;
+                    itemToUpdate.Notes = accountModel.Notes;
+                    itemToUpdate.CategoryId = accountModel.CategoryId;
+                    itemToUpdate.DateCreated = accountModel.DateCreated;
+                    itemToUpdate.DateModified = accountModel.DateModified;
+                }
+
+                NotifyPropertyChanged("Accounts");
+                AccountsView.Refresh();
+                NotifyPropertyChanged("AccountsView");
+
+                SelectedAccount = null;
+                SelectedAccount = accountModel;
+                NotifyPropertyChanged("SelectedAccount");
+            }
         }
 
         private DelegateCommand _deleteAccountCommand;
@@ -723,132 +714,77 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
 
         private void DeleteAccount()
         {
-            if (!_deletedAccountObjects.Contains(SelectedAccount))
+            var result = MessageBox.Show($@"Are you sure to deleted '{SelectedAccount.AccountName}'?", "Confirm Delete Account",
+                MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.No)
             {
-                _deletedAccountObjects.Add(SelectedAccount);
+                return;
             }
+
+            _repository.DeleteAccount(SelectedAccount.AccountId);
 
             SelectedAccount.IsDeleted = true;
             SelectedAccount.IsDirty = true;
             Accounts.Remove(SelectedAccount);
+            NotifyPropertyChanged("Accounts");
+
+            _selectedAccount = null;
+            NotifyPropertyChanged("SelectedAccount");
+
+            AccountsView.Refresh();
+            NotifyPropertyChanged("AccountsView");
+
+            //Load TreeView
+            LoadTreeView();
         }
-
-        private DelegateCommand _saveAccountCommand;
-
-        public DelegateCommand SaveAccountCommand => _saveAccountCommand;
-
-        public bool CanSaveAccount
-        {
-            get
-            {
-                //if (this.SelectedCategory == null) return false;
-
-                if (HasUnSavedAccounts() == false) return false;
-
-                var errObjects = (from a in _accounts where a.ErrorCount > 0 select a).ToList();
-
-                if (errObjects.Any()) return false;
-
-                return true;
-            }
-        }
-
-        private void SaveAccounts()
-        {
-            try
-            {
-                var isDirtyObjects = (from a in Accounts where a.IsDirty select a).ToList();
-
-                foreach (var item in isDirtyObjects)
-                {
-                    if (item.IsNew)
-                    {
-                        var newAcctModel = new AccountModel();
-                        newAcctModel.AccountId = item.AccountId;
-                        newAcctModel.AccountName = Core.Utilities.HelperTools.FormatSqlString(item.AccountName);
-                        newAcctModel.AccountLoginId = Core.Utilities.HelperTools.FormatSqlString(item.AccountLoginId);
-                        newAcctModel.AccountPassword = Core.Utilities.Encryption.Encrypt(item.AccountPassword);
-                        newAcctModel.Notes = Core.Utilities.HelperTools.FormatSqlString(item.Notes);
-                        newAcctModel.DateCreated = DateTime.Today;
-                        newAcctModel.CategoryId = item.CategoryId;
-                        newAcctModel.IsPasswordEncrypted = "Y";
-
-                        _repository.InsertNewAccount(newAcctModel);
-                        item.IsNew = false;
-                        item.IsDirty = false;
-                        item.IsPasswordEncrypted = "Y";
-                    }
-                    else if (item.IsDeleted)
-                    {
-                        _repository.DeleteAccount(item.AccountId);
-                        item.IsDeleted = false;
-                        item.IsDirty = false;
-                    }
-                    else //its an update
-                    {
-                        var updatedAcctModel = new AccountModel();
-                        updatedAcctModel.AccountId = item.AccountId;
-                        updatedAcctModel.AccountName = Core.Utilities.HelperTools.FormatSqlString(item.AccountName);
-                        updatedAcctModel.AccountLoginId = Core.Utilities.HelperTools.FormatSqlString(item.AccountLoginId);
-
-                        var existingPassword = _repository.GetPassword(item.AccountId);
-                        if (existingPassword == item.AccountPassword)
-                        {
-                            updatedAcctModel.AccountPassword = item.AccountPassword;
-                        }
-                        else
-                        {
-                            updatedAcctModel.AccountPassword = Core.Utilities.Encryption.Encrypt(item.AccountPassword);
-                        }
-
-                        updatedAcctModel.IsPasswordEncrypted = "Y";
-                        updatedAcctModel.Notes = Core.Utilities.HelperTools.FormatSqlString(item.Notes);
-                        updatedAcctModel.DateCreated = DateTime.Today;
-                        updatedAcctModel.CategoryId = item.CategoryId;
-
-                        _repository.UpdateAccount(updatedAcctModel);
-                        item.IsDirty = false;
-                    }
-                }
-
-                if (_deletedAccountObjects.Count > 0)
-                {
-                    foreach (var item in _deletedAccountObjects)
-                    {
-                        _repository.DeleteAccount(item.AccountId);
-                    }
-                }
-
-                //Load TreeView
-                LoadTreeView();
-
-                //Load Accounts
-                if (SelectedCategory != null)
-                {
-                    LoadAccountsByCategoryId(Convert.ToInt32(SelectedCategory.CategoryId));
-                }
-            }
-            catch (Exception oEx)
-            {
-                MessageBox.Show(oEx.Message, "Exception", MessageBoxButton.OK, MessageBoxImage.Exclamation);
-            }
-        }
-
-        public ICommand ClearCategoriesFilterCommand { get; }
 
         public ICommand AddNewCategoryCommand { get; }
 
-        private void AddNewCategory()
+        private void AddOrEditCategory(AccountActionType actionType)
         {
-            var categoryModel = new CategoryModel();
-            categoryModel.CategoryId = (_repository.GetAllCategories().Count() + 1);
-            categoryModel.CategoryName = string.Empty;
+            var model = new CategoryModel();
+            if (actionType == AccountActionType.New)
+            {
+                model.CategoryId = -999;
+                model.CategoryName = string.Empty;
+            }
+            else if (actionType == AccountActionType.Edit)
+            {
+                model = SelectedCategory;
+            }
 
-            categoryModel.IsDirty = true;
-            categoryModel.IsNew = true;
-            categoryModel.PropertyChanged += AccountMgrViewModel_PropertyChanged;
-            SelectedCategory = categoryModel;
-            _categories.Add(categoryModel);
+            var viewModel = new CategoryEditorViewModel(_repository, model, actionType);
+            var view = new CategoryEditorView { DataContext = viewModel };
+            view.ShowDialog();
+
+            if (viewModel.SaveSuccessful)
+            {
+                model.CategoryId = viewModel.CategoryId;
+                model.CategoryName = viewModel.CategoryName;
+                model.PropertyChanged += AccountMgrViewModel_PropertyChanged;
+
+                if (actionType == AccountActionType.New)
+                {
+                    _categories.Add(model);
+                }
+                else if (actionType == AccountActionType.Edit)
+                {
+                    var itemToUpdate = _categories.FirstOrDefault(c => c.CategoryId == model.CategoryId);
+                    itemToUpdate.CategoryName = model.CategoryName;
+                }
+
+                NotifyPropertyChanged("Categories");
+                CategoriesView.Refresh();
+                NotifyPropertyChanged("CategoriesView");
+
+                SelectedCategory = null;
+                SelectedCategory = model;
+                NotifyPropertyChanged("SelectedCategory");
+
+                //LoadTreeView
+                LoadData();
+                LoadTreeView();
+            }
         }
 
         private DelegateCommand _deleteCategoryCommand;
@@ -861,80 +797,38 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
 
         private void DeleteCategory()
         {
-            if (!_deletedCategoryObjects.Contains(SelectedCategory))
+            var result = MessageBox.Show($@"Deleting category will delete all accounts as well.{Environment.NewLine}Sure to delete '{SelectedCategory.CategoryName}'?", "Confirm Delete Category",
+                MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.No)
             {
-                _deletedCategoryObjects.Add(SelectedCategory);
+                return;
             }
 
-            SelectedCategory.IsDeleted = true;
-            SelectedCategory.IsDirty = true;
+            _repository.DeleteAccountCategory(SelectedCategory.CategoryId);
+
             Categories.Remove(SelectedCategory);
+            NotifyPropertyChanged("Categories");
+
+            _selectedCategory = null;
+            NotifyPropertyChanged("SelectedCategory");
+
+            CategoriesView.Refresh();
+            NotifyPropertyChanged("CategoriesView");
+
+            //Load TreeView
+            LoadData();
+            LoadTreeView();
+
+            //Load Categories
+            LoadAllCategories();
         }
 
-        private DelegateCommand _saveCategoryCommand;
+        private DelegateCommand _editCategoryCommand;
 
-        public DelegateCommand SaveCategoryCommand
+        public DelegateCommand EditCategoryCommand
         {
-            get => _saveCategoryCommand;
-            set => _saveCategoryCommand = value;
-        }
-
-        public bool CanSaveCategory
-        {
-            get
-            {
-                //if (this.SelectedCategory == null) return false;
-
-                if (HasUnSavedCategories() == false) return false;
-
-                var errObjects = (from c in _categories where c.ErrorCount > 0 select c).ToList();
-
-                if (errObjects.Any()) return false;
-
-                return true;
-            }
-        }
-
-        private void SaveCategories()
-        {
-            try
-            {
-                var isDirtyObjects = (from c in Categories where c.IsDirty select c).ToList();
-
-                foreach (var item in isDirtyObjects)
-                {
-                    if (item.IsNew)
-                    {
-                        _repository.InsertNewAccountCategory(item.CategoryName);
-                    }
-                    else if (item.IsDeleted)
-                    {
-                        _repository.DeleteAccountCategory(Convert.ToInt32(item.CategoryId));
-                    }
-                    else //its an update
-                    {
-                        _repository.UpdateAccountCategory(item.CategoryId, item.CategoryName);
-                    }
-                }
-
-                if (_deletedCategoryObjects.Count > 0)
-                {
-                    foreach (var item in _deletedCategoryObjects)
-                    {
-                        _repository.DeleteAccountCategory(item.CategoryId);
-                    }
-                }
-
-                //Load TreeView
-                LoadTreeView();
-
-                //Load Categories
-                LoadAllCategories();
-            }
-            catch (Exception oEx)
-            {
-                MessageBox.Show(oEx.Message, "Exception", MessageBoxButton.OK, MessageBoxImage.Exclamation);
-            }
+            get => _editCategoryCommand;
+            set => _editCategoryCommand = value;
         }
 
         public ICommand AccountContextMenuCommand { get; }
@@ -949,16 +843,7 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
 
                     sb.AppendLine("Name: " + SelectedAccount.AccountName);
                     sb.AppendLine("Login: " + SelectedAccount.AccountLoginId);
-
-                    if (SelectedAccount.IsPasswordEncrypted == "Y")
-                    {
-                        sb.AppendLine("Password: " + Core.Utilities.Encryption.Decrypt(SelectedAccount.AccountPassword));
-                    }
-                    else
-                    {
-                        sb.AppendLine("Password: " + SelectedAccount.AccountPassword);
-                    }
-
+                    sb.AppendLine("Password: " + SelectedAccount.AccountPassword);
                     sb.AppendLine("Notes: " + SelectedAccount.Notes);
 
                     MessageBox.Show(sb.ToString(), "View Details", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -983,6 +868,9 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
                     case "EDIT":
                         _dialogCoordinator.ShowMessageAsync(this, "Category Context Menu: " + categoryNode.CategoryName, "Edit Clicked!");
                         break;
+                    case "ADD_NEW_ACCOUNT":
+                        AddOrEditAccount(AccountActionType.New);
+                        break;
                 }
             }
         }
@@ -991,106 +879,25 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
 
         #region Closing
 
-        public bool HasUnSavedCategories()
-        {
-            if (Categories == null) return false;
-
-            var isDirtyObjects = (from c in Categories where c.IsDirty select c).ToList();
-
-            if (isDirtyObjects.Any()) return true;
-
-            if (_deletedCategoryObjects.Count > 0) return true;
-
-            return false;
-        }
-
-        public bool HasUnSavedAccounts()
-        {
-            if (Accounts == null) return false;
-
-            var isDirtyObjects = (from a in Accounts where a.IsDirty select a).ToList();
-
-            if (isDirtyObjects.Any()) return true;
-
-            if (_deletedAccountObjects.Count > 0) return true;
-
-            return false;
-        }
-
         private void CloseWindow()
         {
             foreach (Window window in Application.Current.Windows)
             {
                 if (window.DataContext == this)
                 {
-                    UserAgreesToClose = true;
                     window.Close();
                 }
             }
         }
 
 
-        public async void OnClosing()
+        public void OnClosing()
         {
-            var mySettings = new MetroDialogSettings()
-            {
-                AffirmativeButtonText = "Ok",
-                NegativeButtonText = "Cancel",
-                AnimateShow = true,
-                AnimateHide = false
-            };
-
-            if (HasUnSavedCategories() || HasUnSavedAccounts())
-            {
-                var result = await _dialogCoordinator.ShowMessageAsync(this,
-                    "Confirm Close",
-                    "Are you sure, you want to close without Saving?",
-                    MessageDialogStyle.AffirmativeAndNegative, mySettings);
-
-                if (result == MessageDialogResult.Affirmative)
-                {
-                    CloseWindow();
-                    return;
-                }
-
-                return;
-            }
-
             CloseWindow();
         }
 
         public override void OnWindowClosing(object sender, CancelEventArgs e)
         {
-            if (UserAgreesToClose)
-            {
-                e.Cancel = false; //go ahead and close!
-                Dispose();
-                return;
-            }
-
-            if (HasUnSavedCategories() || HasUnSavedAccounts() && (UserAgreesToClose == false))
-            {
-                var result = MessageBox.Show(
-                    "Are you sure, you want to close without Saving?",
-                    "Confirm Close",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
-
-                UserAgreesToClose = (result == MessageBoxResult.Yes);
-
-                if (UserAgreesToClose)
-                {
-                    e.Cancel = false; //go ahead and close!
-                    Dispose();
-                    return;
-                }
-                else
-                {
-                    e.Cancel = true; //stop window from closing
-                    return;
-                }
-            }
-
             e.Cancel = false; //go ahead and close!
             Dispose();
         }
@@ -1101,8 +908,6 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
             _allCategories = null;
             _expandedCategoryNodes = null;
             _expandedAccountNodes = null;
-
-            PropertyChanged -= AccountMgrViewModel_PropertyChanged;
 
             base.Dispose(disposing);
         }
