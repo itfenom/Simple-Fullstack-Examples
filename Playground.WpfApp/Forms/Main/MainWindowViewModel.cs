@@ -67,6 +67,7 @@ namespace Playground.WpfApp.Forms.Main
 
             //TreeViews
             ShowTreeViewSelectedItemCommand = new DelegateCommand(() => OnShowTreeViewSelectedItem());
+            ShowTreeViewFilteringCommand = new DelegateCommand(() => OnShowTreeViewFiltering());
 
             //Others
             ShowXamlMiscCommand = new DelegateCommand(() => OnShowXamlMisc());
@@ -476,6 +477,14 @@ namespace Playground.WpfApp.Forms.Main
         {
             var view = new TreeViewEx.TreeViewSelectItem.TreeViewSelectItemView();
             view.DataContext = new TreeViewEx.TreeViewSelectItem.TreeViewSelectItemViewModel();
+            view.ShowDialog();
+        }
+
+        public ICommand ShowTreeViewFilteringCommand { get; }
+
+        private void OnShowTreeViewFiltering()
+        {
+            var view = new TreeViewEx.TreeViewLib.MetaAccountMainView();
             view.ShowDialog();
         }
 

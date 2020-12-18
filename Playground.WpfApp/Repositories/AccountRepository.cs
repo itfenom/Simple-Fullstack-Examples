@@ -165,7 +165,7 @@ namespace Playground.WpfApp.Repositories
         public void InsertNewAccountCategory(string newCategoryName)
         {
             _sql = "INSERT INTO ACCT_CATEGORY(CATEGORY_ID, CATEGORY_NAME) VALUES("
-                 + "SELECT MAX(CATEGORY_ID) + 1 FROM ACCT_CATEGORY, '" + newCategoryName + "')";
+                 + "(SELECT ACCT_SEQ.NEXTVAL FROM DUAL), '" + newCategoryName + "')";
 
             DAL.Seraph.ExecuteNonQuery(_sql);
         }

@@ -33,7 +33,7 @@ CREATE TABLE ACCT_MGR
 )
 --------------------------------------------------------------------------------
 CREATE SEQUENCE ACCT_SEQ
-START WITH 1
+START WITH 101
 INCREMENT BY 1;
 
 --------------------------------------------------------------------------------
@@ -125,13 +125,12 @@ PROCEDURE PROC_INSERT_CATEGORY(P_CATEGORY_NAME VARCHAR2, P_CATEGORY_ID OUT NUMBE
 AS
   BEGIN
         IF(P_CATEGORY_NAME IS NOT NULL) THEN
-        
-            SELECT MAX(NVL(CATEGORY_ID, 0) + 1) AS CATEGORY_ID INTO P_CATEGORY_ID
-            FROM ACCT_CATEGORY;
-            
+
             INSERT INTO ACCT_CATEGORY(CATEGORY_ID, CATEGORY_NAME)
-            VALUES (P_CATEGORY_ID, P_CATEGORY_NAME);
-            
+            VALUES (ACCT_SEQ.NEXTVAL, P_CATEGORY_NAME);
+
+            P_CATEGORY_ID := ACCT_SEQ.CURRVAL;
+
         END IF;
         
   END PROC_INSERT_CATEGORY;

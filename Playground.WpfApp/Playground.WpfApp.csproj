@@ -91,6 +91,9 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="TreeLib, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dirkster.TreeLib.1.2.0\lib\net40\TreeLib.dll</HintPath>
+    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -248,6 +251,22 @@
     <Compile Include="Forms\ReactiveEx\ValidatableBindableBase.cs" />
     <Compile Include="Forms\ReactiveEx\WindowEventLoggingObserver.cs" />
     <Compile Include="Forms\TabsEx\TabNavigation\CommandViewModel.cs" />
+    <Compile Include="Forms\TreeViewEx\TreeViewLib\BaseViewModel.cs" />
+    <Compile Include="Forms\TreeViewEx\TreeViewLib\Beh\HighlightTextBlockBehavior.cs" />
+    <Compile Include="Forms\TreeViewEx\TreeViewLib\Beh\TextChangedCommand.cs" />
+    <Compile Include="Forms\TreeViewEx\TreeViewLib\Beh\TreeViewItemExpanded.cs" />
+    <Compile Include="Forms\TreeViewEx\TreeViewLib\Database.cs" />
+    <Compile Include="Forms\TreeViewEx\TreeViewLib\MetaAccountMainView.xaml.cs">
+      <DependentUpon>MetaAccountMainView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\TreeViewEx\TreeViewLib\MetaAccountMainViewModel.cs" />
+    <Compile Include="Forms\TreeViewEx\TreeViewLib\MetaAccountModel.cs" />
+    <Compile Include="Forms\TreeViewEx\TreeViewLib\MetaAccountRootViewModel.cs" />
+    <Compile Include="Forms\TreeViewEx\TreeViewLib\MetaAccountViewModel.cs" />
+    <Compile Include="Forms\TreeViewEx\TreeViewLib\OneTaskLimitedScheduler.cs" />
+    <Compile Include="Forms\TreeViewEx\TreeViewLib\OneTaskProcessor.cs" />
+    <Compile Include="Forms\TreeViewEx\TreeViewLib\SearchParams.cs" />
+    <Compile Include="Forms\TreeViewEx\TreeViewLib\SelectionRange.cs" />
     <Compile Include="Mvvm\AttributedValidation\CollectionNotNullOrEmptyAttribute.cs" />
     <Compile Include="Repositories\AccountRepository.cs" />
     <Compile Include="Forms\DataGridsEx\AccountMgr\CategoryModel.cs" />
@@ -674,6 +693,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Forms\ReactiveEx\TreeAssignments\TreeAssignmentsEditorView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Forms\TreeViewEx\TreeViewLib\MetaAccountMainView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

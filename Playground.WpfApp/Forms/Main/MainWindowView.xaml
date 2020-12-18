@@ -131,6 +131,7 @@
                     </MenuItem>
                     <MenuItem Header="TreeViews">
                         <MenuItem Header="TreeView SelectItem" Command="{Binding ShowTreeViewSelectedItemCommand}" />
+                        <MenuItem Header="TreeView Filtering" Command="{Binding ShowTreeViewFilteringCommand}" />
                     </MenuItem>
                     <MenuItem Header="ListViews">
                         <MenuItem Header="Delegates" Command="{Binding ShowDelegateCommand}" />
