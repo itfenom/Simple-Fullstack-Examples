@@ -132,6 +132,7 @@
       <DependentUpon>AccountEditorView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Forms\DataGridsEx\AccountMgr\AccountEditorViewModel.cs" />
+    <Compile Include="Forms\DataGridsEx\AccountMgr\AccountHistoryModel.cs" />
     <Compile Include="Forms\DataGridsEx\AccountMgr\AccountMgrView.xaml.cs">
       <DependentUpon>AccountMgrView.xaml</DependentUpon>
     </Compile>

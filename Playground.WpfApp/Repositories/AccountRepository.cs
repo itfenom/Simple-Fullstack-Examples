@@ -33,6 +33,8 @@ namespace Playground.WpfApp.Repositories
         void UpdateAccount(AccountModel updatedAcctModel);
 
         string GetPassword(int accountId);
+
+        List<AccountHistoryModel> GetAllAccountsHistory();
     }
 
     public class AccountRepository : IAccountRepository
@@ -241,6 +243,47 @@ namespace Playground.WpfApp.Repositories
                         WHERE CATEGORY_ID = {categoryId}";
 
             DAL.Seraph.ExecuteNonQuery(_sql);
+        }
+
+        public List<AccountHistoryModel> GetAllAccountsHistory()
+        {
+            var retVal = new List<AccountHistoryModel>();
+            var dt = DAL.Seraph.ExecuteQuery(@"
+                     SELECT A.TRANSACTION_TYPE,
+                           A.TIME_STAMP,           
+                           B.CATEGORY_NAME,
+                           A.ACCT_NAME,  
+                           A.ACCT_LOGIN_ID,
+                           A.ACCT_PASSWORD,
+                           A.ACCT_NOTES,
+                           A.DATE_CREATED,        
+                           A.DATE_MODIFIED        
+                    FROM ACCT_HISTORY A 
+                    INNER JOIN ACCT_CATEGORY B
+                        ON A.CATEGORY_ID = B.CATEGORY_ID
+                    ORDER BY B.CATEGORY_NAME, A.ACCT_NAME, TIME_STAMP DESC");
+
+            foreach (DataRow row in dt.Rows)
+            {
+                var decryptedPassword = Encryption.Decrypt(row["ACCT_PASSWORD"].ToString());
+
+                retVal.Add(new AccountHistoryModel
+                {
+                    TransactionType = row["TRANSACTION_TYPE"].ToString(),
+                    TimeStamp = row["TIME_STAMP"].ToString(),
+                    Category = row["CATEGORY_NAME"].ToString(),
+                    Account = row["ACCT_NAME"].ToString(),
+                    LoginId = row["ACCT_LOGIN_ID"].ToString(),
+                    Password = string.IsNullOrEmpty(decryptedPassword)
+                    ? row["ACCT_PASSWORD"].ToString()
+                    : decryptedPassword,
+                    Notes = row["ACCT_NOTES"].ToString(),
+                    DateCreated = row["DATE_CREATED"].ToString(),
+                    DateModified = row["DATE_MODIFIED"].ToString(),
+                });
+            }
+
+            return retVal;
         }
     }
 }

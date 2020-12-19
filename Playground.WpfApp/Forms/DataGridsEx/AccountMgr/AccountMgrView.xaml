@@ -173,7 +173,11 @@
             <TabControl Grid.Row="0" Grid.Column="2" SelectedIndex="{Binding SelectedTabIndex, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
                 <TabItem Header="General">
                     <Grid Background="Beige">
-                        <TextBlock Text="Select TreeView node to navigate to appropriate tab." />
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="309*"/>
+                            <ColumnDefinition Width="500*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Select TreeView node to navigate to appropriate tab." Grid.ColumnSpan="2" />
                     </Grid>
                 </TabItem>
 
@@ -364,6 +368,105 @@
                                 </DataGridComboBoxColumn>
                             </DataGrid.Columns>
                         </DataGrid>
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="Accounts History">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Grid.Row="0" Margin="2" Orientation="Horizontal" >
+                            <Button Margin="2" Content="Reload Data" Command="{Binding ReloadAccountHistoryCommand}"/>
+                        </StackPanel>
+                        <DockPanel Grid.Row="1" Margin="2" LastChildFill="True" >
+                            <DataGrid Margin="2"
+                                      BorderThickness="2"
+                                      IsReadOnly="True"
+                                      ItemsSource="{Binding AccountHistoryView}"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      SelectionMode="Single"
+                                      GridLinesVisibility="All"
+                                      VerticalScrollBarVisibility="Visible"
+                                      ColumnWidth="*"
+                                      RowHeaderWidth="27">
+
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="{x:Type DataGridCell}">
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Foreground" Value="Black"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.CellStyle>
+
+                                <DataGrid.Columns>
+                                    <!--TransactionType-->
+                                    <DataGridTextColumn Header="Transaction Type"
+                                                        Width="145"
+                                                        Binding="{Binding TransactionType, UpdateSourceTrigger=PropertyChanged}">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Vertical">
+                                                    <TextBlock TextAlignment="Center" Text="{Binding Content, RelativeSource={RelativeSource Mode=TemplatedParent}}" />
+                                                    <TextBox Style="{StaticResource FilterTextBoxStyles}" Tag="Filter..." MinWidth="120" Text="{Binding DataContext.TransactionTypeFilter, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+                                    </DataGridTextColumn>
+
+                                    <!--Category-->
+                                    <DataGridTextColumn Header="Category"
+                                                        Width="140"
+                                                        Binding="{Binding Category, UpdateSourceTrigger=PropertyChanged}">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Vertical">
+                                                    <TextBlock TextAlignment="Center" Text="{Binding Content, RelativeSource={RelativeSource Mode=TemplatedParent}}" />
+                                                    <TextBox Style="{StaticResource FilterTextBoxStyles}" Tag="Filter..." MinWidth="115" Text="{Binding DataContext.CategoryFilter, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+                                    </DataGridTextColumn>
+
+                                    <!--Account-->
+                                    <DataGridTextColumn Header="Account"
+                                                        Width="140"
+                                                        Binding="{Binding Account, UpdateSourceTrigger=PropertyChanged}">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Vertical">
+                                                    <TextBlock TextAlignment="Center" Text="{Binding Content, RelativeSource={RelativeSource Mode=TemplatedParent}}" />
+                                                    <TextBox Style="{StaticResource FilterTextBoxStyles}" Tag="Filter..." MinWidth="115" Text="{Binding DataContext.AccountFilter, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+                                    </DataGridTextColumn>
+
+                                    <!--Login-->
+                                    <DataGridTextColumn Header="Login Id" Width="100" Binding="{Binding LoginId}" />
+
+                                    <!--Password-->
+                                    <DataGridTextColumn Header="Password" Width="100" Binding="{Binding Password}" />
+
+                                    <!--Notes-->
+                                    <DataGridTextColumn Header="Notes" Width="100" Binding="{Binding Notes}" />
+
+                                    <!--Timestamp-->
+                                    <DataGridTextColumn Header="TimeStamp" Width="100" Binding="{Binding TimeStamp}" />
+
+                                    <!--DateCreated-->
+                                    <DataGridTextColumn Header="Date Created" Width="100" Binding="{Binding DateCreated}" />
+
+                                    <!--DateModified-->
+                                    <DataGridTextColumn Header="Date Modified" Width="100" Binding="{Binding DateModified}" />
+
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
                     </Grid>
                 </TabItem>
             </TabControl>

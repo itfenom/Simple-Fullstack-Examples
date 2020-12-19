@@ -106,6 +106,10 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
             LoadData();
             LoadTreeView();
 
+            ReloadAccountHistoryCommand = new DelegateCommand(() => LoadAccountHistory());
+            AccountHistoryView = null;
+            LoadAccountHistory();
+
             PropertyChanged += AccountMgrViewModel_PropertyChanged;
         }
 
@@ -876,6 +880,98 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
         }
 
         #endregion Button/Commands
+
+        #region AccountHistory
+
+        public ICollectionView AccountHistoryView { get; set; }
+
+        public ICommand ReloadAccountHistoryCommand { get; }
+
+        private void LoadAccountHistory()
+        {
+            var data = _repository.GetAllAccountsHistory();
+            AccountHistoryView = CollectionViewSource.GetDefaultView(data);
+            NotifyPropertyChanged("AccountHistoryView");
+            ApplyAccountHistoryFilters();
+        }
+
+        private string _transactionTypeFilter;
+
+        public string TransactionTypeFilter
+        {
+            get => _transactionTypeFilter;
+            set
+            {
+                SetPropertyValue(ref _transactionTypeFilter, value);
+                ApplyAccountHistoryFilters();
+            }
+        }
+
+        private string _categoryFilter;
+
+        public string CategoryFilter
+        {
+            get => _categoryFilter;
+            set 
+            { 
+                SetPropertyValue(ref _categoryFilter, value);
+                ApplyAccountHistoryFilters();
+            }
+        }
+
+        private string _accountFilter;
+
+        public string AccountFilter
+        {
+            get => _accountFilter;
+            set
+            {
+                SetPropertyValue(ref _accountFilter, value);
+                ApplyAccountHistoryFilters();
+            }
+        }
+
+        private void ApplyAccountHistoryFilters()
+        {
+            if (AccountHistoryView == null) return;
+
+            try
+            {
+                var filters = BuildGroupFilter();
+                if(filters?.Any() == true)
+                {
+                    AccountHistoryView.Filter = row => filters.All(filter => filter(row as AccountHistoryModel));
+                }
+                else
+                {
+                    AccountHistoryView.Filter = null;
+                }
+
+                AccountHistoryView.Refresh();
+                NotifyPropertyChanged("AccountHistoryView");
+            }
+            catch (Exception) { /*Ignored*/ }
+        }
+
+        private IEnumerable<Predicate<AccountHistoryModel>> BuildGroupFilter()
+        {
+            if(!string.IsNullOrEmpty(TransactionTypeFilter))
+            {
+                yield return rowView => rowView.TransactionType.ToLower().Contains(TransactionTypeFilter.ToLower());
+            }
+
+            if (!string.IsNullOrEmpty(CategoryFilter))
+            {
+                yield return rowView => rowView.Category.ToLower().Contains(CategoryFilter.ToLower());
+            }
+
+            if (!string.IsNullOrEmpty(AccountFilter))
+            {
+                yield return rowView => rowView.Account.ToLower().Contains(AccountFilter.ToLower());
+            }
+        }
+
+        #endregion
 
         #region Closing
 
