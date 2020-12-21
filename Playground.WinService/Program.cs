@@ -33,8 +33,8 @@ namespace Playground.WinService
             //Initialize callback functions in Seraph.Core project.
             InitializeCoreProjectCallBackFunc();
 
-            int mode;
-            string cmd;
+            int mode = 0;
+            string cmd = string.Empty;
 
 #if DEBUG
             MessageBox.Show("Running in Debug mode!", "Warning");
