@@ -396,7 +396,8 @@
                                   GridLinesVisibility="All"
                                   IsReadOnly="True"
                                   VerticalScrollBarVisibility="Visible"
-                                   ItemsSource="{Binding AccountHistoryView}">
+                                  ItemsSource="{Binding AccountHistoryView}"
+                                  HeadersVisibility="All">
 
                                 <DataGrid.CellStyle>
                                     <Style TargetType="{x:Type DataGridCell}">
