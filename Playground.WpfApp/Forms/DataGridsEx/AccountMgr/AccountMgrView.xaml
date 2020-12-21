@@ -373,25 +373,30 @@
 
                 <TabItem Header="Accounts History">
                     <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="495*"/>
+                            <ColumnDefinition Width="314*"/>
+                        </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
-                        <StackPanel Grid.Row="0" Margin="2" Orientation="Horizontal" >
-                            <Button Margin="2" Content="Reload Data" Command="{Binding ReloadAccountHistoryCommand}"/>
-                        </StackPanel>
-                        <DockPanel Grid.Row="1" Margin="2" LastChildFill="True" >
+                        <DockPanel Grid.Row="0" Margin="3" LastChildFill="True" Grid.ColumnSpan="2" >
+                            <StackPanel Orientation="Horizontal" Background="AliceBlue" Margin="3">
+                                <Button Margin="3" Content="Reload Data" Command="{Binding ReloadAccountHistoryCommand}"/>
+                            </StackPanel>
+                        </DockPanel>
+
+                        <DockPanel Grid.Row="1" Margin="3" LastChildFill="True" Grid.ColumnSpan="2" >
                             <DataGrid Margin="2"
-                                      BorderThickness="2"
-                                      IsReadOnly="True"
-                                      ItemsSource="{Binding AccountHistoryView}"
-                                      AutoGenerateColumns="False"
-                                      CanUserAddRows="False"
-                                      SelectionMode="Single"
-                                      GridLinesVisibility="All"
-                                      VerticalScrollBarVisibility="Visible"
-                                      ColumnWidth="*"
-                                      RowHeaderWidth="27">
+                                  AlternationCount="2"
+                                  CanUserAddRows="False"
+                                  SelectionMode="Single"
+                                  AutoGenerateColumns="False"
+                                  GridLinesVisibility="All"
+                                  IsReadOnly="True"
+                                  VerticalScrollBarVisibility="Visible"
+                                   ItemsSource="{Binding AccountHistoryView}">
 
                                 <DataGrid.CellStyle>
                                     <Style TargetType="{x:Type DataGridCell}">
@@ -447,22 +452,31 @@
                                     </DataGridTextColumn>
 
                                     <!--Login-->
-                                    <DataGridTextColumn Header="Login Id" Width="100" Binding="{Binding LoginId}" />
+                                    <DataGridTextColumn Header="Login Id" Width="140" Binding="{Binding LoginId, UpdateSourceTrigger=PropertyChanged}">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Vertical">
+                                                    <TextBlock TextAlignment="Center" Text="{Binding Content, RelativeSource={RelativeSource Mode=TemplatedParent}}" />
+                                                    <TextBox Style="{StaticResource FilterTextBoxStyles}" Tag="Filter..." MinWidth="115" Text="{Binding DataContext.LoginIdFilter, UpdateSourceTrigger=PropertyChanged, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+                                    </DataGridTextColumn>
 
                                     <!--Password-->
                                     <DataGridTextColumn Header="Password" Width="100" Binding="{Binding Password}" />
 
                                     <!--Notes-->
-                                    <DataGridTextColumn Header="Notes" Width="100" Binding="{Binding Notes}" />
+                                    <DataGridTextColumn Header="Notes" Width="Auto" Binding="{Binding Notes}" />
 
                                     <!--Timestamp-->
-                                    <DataGridTextColumn Header="TimeStamp" Width="100" Binding="{Binding TimeStamp}" />
+                                    <DataGridTextColumn Header="TimeStamp" Width="Auto" Binding="{Binding TimeStamp}" />
 
                                     <!--DateCreated-->
-                                    <DataGridTextColumn Header="Date Created" Width="100" Binding="{Binding DateCreated}" />
+                                    <DataGridTextColumn Header="Date Created" Width="Auto" Binding="{Binding DateCreated}" />
 
                                     <!--DateModified-->
-                                    <DataGridTextColumn Header="Date Modified" Width="100" Binding="{Binding DateModified}" />
+                                    <DataGridTextColumn Header="Date Modified" Width="Auto" Binding="{Binding DateModified}" />
 
                                 </DataGrid.Columns>
                             </DataGrid>

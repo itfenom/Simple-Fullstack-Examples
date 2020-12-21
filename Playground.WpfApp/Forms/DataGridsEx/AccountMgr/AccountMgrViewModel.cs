@@ -931,6 +931,18 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
             }
         }
 
+        private string _loginIdFilter;
+
+        public string LoginIdFilter
+        {
+            get => _loginIdFilter; 
+            set 
+            {
+                SetPropertyValue(ref _loginIdFilter, value);
+                ApplyAccountHistoryFilters();
+            }
+        }
+
         private void ApplyAccountHistoryFilters()
         {
             if (AccountHistoryView == null) return;
@@ -968,6 +980,11 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
             if (!string.IsNullOrEmpty(AccountFilter))
             {
                 yield return rowView => rowView.Account.ToLower().Contains(AccountFilter.ToLower());
+            }
+
+            if (!string.IsNullOrEmpty(LoginIdFilter))
+            {
+                yield return rowView => rowView.LoginId.ToLower().Contains(LoginIdFilter.ToLower());
             }
         }
 
