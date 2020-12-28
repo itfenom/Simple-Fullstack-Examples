@@ -383,7 +383,7 @@
                         </Grid.RowDefinitions>
                         <DockPanel Grid.Row="0" Margin="3" LastChildFill="True" Grid.ColumnSpan="2" >
                             <StackPanel Orientation="Horizontal" Background="AliceBlue" Margin="3">
-                                <Button Margin="3" Content="Reload Data" Command="{Binding ReloadAccountHistoryCommand}"/>
+                                <Button Margin="3" Content="Reload Data " ToolTip="Refreshes every 30 seconds..." Command="{Binding ReloadAccountHistoryCommand}"/>
                             </StackPanel>
                         </DockPanel>
 

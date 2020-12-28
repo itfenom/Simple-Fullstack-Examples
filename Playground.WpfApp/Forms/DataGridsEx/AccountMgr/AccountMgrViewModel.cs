@@ -8,6 +8,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Threading;
 using MahApps.Metro.Controls.Dialogs;
 using Playground.WpfApp.Mvvm;
 using Playground.WpfApp.Repositories;
@@ -106,9 +107,13 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
             LoadData();
             LoadTreeView();
 
-            ReloadAccountHistoryCommand = new DelegateCommand(() => LoadAccountHistory());
+            ReloadAccountHistoryCommand = new DelegateCommand(() => OnReloadAccountHistory());
             AccountHistoryView = null;
             LoadAccountHistory();
+
+            _timer = new DispatcherTimer { Interval = new TimeSpan(0, 0, 30) };
+            _timer.Tick += Timer_Tick;
+            _timer.Start();
 
             PropertyChanged += AccountMgrViewModel_PropertyChanged;
         }
@@ -882,10 +887,35 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
         #endregion Button/Commands
 
         #region AccountHistory
+        private DispatcherTimer _timer;
+
+        private void Timer_Tick(object sender, EventArgs e)
+        {
+            if(AccountHistoryView != null)
+            {
+                Console.WriteLine($"Timer actived: {DateTime.Now.ToLongTimeString()}");
+                LoadAccountHistory();
+            }
+        }
 
         public ICollectionView AccountHistoryView { get; set; }
 
         public ICommand ReloadAccountHistoryCommand { get; }
+
+        private void OnReloadAccountHistory()
+        {
+            try
+            {
+                //Stop the timer and then re-start it...
+                Console.WriteLine($"Reloading data as per user request: {DateTime.Now.ToLongTimeString()}");
+                _timer?.Stop();
+                LoadAccountHistory();
+            }
+            finally
+            {
+                _timer?.Start();
+            }
+        }
 
         private void LoadAccountHistory()
         {
@@ -1021,6 +1051,8 @@ namespace Playground.WpfApp.Forms.DataGridsEx.AccountMgr
             _allCategories = null;
             _expandedCategoryNodes = null;
             _expandedAccountNodes = null;
+            _timer.Tick -= Timer_Tick;
+            _timer = null;
 
             base.Dispose(disposing);
         }
