@@ -170,6 +170,7 @@
                     <MenuItem Header="Progress Dialog" Command="{Binding ShowProgressDialogCommand}" />
                     <MenuItem Header="CRUD" Command="{Binding ShowCrudCommand}" />
                     <MenuItem Header="CRUD2" Command="{Binding ShowCrud2Command}" />
+                    <MenuItem Header="CRUD3 (DynamicData)" Command="{Binding ShowCrud3Command}" />
                     <MenuItem Header="Todo" Command="{Binding ShowTodoCommand}" />
                     <MenuItem Header="Data Entry From" Command="{Binding ShowDataEntryFormCommand}"/>
                     <MenuItem Header="Tree Assignments" Command="{Binding ShowTreeAssignmentsCommand}"/>

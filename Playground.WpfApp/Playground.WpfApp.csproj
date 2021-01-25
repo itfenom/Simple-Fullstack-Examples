@@ -172,6 +172,10 @@
       <DependentUpon>ReactiveEmployeeView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Forms\ReactiveEx\Crud2\ReactiveEmployeeViewModel.cs" />
+    <Compile Include="Forms\ReactiveEx\Crud3\DynamicDataContactView.xaml.cs">
+      <DependentUpon>DynamicDataContactView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\ReactiveEx\Crud3\DynamicDataContactViewModel.cs" />
     <Compile Include="Forms\ReactiveEx\Crud\EmpEditorView.xaml.cs">
       <DependentUpon>EmpEditorView.xaml</DependentUpon>
     </Compile>
@@ -635,6 +639,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Forms\ReactiveEx\Crud2\ReactiveEmployeeView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Forms\ReactiveEx\Crud3\DynamicDataContactView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
