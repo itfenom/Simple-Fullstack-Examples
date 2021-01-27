@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Text.RegularExpressions;
 
 namespace Playground.UnitTests
 {
@@ -65,6 +66,19 @@ namespace Playground.UnitTests
         private void MethodThatThrowsException()
         {
             throw new ArgumentException("Something bad has happened!");
+        }
+
+        [TestMethod]
+        public void ValidateEmailTest()
+        {
+            var emailAddressToValidate = "this@test.com";
+            var regExp = @"^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}" +
+                           @"\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\" +
+                           @".)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$";
+
+            var result = Regex.IsMatch(emailAddressToValidate, regExp);
+
+            Assert.IsTrue(result);
         }
     }
 }

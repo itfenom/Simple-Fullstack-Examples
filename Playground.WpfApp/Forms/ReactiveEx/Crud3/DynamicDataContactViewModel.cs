@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Text.RegularExpressions;
 using System.Windows;
 using DynamicData;
 using Playground.WpfApp.Behaviors;
@@ -77,11 +78,6 @@ namespace Playground.WpfApp.Forms.ReactiveEx.Crud3
                 .Bind(out _contactsList)
                 .DisposeMany() //Dispose TradeProxy when no longer required
                 .Subscribe();
-            //.Subscribe(x =>
-            //{
-            //    Console.WriteLine($@"Changes: {x.TotalChanges}");
-            //});
-
 
             //Add new Command
             AddNewContactCommand = ReactiveCommand.Create(() =>
@@ -90,9 +86,6 @@ namespace Playground.WpfApp.Forms.ReactiveEx.Crud3
             }).DisposeWith(Disposables.Value);
 
             //Delete Command
-            var hasContact = this._contacts.CountChanged
-                .Select(x => x > 0);
-
             var isSelected = this.WhenAnyValue(x => x.SelectedContact, (Contact c) => c != null);
             DeleteContactCommand = ReactiveCommand.Create(
                 () =>
@@ -118,11 +111,28 @@ namespace Playground.WpfApp.Forms.ReactiveEx.Crud3
                 x => x.SelectedContact.Name,
                 x => x.SelectedContact.Email,
                 x => x.SelectedContact.Phone,
-                (s, n, e, p) =>
+                x => x.HasErrors,
+                x => x.AllErrors,
+                x => x.Contacts,
+                (s, n, e, p, err, errCount, cts) =>
                 {
-                    return HasUnsavedChanges() &&
-                           !HasErrors &&
-                           !AllErrors.Any();
+                    var isValid = true;
+
+                    foreach (var item in cts.Where(ct => ct.EditState != EditState.NotChanged))
+                    {
+                        isValid = !string.IsNullOrEmpty(item.Name) && !string.IsNullOrEmpty(item.Phone) && ValidateEmail(item.Email);
+                        if (!isValid) break;
+                    }
+
+                    return errCount != null &&
+                           HasUnsavedChanges() &&
+                           s != null &&
+                           !string.IsNullOrEmpty(n) &&
+                           !string.IsNullOrEmpty(e) &&
+                           !string.IsNullOrEmpty(p) &&
+                           !err &&
+                           !errCount.Any() &&
+                           isValid;
                 });
 
             SaveCommand = ReactiveCommand.Create(() => Save(), canExecuteSave).DisposeWith(Disposables.Value);
@@ -131,10 +141,8 @@ namespace Playground.WpfApp.Forms.ReactiveEx.Crud3
             CancelCommand = ReactiveCommand.Create(() =>
             {
                 Close?.Invoke();
-                return Unit.Default;
             });
         }
-
 
         private List<Contact> GetAllContacts()
         {
@@ -148,6 +156,16 @@ namespace Playground.WpfApp.Forms.ReactiveEx.Crud3
             return retVal;
         }
 
+        public bool ValidateEmail(string email)
+        {
+            var emailRegExp = @"^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}" +
+                    @"\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\" +
+                    @".)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$";
+
+            return Regex.IsMatch(email, emailRegExp);
+
+        }
+
         public ReactiveCommand<Unit, Unit> AddNewContactCommand { get; }
 
         public ReactiveCommand<Unit, Unit> DeleteContactCommand { get; }
@@ -158,6 +176,7 @@ namespace Playground.WpfApp.Forms.ReactiveEx.Crud3
         {
             //Validate before saving!
 
+            //Edit/Insert
             foreach (var item in _contacts.Items)
             {
                 if (item.IsEditing || item.EditState == EditState.Changed)
@@ -175,12 +194,16 @@ namespace Playground.WpfApp.Forms.ReactiveEx.Crud3
                 }
             }
 
-            foreach (var item in _deletedContacts)
+            //Delete
+            if(_deletedContacts.Count > 0)
             {
-                //Delete    
-            }
+                foreach (var item in _deletedContacts)
+                {
+                    //Delete    
+                }
 
-            _deletedContacts.Clear();
+                _deletedContacts.Clear();
+            }
 
             SelectedContact = null;
         }
@@ -282,9 +305,10 @@ namespace Playground.WpfApp.Forms.ReactiveEx.Crud3
 
         private string _email;
 
-        [Required]
-        [DataType(DataType.EmailAddress, ErrorMessage = "Invalid Email!")]
-        [Display(Name = "Email")]
+        [Required(AllowEmptyStrings = false, ErrorMessage = "Email address is required.")]
+        [RegularExpression(@"^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}" +
+                           @"\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\" +
+                           @".)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$", ErrorMessage = "Please enter a valid email address.")]
         public string Email
         {
             get => _email;
