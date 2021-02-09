@@ -100,6 +100,7 @@ namespace Playground.WpfApp.Forms.Main
             ShowCrudCommand = new DelegateCommand(() => OnShowCrud());
             ShowCrud2Command = new DelegateCommand(() => OnShowCrud2());
             ShowCrud3Command = new DelegateCommand(() => OnShowCrud3());
+            ShowCrud4Command = new DelegateCommand(() => OnShowCrud4());
             ShowTodoCommand = new DelegateCommand(() => OnShowTodo());
             ShowDataEntryFormCommand = new DelegateCommand(() => OnShowDataEntryForm());
             ShowTreeAssignmentsCommand = new DelegateCommand(() => OnShowTreeAssignments());
@@ -672,6 +673,15 @@ namespace Playground.WpfApp.Forms.Main
         {
             var view = new ReactiveEx.Crud3.DynamicDataContactView();
             view.DataContext = new ReactiveEx.Crud3.DynamicDataContactViewModel();
+            view.ShowDialog();
+        }
+
+        public ICommand ShowCrud4Command { get; }
+
+        private void OnShowCrud4()
+        {
+            var view = new ReactiveEx.Crud4.DynamicDataContact2View();
+            view.DataContext = new ReactiveEx.Crud4.DynamicDataContact2ViewModel();
             view.ShowDialog();
         }
 
