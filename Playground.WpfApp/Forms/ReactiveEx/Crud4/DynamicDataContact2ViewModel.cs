@@ -20,6 +20,7 @@ namespace Playground.WpfApp.Forms.ReactiveEx.Crud4
  /*
  * This is to test DynamicData using ReactiveUI
  * Using ObservableCollectionExtended<T> of DynamicData, which is single threaded.
+ * Not working as I intended.
  */
 
     public class DynamicDataContact2ViewModel : ValidatableBindableBase, ICloseWindow

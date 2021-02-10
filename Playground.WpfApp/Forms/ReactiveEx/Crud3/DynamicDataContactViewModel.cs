@@ -9,12 +9,14 @@ using System.Reactive.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using DynamicData;
+using DynamicData.Binding;
 using Playground.WpfApp.Behaviors;
 using ReactiveUI;
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 
 /*
  * This is to test DynamicData using ReactiveUI
+ * Change tracking on the collection is now working!!!
  */
 
 namespace Playground.WpfApp.Forms.ReactiveEx.Crud3
@@ -38,6 +40,21 @@ namespace Playground.WpfApp.Forms.ReactiveEx.Crud3
             set => this.RaiseAndSetIfChanged(ref _selectedContact, value);
         }
 
+        //----For change Tracking
+        private readonly ObservableAsPropertyHelper<bool> _isFormValid;
+        public bool IsFormValid
+        {
+            get
+            {
+                if (_isFormValid == null)
+                    return false;
+                return _isFormValid.Value;
+            }
+        }
+
+        //----
+
+        //--Constructor
         public DynamicDataContactViewModel()
         {
             _deletedContacts = new List<Contact>();
@@ -76,8 +93,19 @@ namespace Playground.WpfApp.Forms.ReactiveEx.Crud3
                 .Filter(multipleFilters)
                 .ObserveOn(RxApp.MainThreadScheduler) //this needed because UI updates need to run on the main thread
                 .Bind(out _contactsList)
-                .DisposeMany() //Dispose TradeProxy when no longer required
+                .DisposeMany() //Dispose when no longer required
                 .Subscribe();
+
+            //Setup Change tracking on the collection that is bound to the UI
+            var isValid_ = this._contactsList
+                .ToObservableChangeSet()
+                .AutoRefresh(model => model.HasErrors)
+                .ToCollection()
+                .Select(x => x.All(y => !y.HasErrors));
+
+            _isFormValid = isValid_
+                .ObserveOn(RxApp.MainThreadScheduler)
+                .ToProperty(this, x => x.IsFormValid);
 
             //Add new Command
             AddNewContactCommand = ReactiveCommand.Create(() =>
@@ -114,8 +142,13 @@ namespace Playground.WpfApp.Forms.ReactiveEx.Crud3
                 x => x.HasErrors,
                 x => x.AllErrors,
                 x => x.Contacts,
-                (s, n, e, p, err, errCount, cts) =>
+                x => x.IsFormValid,
+                (s, n, e, p, err, errCount, cts, isFormValid) =>
                 {
+                    Console.WriteLine($"The value of isFormValid: {isFormValid}");
+                    return isFormValid == true &&
+                           HasUnsavedChanges();
+                    /*
                     var isValid = true;
 
                     foreach (var item in cts.Where(ct => ct.EditState != EditState.NotChanged))
@@ -133,6 +166,7 @@ namespace Playground.WpfApp.Forms.ReactiveEx.Crud3
                            !err &&
                            !errCount.Any() &&
                            isValid;
+                    */
                 });
 
             SaveCommand = ReactiveCommand.Create(() => Save(), canExecuteSave).DisposeWith(Disposables.Value);
