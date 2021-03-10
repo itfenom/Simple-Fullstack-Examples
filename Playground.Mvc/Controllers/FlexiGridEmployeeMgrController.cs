@@ -20,6 +20,7 @@ namespace Playground.Mvc.Controllers
 
         public ActionResult Index()
         {
+            ViewBag.BasePath = Url.Content("~").WithTrailingSlash();
             return View();
         }
 

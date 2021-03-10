@@ -217,6 +217,7 @@
     <Compile Include="Helpers\FlexigridExtensions.cs" />
     <Compile Include="Helpers\HelperTools.cs" />
     <Compile Include="Helpers\OverrideAuthorizeClass.cs" />
+    <Compile Include="Helpers\PathExtension.cs" />
     <Compile Include="Helpers\SessionSingleton.cs" />
     <Compile Include="Helpers\WebgridExtensions.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
