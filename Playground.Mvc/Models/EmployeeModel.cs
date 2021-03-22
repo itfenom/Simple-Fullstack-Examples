@@ -14,11 +14,17 @@ namespace Playground.Mvc.Models
         public int? EMP_PHOTO_Id { get; set; }
         public bool? EMP_IS_ACTIVE { get; set; }
 
-        public string ActionLinks { get; set; }
-
-        public void PrepForView()
+        public string HireDateStr
         {
-            ActionLinks = $@"<a href='#' data-empId-edit='{EMP_ID}'>Edit</a>&nbsp;&nbsp;<a href='#' data-empId-detail='{EMP_ID}'>Details</a>";
+            get
+            {
+                if(EMP_HIRE_DATE == null)
+                {
+                    return DateTime.MinValue.ToShortDateString();
+                }
+
+                return EMP_HIRE_DATE.ToShortDateString();
+            }
         }
     }
 }

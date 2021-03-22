@@ -77,10 +77,6 @@ namespace Playground.Mvc.Controllers
             }
 
             var items = _repository.GetDataForJqGrid(request);
-            foreach (var item in items.Item1)
-            {
-                item.PrepForView();
-            }
 
             return Json(
                 new

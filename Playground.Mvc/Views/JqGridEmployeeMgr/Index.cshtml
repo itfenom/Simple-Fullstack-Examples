@@ -31,6 +31,7 @@
         text-decoration: none;
         color: #d32525;
     }
+
 </style>
 
 
@@ -164,7 +165,8 @@
     };
 
     empIdLinkFormatter = function (cellValue, options, rowObject) {
-        return "<div class='center'><a href='#' class='emp-edit' data-edit='" + cellValue + "'> " + cellValue + "</a ></div > ";
+        var empId = cellValue;
+        return '<a href="javascript:EmployeeIdClick(' + empId + ')" style="color: #3366ff" id="' + empId + '" >' + cellValue + '</a>';
         };
 
         genderFormatter = function (cellValue, options, rowObject) {
@@ -220,8 +222,7 @@
                     "Salary",
                     "Gender",
                     "IsActive",
-                    "Hire Date",
-                    "Actions"],
+                    "Hire Date"],
                 colModel: [
                     { name: "EMP_ID", width: 25, formatter: empIdLinkFormatter },
                     { name: "EMP_NAME", width: 27 },
@@ -230,8 +231,7 @@
                     { name: "EMP_SALARY", width: 30 },
                     { name: "EMP_GENDER", width: 30, formatter: genderFormatter },
                     { name: "EMP_IS_ACTIVE", width: 18, formatter: activeFormatter },
-                    { name: "EMP_HIRE_DATE", width: 35, sortable: false, search: false  },
-                    { name: "ActionLinks", width: 35, sortable: false, search: false },
+                    { name: "HireDateStr", width: 35, sortable: false, search: false  }
                 ],
                 rowNum: 15,
                 loadui: "block",
@@ -277,15 +277,9 @@
         });
     });
 
-    $(document).ready(function () {
-
-        $('.emp-edit a').click(function (event) {
-            event.preventDefault();
-
-            var clickedItem = $(this);
-            var empId = clickedItem.attr('data-edit');
-        });
-    });
+    function EmployeeIdClick(empId) {
+        console.log('Employee ID: ' + empId);
+    }
 
 
 </script>
