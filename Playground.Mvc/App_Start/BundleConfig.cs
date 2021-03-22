@@ -53,6 +53,10 @@ namespace Playground.Mvc
             //Fontawesome
             BundleTable.Bundles.Add(new StyleBundle("~/Content/fontawesome").Include(
                 "~/Content/fontawesome/font-awesome.css"));
+
+            //jqGrid JS
+            bundles.Add(new ScriptBundle("~/bundles/jqgrid").Include(
+                "~/Scripts/free-jqGrid/jquery.jqgrid.min.js"));
         }
     }
 }

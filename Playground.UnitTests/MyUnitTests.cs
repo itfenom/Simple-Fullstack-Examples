@@ -1,5 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Playground.UnitTests
@@ -79,6 +81,66 @@ namespace Playground.UnitTests
             var result = Regex.IsMatch(emailAddressToValidate, regExp);
 
             Assert.IsTrue(result);
+        }
+
+        private class EmployeeModel
+        {
+            public string EMP_GENDER { get; set; }
+            public string EMP_NAME { get; set; }
+        }
+
+        [TestMethod]
+        public void GetFilterWhereClauseTest()
+        {
+            var searchPropertiesAndTerms = new List<KeyValuePair<string, string>>();
+            searchPropertiesAndTerms.Add(new KeyValuePair<string, string>("EMP_GENDER", "Male"));
+            searchPropertiesAndTerms.Add(new KeyValuePair<string, string>("EMP_NAME", "Knowl"));
+
+            var filterClause = GetFilterWhereClause<EmployeeModel>(searchPropertiesAndTerms);
+
+
+            Assert.IsTrue(!string.IsNullOrEmpty(filterClause));
+
+        }
+
+        private string GetFilterWhereClause<T>(List<KeyValuePair<string, string>> searchPropertiesAndTerms)
+        {
+            var search = string.Empty;
+            if (true == searchPropertiesAndTerms?.Any())
+            {
+                foreach (var kvp in searchPropertiesAndTerms)
+                {
+                    var prop = typeof(T).GetProperty(kvp.Key);
+
+                    var isString = prop.PropertyType == typeof(string);
+                    if (isString)
+                    {
+                        if (search == string.Empty)
+                        {
+                            search += $" WHERE UPPER(inner_sa.{kvp.Key}) LIKE '%{kvp.Value?.ToUpper()}%'";
+                        }
+                        else
+                        {
+                            search += $" AND UPPER(inner_sa.{kvp.Key}) LIKE '%{kvp.Value?.ToUpper()}%'";
+                        }
+                    }
+                    else
+                    {
+                        if (search == string.Empty)
+                        {
+                            search += $" WHERE inner_sa.{kvp.Key} = {kvp.Value}";
+                        }
+                        else
+                        {
+                            search += $" AND inner_sa.{kvp.Key} = {kvp.Value}";
+                        }
+                    }
+                }
+            }
+
+
+
+            return search;
         }
     }
 }

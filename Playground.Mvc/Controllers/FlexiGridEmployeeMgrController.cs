@@ -1,6 +1,7 @@
 ﻿using Playground.Mvc.DAL;
 using Playground.Mvc.Helpers;
 using Playground.Mvc.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
@@ -24,8 +25,17 @@ namespace Playground.Mvc.Controllers
             return View();
         }
 
-        public ActionResult EmployeesList(int page, int rp, string sortName, string sortOrder, string qType, string query)
+        public ActionResult EmployeesList()
         {
+            ViewBag.BasePath = Url.Content("~").WithTrailingSlash();
+
+            var page = Convert.ToInt32(Request.Form["page"]);
+            var perPage = Convert.ToInt32(Request.Form["rp"]);
+            var sortName = Request.Form["sortname"];
+            var sortOrder = Request.Form["sortorder"];
+            var qType = Request.Form["qtype"];
+            var query = Request.Form["query"];
+
             var allEmployees = _repository.GetAllEmployees().AsQueryable();
 
             var total = allEmployees.Count();
@@ -35,12 +45,12 @@ namespace Playground.Mvc.Controllers
                 allEmployees = allEmployees.Like(qType, query);
             }
 
-            if (!string.IsNullOrEmpty(sortName) && !string.IsNullOrEmpty(sortOrder))
+            if (!string.IsNullOrEmpty(sortName))
             {
                 allEmployees = allEmployees.OrderBy(sortName, sortOrder == "asc");
             }
 
-            allEmployees = allEmployees.Skip((page - 1) * rp).Take(rp);
+            allEmployees = allEmployees.Skip((page - 1) * perPage).Take(perPage);
 
             return CreateFlexiJson(allEmployees.ToList(), page, total);
         }
@@ -48,6 +58,8 @@ namespace Playground.Mvc.Controllers
         [HttpPost]
         public ActionResult SaveEmployee(EmployeeViewModel employeeObj)
         {
+            ViewBag.BasePath = Url.Content("~").WithTrailingSlash();
+
             if (employeeObj.EmpID == 0) // if ID == 0, its a new entry
             {
                 _repository.AddNewEmployee(employeeObj);
@@ -67,6 +79,8 @@ namespace Playground.Mvc.Controllers
         [HttpPost]
         public ActionResult DeleteEmployee(int employeeId)
         {
+            ViewBag.BasePath = Url.Content("~").WithTrailingSlash();
+
             if (_repository.DeleteEmployee(employeeId))
             {
                 ViewBag.Message = "Employee Deleted successfully!";

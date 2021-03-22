@@ -622,6 +622,21 @@ div.pGroup {
 	background: url(images/load.gif) no-repeat center;
 }
 
+.flexigrid .add {
+	background: url(images/FG_Add.png) no-repeat left;
+	height: 20px;
+}
+
+.flexigrid .edit {
+	background: url(images/FG_Edit.png) no-repeat left;
+	height: 20px;
+}
+
+.flexigrid .delete {
+	background: url(images/FG_Delete.png) no-repeat left;
+	height: 20px;
+}
+
 /* ie adjustments */
 .flexigrid.ie div.hDiv th div,.flexigrid.ie  div.bDiv td  div,div.colCopy.ie div
 	/* common inner cell properties*/ {
