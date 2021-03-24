@@ -1,6 +1,4 @@
-﻿@{
-    ViewBag.Title = "Ajax Demo | Index";
-}
+﻿@{ ViewBag.Title = "Ajax Demo | Index"; }
 
 <head>
     <title>@ViewBag.Title</title>
@@ -31,7 +29,10 @@
     <div id="books" style="background-color:lightskyblue"></div>
 </div>
 
-<script type="text/javascript">
+@section Scripts {
+
+    <script src="@Url.Content("~/Scripts/jquery-3.3.1.min.js")"></script>
+    <script type="text/javascript">
 
     $(document).ready(function () {
         //alert('Hello')Url.Content(
@@ -92,4 +93,5 @@
                 })
             });
         });*@
-</script>
+    </script>
+}
