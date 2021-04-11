@@ -57,6 +57,7 @@ namespace Playground.WpfApp.Forms.Main
             ShowAdvAsyncAwaitCommand = new DelegateCommand(() => OnShowAdvAsyncAwait());
             ShowAsyncWithProgressbarCommand = new DelegateCommand(() => OnShowAsyncWithProgressbar());
             ShowBasicAsyncAwaitCommand = new DelegateCommand(() => OnShowBasicAsyncAwait());
+            ShowLoadDataAsyncAwaitCommand = new DelegateCommand(() => OnShowLoadDataAsyncAwait());
 
             //DataGrids
             ShowNavigationDataGridCommand = new DelegateCommand(() => OnShowNavigationDataGrid());
@@ -313,6 +314,16 @@ namespace Playground.WpfApp.Forms.Main
         private void OnShowBasicAsyncAwait()
         {
             var view = new AsyncEx.BasicAsyncAwaitEx.BasicAsyncAwaitExView();
+            view.ShowDialog();
+        }
+
+        public ICommand ShowLoadDataAsyncAwaitCommand { get; }
+
+        private void OnShowLoadDataAsyncAwait()
+        {
+            var view = new Forms.AsyncEx.LoadDataAsyncAwait.LoadDataAsyncAwaitView();
+            var viewModel = new Forms.AsyncEx.LoadDataAsyncAwait.LoadDataAsyncAwaitViewModel();
+            view.DataContext = viewModel;
             view.ShowDialog();
         }
 

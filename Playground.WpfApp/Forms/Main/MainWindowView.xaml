@@ -121,6 +121,7 @@
                         <MenuItem Header="Basic Async await" Command="{Binding ShowBasicAsyncAwaitCommand}" />
                         <MenuItem Header="Adv Async await" Command="{Binding ShowAdvAsyncAwaitCommand}" />
                         <MenuItem Header="Async with progressbar" Command="{Binding ShowAsyncWithProgressbarCommand}" />
+                        <MenuItem Header="Load Data Async/Await" Command="{Binding ShowLoadDataAsyncAwaitCommand}" />
                     </MenuItem>
                     <MenuItem Header="DataGridViews">
                         <MenuItem Header="Account Mgr" Command="{Binding ShowAccountMgrCommand}" />

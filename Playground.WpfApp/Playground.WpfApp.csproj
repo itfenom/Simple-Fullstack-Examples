@@ -128,6 +128,11 @@
     <Compile Include="Forms\AsyncEx\BasicAsyncAwaitEx\BasicAsyncAwaitExView.xaml.cs">
       <DependentUpon>BasicAsyncAwaitExView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Forms\AsyncEx\LoadDataAsyncAwait\LoadDataAsyncAwaitView.xaml.cs">
+      <DependentUpon>LoadDataAsyncAwaitView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\AsyncEx\LoadDataAsyncAwait\LoadDataAsyncAwaitViewModel.cs" />
+    <Compile Include="Forms\AsyncEx\LoadDataAsyncAwait\ProcessDataAsyncAwait.cs" />
     <Compile Include="Forms\DataGridsEx\AccountMgr\AccountEditorView.xaml.cs">
       <DependentUpon>AccountEditorView.xaml</DependentUpon>
     </Compile>
@@ -497,6 +502,10 @@
     <Page Include="Forms\AsyncEx\BasicAsyncAwaitEx\BasicAsyncAwaitExView.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Forms\AsyncEx\LoadDataAsyncAwait\LoadDataAsyncAwaitView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Forms\DataGridsEx\AccountMgr\AccountEditorView.xaml">
       <SubType>Designer</SubType>

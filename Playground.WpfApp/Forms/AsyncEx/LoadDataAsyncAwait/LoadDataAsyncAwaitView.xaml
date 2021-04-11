@@ -1,0 +1,53 @@
+﻿<controls:MetroWindow  
+    x:Class="Playground.WpfApp.Forms.AsyncEx.LoadDataAsyncAwait.LoadDataAsyncAwaitView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:local="clr-namespace:Playground.WpfApp.Forms.AsyncEx.LoadDataAsyncAwait"
+    mc:Ignorable="d"
+    xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
+    BorderBrush="{DynamicResource AccentColorBrush}"
+    xmlns:behav="clr-namespace:Playground.WpfApp.Behaviors"
+    xmlns:converters="clr-namespace:Playground.WpfApp.Converters"
+    behav:WindowCloser.EnableWindowClosing="True"
+    BorderThickness="1"
+    ResizeMode="CanResizeWithGrip"
+    WindowStartupLocation="CenterScreen"
+    WindowTransitionsEnabled="True"
+    TitleCharacterCasing="Normal"
+    Title="Loading data using Async/Await" 
+    Height="500"
+    Width="850">
+    <controls:MetroWindow.Resources>
+        <ResourceDictionary>
+            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                <Setter Property="controls:ButtonHelper.PreserveTextCase" Value="True" />
+            </Style>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisConv"/>
+        </ResourceDictionary>
+    </controls:MetroWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" LastChildFill="True" VerticalAlignment="Center" Margin="5">
+            <Button Margin="2" Command="{Binding StartCommand}" Content="Start"  Width="100" />
+            <Separator Margin="2"/>
+            <Button Margin="2" Command="{Binding StopCommand}" Content="Stop"  Width="100" />
+            <Separator Margin="2"/>
+            <TextBlock Text="{Binding NowProcessingEmployeeText}" Margin="2" />
+        </DockPanel>
+
+        <FlowDocumentScrollViewer Grid.Row="1" Margin="5" Document="{Binding Document, UpdateSourceTrigger=PropertyChanged}"/>
+
+        <DockPanel Grid.Row="2" Dock="Bottom" Margin="5" LastChildFill="True">
+            <ProgressBar Margin="0,3,0,3" Height="40" IsIndeterminate="True" Visibility="{Binding IsProcessing, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource BoolToVisConv} }" />
+        </DockPanel>
+
+    </Grid>
+</controls:MetroWindow>
