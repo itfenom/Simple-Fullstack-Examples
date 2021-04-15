@@ -88,6 +88,15 @@
     <Compile Include="Forms\Admin\ManageUsers.Designer.cs">
       <DependentUpon>ManageUsers.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\AsyncAwaitEx\AdvancedAsyncAwait.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\AsyncAwaitEx\AdvancedAsyncAwait.Designer.cs">
+      <DependentUpon>AdvancedAsyncAwait.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\AsyncAwaitEx\ExtendedBackgroundWorker.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Forms\BasicAsyncAwaitEx\AsyncAndAwaitEx.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -225,6 +234,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\Admin\ManageUsers.resx">
       <DependentUpon>ManageUsers.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\AsyncAwaitEx\AdvancedAsyncAwait.resx">
+      <DependentUpon>AdvancedAsyncAwait.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\BasicAsyncAwaitEx\AsyncAndAwaitEx.resx">
       <DependentUpon>AsyncAndAwaitEx.cs</DependentUpon>
@@ -395,5 +407,6 @@
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

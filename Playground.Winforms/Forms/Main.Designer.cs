@@ -60,11 +60,12 @@
             this.decodeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitLargeStringToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.redTextMessageBoxToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.basicAsyncAwaitToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.adminToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.manageUsersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.manageOnlineAccountsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewAccountHistoryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.basicAsyncAwaitToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.advancedAsyncAwaitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -141,7 +142,7 @@
             this.listViewExampleToolStripMenuItem,
             this.worldWithTreeViewToolStripMenuItem});
             this.examplesToolStripMenuItem.Name = "examplesToolStripMenuItem";
-            this.examplesToolStripMenuItem.Size = new System.Drawing.Size(68, 20);
+            this.examplesToolStripMenuItem.Size = new System.Drawing.Size(69, 20);
             this.examplesToolStripMenuItem.Text = "Examples";
             // 
             // oracleToolStripMenuItem
@@ -261,7 +262,8 @@
             this.decodeToolStripMenuItem,
             this.splitLargeStringToolStripMenuItem,
             this.redTextMessageBoxToolStripMenuItem,
-            this.basicAsyncAwaitToolStripMenuItem1});
+            this.basicAsyncAwaitToolStripMenuItem1,
+            this.advancedAsyncAwaitToolStripMenuItem});
             this.utilitiesToolStripMenuItem.Name = "utilitiesToolStripMenuItem";
             this.utilitiesToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.utilitiesToolStripMenuItem.Text = "&Misc";
@@ -269,65 +271,72 @@
             // encryptDecryptToolStripMenuItem1
             // 
             this.encryptDecryptToolStripMenuItem1.Name = "encryptDecryptToolStripMenuItem1";
-            this.encryptDecryptToolStripMenuItem1.Size = new System.Drawing.Size(189, 22);
+            this.encryptDecryptToolStripMenuItem1.Size = new System.Drawing.Size(195, 22);
             this.encryptDecryptToolStripMenuItem1.Text = "Encrypt Decrypt";
             this.encryptDecryptToolStripMenuItem1.Click += new System.EventHandler(this.EncryptDecryptToolStripMenuItem_Click);
             // 
             // numericTextBoxToolStripMenuItem
             // 
             this.numericTextBoxToolStripMenuItem.Name = "numericTextBoxToolStripMenuItem";
-            this.numericTextBoxToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.numericTextBoxToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.numericTextBoxToolStripMenuItem.Text = "Numeric TextBox";
             this.numericTextBoxToolStripMenuItem.Click += new System.EventHandler(this.NumericTextBoxToolStripMenuItem_Click);
             // 
             // topMostMessageBoxToolStripMenuItem
             // 
             this.topMostMessageBoxToolStripMenuItem.Name = "topMostMessageBoxToolStripMenuItem";
-            this.topMostMessageBoxToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.topMostMessageBoxToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.topMostMessageBoxToolStripMenuItem.Text = "TopMost MessageBox";
             this.topMostMessageBoxToolStripMenuItem.Click += new System.EventHandler(this.TopMostMessageBoxToolStripMenuItem_Click);
             // 
             // exceptionHandlingToolStripMenuItem
             // 
             this.exceptionHandlingToolStripMenuItem.Name = "exceptionHandlingToolStripMenuItem";
-            this.exceptionHandlingToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.exceptionHandlingToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.exceptionHandlingToolStripMenuItem.Text = "ExceptionHandling";
             this.exceptionHandlingToolStripMenuItem.Click += new System.EventHandler(this.ExceptionHandlingToolStripMenuItem_Click);
             // 
             // removeDuplicateToolStripMenuItem
             // 
             this.removeDuplicateToolStripMenuItem.Name = "removeDuplicateToolStripMenuItem";
-            this.removeDuplicateToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.removeDuplicateToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.removeDuplicateToolStripMenuItem.Text = "RemoveDuplicates";
             this.removeDuplicateToolStripMenuItem.Click += new System.EventHandler(this.RemoveDuplicateToolStripMenuItem_Click);
             // 
             // encodeToolStripMenuItem
             // 
             this.encodeToolStripMenuItem.Name = "encodeToolStripMenuItem";
-            this.encodeToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.encodeToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.encodeToolStripMenuItem.Text = "Encode";
             this.encodeToolStripMenuItem.Click += new System.EventHandler(this.EncodeToolStripMenuItem_Click);
             // 
             // decodeToolStripMenuItem
             // 
             this.decodeToolStripMenuItem.Name = "decodeToolStripMenuItem";
-            this.decodeToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.decodeToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.decodeToolStripMenuItem.Text = "Decode";
             this.decodeToolStripMenuItem.Click += new System.EventHandler(this.DecodeToolStripMenuItem_Click);
             // 
             // splitLargeStringToolStripMenuItem
             // 
             this.splitLargeStringToolStripMenuItem.Name = "splitLargeStringToolStripMenuItem";
-            this.splitLargeStringToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.splitLargeStringToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.splitLargeStringToolStripMenuItem.Text = "Split Large String";
             this.splitLargeStringToolStripMenuItem.Click += new System.EventHandler(this.SplitLargeStringToolStripMenuItem_Click);
             // 
             // redTextMessageBoxToolStripMenuItem
             // 
             this.redTextMessageBoxToolStripMenuItem.Name = "redTextMessageBoxToolStripMenuItem";
-            this.redTextMessageBoxToolStripMenuItem.Size = new System.Drawing.Size(189, 22);
+            this.redTextMessageBoxToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.redTextMessageBoxToolStripMenuItem.Text = "Red Text MessageBox";
             this.redTextMessageBoxToolStripMenuItem.Click += new System.EventHandler(this.RedTextMessageBoxToolStripMenuItem_Click);
+            // 
+            // basicAsyncAwaitToolStripMenuItem1
+            // 
+            this.basicAsyncAwaitToolStripMenuItem1.Name = "basicAsyncAwaitToolStripMenuItem1";
+            this.basicAsyncAwaitToolStripMenuItem1.Size = new System.Drawing.Size(195, 22);
+            this.basicAsyncAwaitToolStripMenuItem1.Text = "Basic Async Await";
+            this.basicAsyncAwaitToolStripMenuItem1.Click += new System.EventHandler(this.basicAsyncAwaitToolStripMenuItem1_Click);
             // 
             // adminToolStripMenuItem
             // 
@@ -360,12 +369,12 @@
             this.viewAccountHistoryToolStripMenuItem.Text = "View Account History";
             this.viewAccountHistoryToolStripMenuItem.Click += new System.EventHandler(this.ViewAccountHistoryToolStripMenuItem_Click);
             // 
-            // basicAsyncAwaitToolStripMenuItem1
+            // advancedAsyncAwaitToolStripMenuItem
             // 
-            this.basicAsyncAwaitToolStripMenuItem1.Name = "basicAsyncAwaitToolStripMenuItem1";
-            this.basicAsyncAwaitToolStripMenuItem1.Size = new System.Drawing.Size(189, 22);
-            this.basicAsyncAwaitToolStripMenuItem1.Text = "Basic Async Await";
-            this.basicAsyncAwaitToolStripMenuItem1.Click += new System.EventHandler(this.basicAsyncAwaitToolStripMenuItem1_Click);
+            this.advancedAsyncAwaitToolStripMenuItem.Name = "advancedAsyncAwaitToolStripMenuItem";
+            this.advancedAsyncAwaitToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.advancedAsyncAwaitToolStripMenuItem.Text = "Advanced Async Await";
+            this.advancedAsyncAwaitToolStripMenuItem.Click += new System.EventHandler(this.advancedAsyncAwaitToolStripMenuItem_Click);
             // 
             // Main
             // 
@@ -423,5 +432,6 @@
         private System.Windows.Forms.ToolStripMenuItem manageOnlineAccountsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem viewAccountHistoryToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem basicAsyncAwaitToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem advancedAsyncAwaitToolStripMenuItem;
     }
 }

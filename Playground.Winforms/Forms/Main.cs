@@ -9,6 +9,7 @@ using Playground.Core;
 using Playground.Core.Diagnostics;
 using Playground.Core.Utilities;
 using Playground.Winforms.Forms.Admin;
+using Playground.Winforms.Forms.AsyncAwaitEx;
 using Playground.Winforms.Forms.Examples;
 using Playground.Winforms.Forms.LoginStuff;
 using Playground.Winforms.Forms.Misc;
@@ -500,6 +501,12 @@ namespace Playground.Winforms.Forms
             }
 
             return MessageBox.Show(new Form { TopMost = true }, msg, "Playground.Winform", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void advancedAsyncAwaitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = new AdvancedAsyncAwait();
+            form.ShowDialog();
         }
     }
 }
