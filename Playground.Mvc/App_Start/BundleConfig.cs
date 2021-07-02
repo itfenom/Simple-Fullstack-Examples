@@ -57,6 +57,11 @@ namespace Playground.Mvc
             //jqGrid JS
             bundles.Add(new ScriptBundle("~/bundles/jqgrid").Include(
                 "~/Scripts/free-jqGrid/jquery.jqgrid.min.js"));
+
+            //Knockout JS
+            bundles.Add(new ScriptBundle("~/bundles/knockout/js").Include(
+                "~/Scripts/knockout-3.5.1.js", 
+                "~/Scripts/knockout.mapping.latest.js"));
         }
     }
 }

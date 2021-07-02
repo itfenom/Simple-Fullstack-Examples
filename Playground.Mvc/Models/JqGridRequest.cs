@@ -16,7 +16,7 @@ namespace Playground.Mvc.Models
         public JqGridRequest()
         {
             Page = 1;
-            PerPage = 25;
+            PerPage = 10;
         }
 
         [DataMember]

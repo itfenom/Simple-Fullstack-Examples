@@ -47,6 +47,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Dapper, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Dapper.2.0.90\lib\net461\Dapper.dll</HintPath>
+    </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
     </Reference>
@@ -54,6 +57,9 @@
       <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Oracle.ManagedDataAccess, Version=4.122.19.1, Culture=neutral, PublicKeyToken=89b483f429c47342, processorArchitecture=MSIL">
+      <HintPath>..\packages\Oracle.ManagedDataAccess.19.3.1\lib\net40\Oracle.ManagedDataAccess.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -150,6 +156,7 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\JqGridEmployeeMgrController.cs" />
     <Compile Include="Controllers\jQueryAccordionController.cs" />
+    <Compile Include="Controllers\KnockoutStuffController.cs" />
     <Compile Include="Controllers\MultipleDropDownsController.cs" />
     <Compile Include="Controllers\MultiSelectListBoxController.cs" />
     <Compile Include="Controllers\MvcToWebFormController.cs" />
@@ -227,6 +234,7 @@
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\Alert.cs" />
     <Compile Include="Models\BookmarkViewModel.cs" />
+    <Compile Include="Models\XyzEmployeeRepository.cs" />
     <Compile Include="Models\DiffMethods.cs" />
     <Compile Include="Models\DiffViewModel.cs" />
     <Compile Include="Models\DynamicControls2ViewModel.cs" />
@@ -401,6 +409,8 @@
     <Content Include="Content\themes\base\tabs.css" />
     <Content Include="Content\themes\base\theme.css" />
     <Content Include="Content\themes\base\tooltip.css" />
+    <Content Include="Content\toastr.css" />
+    <Content Include="Content\toastr.min.css" />
     <Content Include="Content\ui.jqgrid.css" />
     <Content Include="Content\ui.jqgrid.min.css" />
     <Content Include="DAL\SeraphDBContext.Context.tt">
@@ -577,6 +587,12 @@
     <Content Include="Scripts\free-jqGrid\plugins\min\jquery.jqgrid.showhidecolumnmenu.js" />
     <Content Include="Scripts\free-jqGrid\plugins\min\ui.multiselect.js" />
     <Content Include="Scripts\free-jqGrid\plugins\ui.multiselect.js" />
+    <Content Include="Scripts\knockout-3.5.1.debug.js" />
+    <Content Include="Scripts\knockout-3.5.1.js" />
+    <Content Include="Scripts\knockout.mapping-latest.debug.js" />
+    <Content Include="Scripts\knockout.mapping-latest.js" />
+    <Content Include="Scripts\toastr.js" />
+    <Content Include="Scripts\toastr.min.js" />
     <Content Include="WebForms\GridViewWithViewState.aspx" />
     <Content Include="WebForms\WebFormTest.aspx" />
     <EntityDeploy Include="DAL\SeraphDBContext.edmx">
@@ -587,6 +603,8 @@
       <DependentUpon>SeraphDBContext.edmx</DependentUpon>
     </Content>
     <Content Include="Content\ui.jqgrid.min.css.map" />
+    <Content Include="Content\toastr.scss" />
+    <Content Include="Content\toastr.less" />
     <None Include="Properties\PublishProfiles\Playground.pubxml" />
     <Content Include="Scripts\free-jqGrid\plugins\min\ui.multiselect.js.map" />
     <Content Include="Scripts\free-jqGrid\plugins\min\jquery.jqgrid.showhidecolumnmenu.js.map" />
@@ -751,6 +769,7 @@
     <Content Include="Views\WebGridEmployeeMgr\Edit.cshtml" />
     <Content Include="Views\WebGridEmployeeMgr\Index.cshtml" />
     <Content Include="Views\JqGridEmployeeMgr\Index.cshtml" />
+    <Content Include="Views\KnockoutStuff\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="Scripts\free-jqGrid\ts\free-jqgrid.d.ts" />
@@ -774,6 +793,7 @@
     <Service Include="{4A0DDDB5-7A95-4FBF-97CC-616D07737A77}" />
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
