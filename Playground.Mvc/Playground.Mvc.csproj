@@ -279,6 +279,7 @@
     <Content Include="App_Data\Playground.Mvc_0_DDLs.txt" />
     <Content Include="App_Data\Playground.Mvc_0_Global.asax.txt" />
     <Content Include="App_Data\Playground.Mvc_0_Helpers.txt" />
+    <Content Include="App_Data\XYZ_EMPLOYEE_DB_SCRIPTS.txt" />
     <Content Include="Catalog\Images\boatbig.png" />
     <Content Include="Catalog\Images\boatpaper.png" />
     <Content Include="Catalog\Images\boatsail.png" />

@@ -1,8 +1,257 @@
 ﻿
 @{
     ViewBag.Title = "Xyz Employees - jQGrid";
-    ViewBag.UseJqGrid = true;
 }
 
-<h2>View Employees in JqGrid</h2>
+<link href="@Url.Content("~/Content/ui.jqgrid.css")" rel="stylesheet" />
+<link href="@Url.Content("~/Content/ui.jqgrid.min.css")" rel="stylesheet" />
 
+<style>
+    html, body {
+        font-size: 11px;
+    }
+
+    .ui-multiselect-header a:hover {
+        text-decoration: none;
+    }
+
+    .ui-multiselect-close {
+        margin-right: 3px;
+    }
+
+    #gbox_list.ui-jqgrid-jquery-ui {
+        width: 99%;
+    }
+
+    .center {
+        text-align: center;
+    }
+
+    a.swr-id-link {
+        text-decoration: none;
+        color: #d32525;
+    }
+</style>
+
+<h2>Employees in JqGrid (Paging/sorting/filtering using Oracle DB)</h2>
+
+<br />
+
+<table id="list"></table>
+
+@section Scripts {
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/jqueryui")
+    @Scripts.Render("~/bundles/jqgrid")
+
+    <script type="text/javascript">
+
+        var distinctDataColumns = {};
+
+        function getDistinctColumnValues(columnName, callback) {
+            $.ajax({
+                url: '@Url.Content("~/KnockoutStuff/GetDistinctColumnValues?columnName=")' + columnName,
+                type: 'GET',
+                success: function (data) {
+                    distinctDataColumns[columnName] = data;
+                    if (callback) callback();
+                },
+            });
+        };
+
+
+        var dataInitMultiselect = function (elem, searchOptions) {
+        var $grid = $(this);
+        setTimeout(function () {
+            var $elem = $(elem),
+                id = elem.id,
+                inToolbar = searchOptions.mode === "filter",
+                options = {
+                    selectedList: 2,
+                    height: "auto",
+                    checkAllText: "all",
+                    uncheckAllText: "no",
+                    noneSelectedText: "Any",
+                    open: function () {
+                        var $menu = $(".ui-multiselect-menu:visible");
+                        $menu.width("auto");
+                        var height = $menu.find(">ul>li").first().outerHeight();
+                        $menu.find(">ul").css("maxHeight", 5 * Math.max(height, 12));
+                        return;
+                    }
+                },
+                $options = $elem.find("option");
+            if ($options.length > 0 && $options[0].selected) {
+                $options[0].selected = false; // unselect the first selected option
+
+            }
+            if (inToolbar) {
+                options.minWidth = "auto";
+            }
+            $grid.triggerHandler("jqGridRefreshFilterValues");
+            $elem.multiselect(options);
+            // replace icons ui-icon-check, ui-icon-closethick, ui-icon-circle-close
+            // and ui-icon-triangle-1-s to font awesome icons
+            var $header = $elem.data("echMultiselect").header;
+            $header.find("span.ui-icon.ui-icon-check")
+                .removeClass("ui-icon ui-icon-check")
+                .addClass("fa fa-fw fa-check");
+            $header.find("span.ui-icon.ui-icon-closethick")
+                .removeClass("ui-icon ui-icon-closethick")
+                .addClass("fa fa-fw fa-times");
+            $header.find("span.ui-icon.ui-icon-circle-close")
+                .removeClass("ui-icon ui-icon-circle-close")
+                .addClass("fa fa-times-circle");
+            $elem.data("echMultiselect")
+                .button
+                .find("span.ui-icon.ui-icon-triangle-1-s")
+                .removeClass("ui-icon ui-icon-triangle-1-s")
+                .addClass("fa fa-caret-down")
+                .css({
+                    float: "right",
+                    marginRight: "5px"
+                });
+
+            $elem.siblings("button.ui-multiselect").css({
+                width: "100%",
+                margin: "1px 0",
+                paddingTop: ".3em",
+                paddingBottom: ".3em"
+            });
+        }, 50);
+    },
+
+    grid = $("#list"),
+    getUniqueNames = function (columnName) {
+        var texts = distinctDataColumns[columnName], uniqueTexts = [],
+            textsLength = texts.length, text, textsMap = {}, i;
+        if (!texts) return [];
+
+        for (i = 0; i < textsLength; i++) {
+            text = texts[i];
+            var html = $(text);
+            var value = html.find('.value');
+            if (value && value.length > 0) {
+                text = value.html();
+            }
+
+            if (text !== undefined && textsMap[text] === undefined && text) {
+                // to test whether the texts is unique we place it in the map.
+                textsMap[text] = true;
+                uniqueTexts.push(text);
+            }
+        }
+        return uniqueTexts;
+    },
+    buildSearchSelect = function (uniqueNames) {
+        var values = ":All";
+        $.each(uniqueNames, function () {
+            values += ";" + this + ":" + this;
+        });
+        return values;
+    },
+    setSearchSelect = function (columnName) {
+        grid.jqGrid('setColProp', columnName,
+            {
+                stype: 'select',
+                searchoptions: {
+                    value: buildSearchSelect(getUniqueNames(columnName)),
+                    sopt: ['eq']
+                }
+            }
+        );
+    };
+
+        empIdLinkFormatter = function (cellValue, options, rowObject) {
+            var empId = cellValue;
+            return '<a href="javascript:EmployeeIdClick(' + empId + ')" style="color: #3366ff" id="' + empId + '" >' + cellValue + '</a>';
+        };
+
+        genderFormatter = function (cellValue, options, rowObject) {
+            if (cellValue == "M") {
+                return "<div class='center'><i class='fa fa-male'></i></div>";
+            }
+            else if (cellValue == "F") {
+                return "<div class='center'><i class='fa fa-female'></i></div>";
+            }
+        };
+
+        getDistinctColumnValues("Gender", function () {
+            $("#list").jqGrid({
+                url: "@ViewBag.BasePath" +  "KnockoutStuff/GetEmployees",
+                datatype: "json",
+                mtype: "GET",
+                autowidth: true,
+                shrinkToFit: true,
+                forceClientSorting: false,
+                loadonce: false,
+                iconSet: "fontAwesome",
+                jsonReader: {
+                    repeatitems: false,
+                    root: function (response) { return response.EmployeeList; },
+                    page: function (response) { return response.CurrentPage; },
+                    total: function (response) { return response.TotalPages; },
+                    records: function (response) { return response.ItemCount; }
+                },
+                colNames: [
+                    "Id",
+                    "Name",
+                    "Company",
+                    "Email",
+                    "Gender"],
+                colModel: [
+                    { name: "Id", width: 25, formatter: empIdLinkFormatter },
+                    { name: "Name", width: 27 },
+                    { name: "Company", width: 27 },
+                    { name: "Email", width: 30 },
+                    { name: "Gender", width: 30, formatter: genderFormatter }
+                ],
+                rowNum: 15,
+                loadui: "block",
+                multiselect: false,
+                multiPageSelection: true,
+                altRows: true,
+                //multipleSelectSeparator: ";",
+                inFilterSeparator: ";",
+                loadComplete: function () {
+
+                    setSearchSelect('Gender');
+
+                    jQuery("#list").jqGrid("filterToolbar", {
+                        stringResult: true,
+                        searchOnEnter: true,
+                        defaultSearch: 'eq',
+                        beforeClear: function () {
+                            $(this.grid.hDiv).find(".ui-search-toolbar .ui-search-input>select[multiple] option").each(function () {
+                                this.selected = false; // unselect all options
+                            });
+
+                            $(this.grid.hDiv).find(".ui-search-toolbar button.ui-multiselect").each(function () {
+                                $(this).prev("select[multiple]").multiselect("refresh");
+                            }).css({
+                                width: "98%",
+                                marginTop: "1px",
+                                marginBottom: "1px",
+                                paddingTop: "3px"
+                            });
+                        }
+                    });
+                    jQuery("#list").jqGrid('setGridHeight', 400);
+                },
+                rowList: [15, 30, 50, 100],
+                pager: true,
+                pagerRightWidth: 135, // fix wrapping or right part of the pager
+                viewrecords: true,
+                sortable: true,
+                sortname: "Id",
+                sortorder: "asc"
+            }).jqGrid("navGrid", { edit: false, add: false, del: false, search: false });
+        });
+
+        function EmployeeIdClick(empId) {
+            console.log('Employee ID: ' + empId);
+        }
+
+    </script>
+}

@@ -34,7 +34,7 @@ namespace Playground.Mvc.Models
                 dbConn.Open();
                 var sql = $@"SELECT * FROM 
                     (
-                    SELECT ROMNUM RNUM, A.*
+                    SELECT ROWNUM RNUM, A.*
                     FROM ({SelectColumnList<XyzEmployee>(request.SearchPropertiesAndTerms)}) A
                     WHERE ROWNUM <= {pageEnd}
                     )
@@ -69,6 +69,8 @@ namespace Playground.Mvc.Models
         }
     }
 
+    [DatabaseSchema("Seraph")]
+    [DatabaseTable("XYZ_EMPLOYEE")]
     public class XyzEmployee
     {
         public int Id { get; set; }
