@@ -13,7 +13,6 @@
         <table class="table" style="width:100%;" id="empInfoTable">
             <thead class="bg-light">
                 <tr>
-                    <td>Id</td>
                     <td>Name</td>
                     <td>Email</td>
                     <td>Gender</td>
@@ -22,8 +21,7 @@
             </thead>
             <tbody id="empInfo-tbody" data-bind="foreach: activeEmployees">
                 <tr class="emp-info-row" data-bind="click: $root.selectEmployee, css: {selected: $root.selectedEmployee() == $data}">
-                    <td data-bind="text: employeeId"></td>
-                    <td data-bind="text: employeeName"></td>
+                    <td><a href="#" class="emp-info-link" data-bind="text: employeeName, click: function() {$parent.selectEmployee($data)}"></a></td>
                     <td data-bind="text: email"></td>
                     <td data-bind="text: gender"></td>
                     <td>
@@ -34,7 +32,35 @@
         </table>
     </div>
 
-    <div class="col-md-7" id="workHistory" style="display:none;"></div>
+    <div class="col-md-7" id="workHistory" data-bind="visible: selectedEmployee()">
+        <table class="table" style="width:100%;" id="empWorkHistoryTable">
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Salary</th>
+                    <th class="text-center">Move</th>
+                    <th class="text-center">Delete</th>
+                </tr>
+            </thead>
+            <tbody id="work-history-tbody" data-bind="foreach: activeWorkHistory">
+                <tr class="work-history-row" data-bind="css: {'last-moved-row': moved, 'fade-out': fadeOut}">
+                    <td><a href="#" class="work-history-link" data-bind="text: company, click: function() { $parent.selectWorkHistory($data, true) }"></a></td>
+                    <td data-bind="text: title"></td>
+                    <td data-bind="text: status"></td>
+                    <td data-bind="text: salary"></td>
+                    <td class="move-arrows">
+                        <a href="#" data-bind="click: function() { $parent.moveWorkHistoryUp($data)}"><i class="fa fa-arrow-up"></i></a> |
+                        <a href="#" data-bind="click: function() { $parent.moveWorkHistoryDown($data)}"><i class="fa fa-arrow-down"></i></a>
+                    </td>
+                    <td class="delete">
+                        <a href="#" data-bind="click: function(){$parent.deleteWorkHistory($data)}"><i class="fa fa-trash-o"></i></a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <br />
@@ -55,21 +81,21 @@
         text-align: center;
     }
 
-        .delete:hover, .delete a :hover {
-            color: red;
-        }
+    .delete:hover, .delete a :hover {
+        color: red;
+    }
 
-    .emp-info-row {
+    .emp-info-row, .work-history-row {
         background: #fff;
     }
 
-        .emp-info-row:hover {
-            background: #ddd;
-        }
+    .emp-info-row:hover {
+        background: #ddd;
+    }
 
-        .emp-info-row.selected, .emp-info-row.selected:hover {
-            background: #ff0;
-        }
+    .emp-info-row.selected, .emp-info-row.selected:hover {
+        background: #ff0;
+    }
 
     .emp-info-link, work-history-link {
         text-decoration: none;
@@ -80,10 +106,25 @@
         background: rgba(0, 0, 255, 0.2);
     }
 
-        .work-history-row.last-moved-row.fade-out, .emp-info-row.last-moved-row.fade-out {
-            background: rgba(255, 255, 255, 1);
-            transition: background-color 2.5s ease;
-        }
+    .work-history-row.last-moved-row.fade-out, .emp-info-row.last-moved-row.fade-out {
+        background: rgba(255, 255, 255, 1);
+        transition: background-color 2.5s ease;
+    }
+
+    .move-arrows{
+        width:75px;
+        text-align: right;
+    }
+
+    .move-arrows a {
+        text-decoration:none;
+    }
+
+    .move-arrows a:hover{
+        text-decoration:none;
+        color: rgba(0, 0, 255, 1.0);
+    }
+
 </style>
 
 
@@ -120,6 +161,15 @@
             self.isInitialized = ko.observable(false);
             self.submitBtn = $('#btn-submit');
 
+            self.selectedEmployee = ko.observable();
+            self.selectedWorkHistory = ko.observable();
+
+            //make selection
+            self.selectEmployee = function (data) {
+                self.selectedEmployee(data);
+            };
+
+
             self.activeEmployees = ko.computed(function () {
                 if (self.isInitialized()) {
                     return ko.utils.arrayFilter(self.model.employeeInfo(), function (x) {
@@ -130,12 +180,133 @@
                 }
             });
 
-            self.selectedEmployee = ko.observable();
+            self.activeWorkHistory = ko.computed(function () {
+                if (self.selectedEmployee() && self.isInitialized()) {
+                    return ko.utils.arrayFilter(self.selectedEmployee().workHistory(), function (x) {
+                        return !x.isDeleted();
+                    }).sort(function (x, y) {
+                        return x.displaySeq() < y.displaySeq() ? -1
+                            : x.displaySeq() > y.displaySeq() ? 1
+                                : 0;
+                    });
+                } else {
+                    return [];
+                }
+            });
 
-            //make selection
-            self.selectEmployee = function (data) {
-                self.selectedEmployee(data);
-            };
+            //select work-History of a selected employee
+            self.selectWorkHistory = function (workHistory, showEditDialog) {
+                console.log(workHistory()[0].employeeId() + '/' + workHistory()[0].company() + ' was clicked');
+                self.selectedWorkHistory(workHistory);
+            }
+
+            self.moveWorkHistoryUp = function (workHistory) {
+
+                var result = self.findWorkHistory(self.selectedEmployee(), workHistory.company());
+                var i = result.index;
+
+                if (i > 0) {
+
+                    var wrkHistToSwap = self.selectedEmployee().workHistory()[i - 1];
+
+                    self.selectedEmployee().workHistory()[i - 1] = workHistory;
+                    self.selectedEmployee().workHistory()[i] = wrkHistToSwap;
+
+                    var temp = workHistory.displaySeq();
+                    workHistory.displaySeq(wrkHistToSwap.displaySeq());
+                    workHistory.isModified(true);
+
+                    wrkHistToSwap.displaySeq(temp);
+                    wrkHistToSwap.isModified(true);
+
+                    self.selectedEmployee().isModified(true);
+
+                    self.indicateLastMovedRow(workHistory, self.selectedEmployee().employeeName());
+
+                    self.updateSubmitButton(self.submitBtn, ko.toJSON(self.model.employeeInfo), ko.toJSON(self.originalModel.employeeInfo));
+                }
+            }
+
+            self.moveWorkHistoryDown = function (workHistory) {
+
+                var result = self.findWorkHistory(self.selectedEmployee(), workHistory.company());
+                var i = result.index;
+
+                if (i < self.selectedEmployee().workHistory().length - 1) {
+
+                    var wrkHistToSwap = self.selectedEmployee().workHistory()[i + 1];
+
+                    self.selectedEmployee().workHistory()[i + 1] = workHistory;
+                    self.selectedEmployee().workHistory()[i] = wrkHistToSwap;
+
+                    var temp = workHistory.displaySeq();
+                    workHistory.displaySeq(wrkHistToSwap.displaySeq());
+                    workHistory.isModified(true);
+
+                    wrkHistToSwap.displaySeq(temp);
+                    wrkHistToSwap.isModified(true);
+
+                    self.selectedEmployee().isModified(true);
+
+                    self.updateSubmitButton(self.submitBtn, ko.toJSON(self.model.employeeInfo), ko.toJSON(self.originalModel.employeeInfo));
+                }
+            }
+
+            self.findWorkHistory = function (empInfo, company) {
+                if (!empInfo) return null;
+                for (var i = 0; i < empInfo.workHistory().length; i++) {
+                    var wrkHist = empInfo.workHistory()[i];
+                    if (wrkHist.company() === company) {
+                        return { EmpInfo: empInfo, Company: company, index: i }
+                    }
+                }
+
+                return {};
+            }
+
+            var lastMovedRowsContext = {};
+            self.indicateLastMovedRow = function (lastMoved, empStr) {
+                var ctxLabel = lastMoved.company ? lastMoved.company() : empStr + '_' + lastMoved.company();
+                var r = lastMovedRowsContext[ctxLabel];
+                if (r && r.__fadeOutLastMoved) {
+                    clearTimeout(r.__fadeOutLastMoved);
+                    r.__fadeOutLastMoved = null;
+                    lastMoved.moved(false);
+                    lastMoved.fadeOut(false);
+
+                    if (r.__fadeOutLastMoved2) {
+                        clearTimeout(r.__fadeOutLastMoved2);
+                        lastMoved.moved(false);
+                        lastMoved.fadeOut(false);
+                        r.__fadeOutLastMoved2 = null;
+                    }
+                }
+
+                lastMoved.moved(true);
+
+                if (!r) {
+                    r = lastMovedRowsContext[ctxLabel] = {};
+                }
+
+                r.__fadeOutLastMoved = setTimeout(function () {
+                    lastMoved.fadeOut(true);
+                    r.__fadeOutLastMoved2 = setTimeout(function () {
+                        lastMoved.moved(false);
+                        lastMoved.fadeOut(false);
+                        r.__fadeOutLastMoved = null;
+                        r.__fadeOutLastMoved2 = null;
+                    }, 3000);
+                }, 2000);
+            }
+
+            self.deleteWorkHistory = function (workHistory) {
+                if (confirm('Are you sure to delete work history ' + workHistory.company() + '?')) {
+                    workHistory.isDeleted(true);
+                    self.selectedEmployee().isModified(true);
+
+                    self.updateSubmitButton(self.submitBtn, ko.toJSON(self.model.employeeInfo), ko.toJSON(self.originalModel.employeeInfo));
+                }
+            }
 
             //Delete employee
             self.deleteEmployee = function (empId) {
@@ -169,6 +340,8 @@
                     return false;
                 }
             }
+
+            //TODO: add method to re-sequene the display sequene (KM: 07/04/2021)
 
             self.submitIfChanged = function (event) {
                 event.preventDefault();
@@ -257,6 +430,8 @@
                 for (var j = 0; j < wrkHist.length; j++) {
                     wrkHistArrays.push(new BuildWorkHistory(wrkHist[j]));
                 }
+
+                self.workHistory(wrkHistArrays);
             }
 
             self.isDeleted = ko.observable(false);
@@ -276,6 +451,8 @@
             self.isDeleted = ko.observable(false);
             self.isNew = ko.observable(false);
             self.isModified = ko.observable(false);
+            self.moved = ko.observable(false);
+            self.fadeOut = ko.observable(false);
         }
 
     </script>
