@@ -67,6 +67,63 @@ namespace Playground.Mvc.Models
             itemsList.Sort();
             return itemsList;
         }
+
+        public ManageXyzEmployeeModel GetEmployees()
+        {
+            using (var dbConn = new OracleConnection(GetConnectionString()))
+            {
+                var sql = "SELECT * FROM XYZ_EMPLOYEE";
+                var employees = dbConn.Query<XyzEmployee>(sql);
+
+                sql = @"SELECT ID as Id, 
+                        EMPLOYEE_ID AS EmployeeId,  
+                        Company_Name as CompanyName, 
+                        TITLE, 
+                        DISPLAY_SEQUENCE AS DisplaySequence, 
+                        SALARY, 
+                        SKILLS, 
+                        HOBBIES, 
+                        HIRE_DATE AS HireDate, 
+                        STATUS
+                        FROM XYZ_EMPLOYEE_WORK_HISTORY";
+                var empWorkHistory = dbConn.Query<XyzEmployeeWorkHistory>(sql);
+
+                var retVal = new ManageXyzEmployeeModel();
+                retVal.Employees = new List<XyzEmployee>();
+                foreach (var emp in employees)
+                {
+                    var employee = new XyzEmployee();
+                    employee.Id = emp.Id;
+                    employee.Name = emp.Name;
+                    employee.Company = emp.Company;
+                    employee.Email = emp.Email;
+                    employee.Gender = emp.Gender;
+
+                    var empWorkHist = empWorkHistory.Where(x => x.EmployeeId == emp.Id).ToList();
+                    if (empWorkHist != null)
+                    {
+                        employee.WorkHistory = empWorkHist;
+                    }
+                    else
+                    {
+                        employee.WorkHistory = new List<XyzEmployeeWorkHistory>();
+                    }
+
+                    retVal.Employees.Add(employee);
+                }
+
+                return retVal;
+            }
+        }
+
+        public IEnumerable<XyzEmployeeWorkHistory> GetEmployeeWorkHistory(int empId)
+        {
+            var sql = $"SELECT * FROM XYZ_EMPLOYEE_WORK_HISTORY WHERE EMPLOYEE_ID = {empId} ORDER BY DISPLAY_SEQUENCE";
+            using (var dbConn = new OracleConnection(GetConnectionString()))
+            {
+                return dbConn.Query<XyzEmployeeWorkHistory>(sql);
+            }
+        }
     }
 
     [DatabaseSchema("Seraph")]
@@ -82,6 +139,66 @@ namespace Playground.Mvc.Models
         public string Email { get; set; }
 
         public string Gender { get; set; }
+
+        [DatabaseExclude]
+        public bool IsModified { get; set; }
+
+        [DatabaseExclude]
+        public bool IsDeleted { get; set; }
+
+        [DatabaseExclude]
+        public List<XyzEmployeeWorkHistory> WorkHistory { get; set; }
+
+        public void ReplaceNullsWithEmptyStrings()
+        {
+            foreach (var property in typeof(XyzEmployee).GetProperties())
+            {
+                if(property.PropertyType == typeof(string))
+                {
+                    var val = property.GetValue(this);
+                    if(val == null)
+                    {
+                        property.SetValue(this, string.Empty);
+                    }
+                }
+            }
+        }
+    }
+
+    [DatabaseSchema("Seraph")]
+    [DatabaseTable("XYZ_EMPLOYEE_WORK_HISTORY")]
+    public class XyzEmployeeWorkHistory
+    {
+        public int Id { get; set; }
+
+        public int EmployeeId { get; set; }
+
+        public string CompanyName { get; set; }
+
+        public string Title { get; set; }
+
+        public DateTime HireDate { get; set; }
+
+        public string Status { get; set; }
+
+        public int DisplaySequence { get; set; }
+
+        public decimal Salary { get; set; }
+
+        public string Skills { get; set; }
+
+        public string Hobbies { get; set; }
+
+        [DatabaseExclude]
+        public bool IsModified { get; set; }
+
+        [DatabaseExclude]
+        public bool IsDeleted { get; set; }
+    }
+
+    public class ManageXyzEmployeeModel
+    {
+        public List<XyzEmployee> Employees { get; set; }
     }
 
     public class XyzEmployeePagingModel

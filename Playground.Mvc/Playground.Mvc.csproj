@@ -771,6 +771,7 @@
     <Content Include="Views\WebGridEmployeeMgr\Index.cshtml" />
     <Content Include="Views\JqGridEmployeeMgr\Index.cshtml" />
     <Content Include="Views\KnockoutStuff\Index.cshtml" />
+    <Content Include="Views\KnockoutStuff\ManageEmployees.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="Scripts\free-jqGrid\ts\free-jqgrid.d.ts" />

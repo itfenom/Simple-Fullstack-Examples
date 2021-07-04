@@ -1,0 +1,282 @@
+﻿@model Playground.Mvc.Models.ManageXyzEmployeeModel
+@using Newtonsoft.Json
+
+@{
+    ViewBag.Title = "Manage Employees using Knockout JS";
+}
+
+<h2>Manage Employees</h2>
+<hr />
+
+<div class="row" id="empInfoDiv">
+    <div class="col-sm-5">
+        <table class="table" style="width:100%;" id="empInfoTable">
+            <thead class="bg-light">
+                <tr>
+                    <td>Id</td>
+                    <td>Name</td>
+                    <td>Email</td>
+                    <td>Gender</td>
+                    <td>Delete</td>
+                </tr>
+            </thead>
+            <tbody id="empInfo-tbody" data-bind="foreach: activeEmployees">
+                <tr class="emp-info-row" data-bind="click: $root.selectEmployee, css: {selected: $root.selectedEmployee() == $data}">
+                    <td data-bind="text: employeeId"></td>
+                    <td data-bind="text: employeeName"></td>
+                    <td data-bind="text: email"></td>
+                    <td data-bind="text: gender"></td>
+                    <td>
+                        <a href="#" class="delete" data-bind="click: function () { $parent.deleteEmployee(employeeId()) }"><i class="fa fa-trash"></i></a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="col-md-7" id="workHistory" style="display:none;"></div>
+</div>
+
+<br />
+<br />
+<div class="row">
+    <div class="col-sm-6">
+    </div>
+    <div class="col-sm-6 text-right">
+        <button class="btn btn-primary main-button" id="btn-submit" onclick="submitIfChanged(event)">No Changes...</button>
+        <button class="btn btn-secondary main-button-right-edge" data-bind="click: function(){cancelClicked(event)}">Cancel</button>
+    </div>
+</div>
+
+<style>
+
+    .delete, delete a {
+        color: #d32525;
+        text-align: center;
+    }
+
+        .delete:hover, .delete a :hover {
+            color: red;
+        }
+
+    .emp-info-row {
+        background: #fff;
+    }
+
+        .emp-info-row:hover {
+            background: #ddd;
+        }
+
+        .emp-info-row.selected, .emp-info-row.selected:hover {
+            background: #ff0;
+        }
+
+    .emp-info-link, work-history-link {
+        text-decoration: none;
+        color: #d32525;
+    }
+
+    .work-history-row.last-moved-row, .emp-info-row.last-moved-row {
+        background: rgba(0, 0, 255, 0.2);
+    }
+
+        .work-history-row.last-moved-row.fade-out, .emp-info-row.last-moved-row.fade-out {
+            background: rgba(255, 255, 255, 1);
+            transition: background-color 2.5s ease;
+        }
+</style>
+
+
+@section Scripts {
+
+    @Scripts.Render("~/bundles/knockout/js")
+
+    <script type="text/javascript">
+
+        @{
+            foreach(var item in Model.Employees)
+            {
+                item.ReplaceNullsWithEmptyStrings();
+            }
+
+            var json = JsonConvert.SerializeObject(Model);
+        }
+
+        @Html.Raw("var model = " + json)
+        @Html.Raw("var originalModel = " + json)
+
+        var viewModel = new ManageEmployeesViewModel({ model: model });
+
+        $(document).ready(function () {
+            viewModel.initialize();
+        });
+
+        function ManageEmployeesViewModel(args) {
+
+            var self = this;
+            self.model = { employeeInfo: ko.observableArray() };
+            self.originalModel = { employeeInfo: ko.observableArray() };
+
+            self.isInitialized = ko.observable(false);
+            self.submitBtn = $('#btn-submit');
+
+            self.activeEmployees = ko.computed(function () {
+                if (self.isInitialized()) {
+                    return ko.utils.arrayFilter(self.model.employeeInfo(), function (x) {
+                        return !x.isDeleted();
+                    });
+                } else {
+                    return [];
+                }
+            });
+
+            self.selectedEmployee = ko.observable();
+
+            //make selection
+            self.selectEmployee = function (data) {
+                self.selectedEmployee(data);
+            };
+
+            //Delete employee
+            self.deleteEmployee = function (empId) {
+                var empTodelete = ko.utils.arrayFirst(self.model.employeeInfo(), function (x) {
+                    var id = x.employeeId();
+                    if (id === empId) {
+                        return x;
+                    }
+                });
+
+                if (empTodelete) {
+                    if (confirm('Are you sure to delete employee ' + empTodelete.employeeName() + '?')) {
+                        empTodelete.isDeleted(true);
+                        self.updateSubmitButton(self.submitBtn, ko.toJSON(self.model.employeeInfo), ko.toJSON(self.originalModel.employeeInfo));
+                    }
+                }
+            }
+
+            //Cancel all (redirect to jqGrid page)
+            self.cancelClicked = function (event) {
+                event.preventDefault();
+
+                var changes = JSON.stringify(ko.toJS(model)) === JSON.stringify(ko.toJS(originalModel));
+
+                if (changes) {
+                    if (confirm('Your changes have not been saved. Are you sure to abandon changes?')) {
+                        var link = '@Url.Action("Index", "KnockoutStuff")';
+                        window.location.href = link;
+                    }
+                } else {
+                    return false;
+                }
+            }
+
+            self.submitIfChanged = function (event) {
+                event.preventDefault();
+
+                self.submitBtn.prop('disabled', true);
+
+                var link = '@Url.Action("Index", "KnockoutJsEmployeeMgr")';
+                var dataToPost = ko.toJSON(self.model.employees);
+
+                $.ajax({
+                    url: '@Url.Action("SaveEmployee", "KnockoutJsEmployeeMgr")',
+                    cache: false,
+                    traditional: true,
+                    dataType: "json",
+                    type: 'POST',
+                    contentType: 'application/json; charset=utf-8',
+                    data: dataToPost,
+                    success: function (data) {
+                        if (data.success) {
+                            window.location.href = link;
+                        }
+                        else {
+                            alert("error: " + data.msg);
+                        }
+                    },
+                    error: function (response) {
+                        alert("error: " + response.msg);
+                        self.submitBtn.prop('disabled', false);
+                    }
+                });
+            }
+
+            //Enable/disable submit button
+            self.updateSubmitButton = function (submitBtn, model, originalModel) {
+                if (this.hasChanges(model, originalModel)) {
+                    $(submitBtn).prop('disabled', false)
+                        .text('Submit')
+                        .removeClass('btn-outline-primary')
+                        .addClass('btn-primary');
+                } else {
+                    $(submitBtn).prop('disabled', true)
+                        .text('No Changes...')
+                        .removeClass('btn-primary')
+                        .addClass('btn-outline-primary');
+                }
+            }
+
+            self.hasChanges = function (model, originalModel) {
+                var changes = JSON.stringify(ko.toJS(model)) !== JSON.stringify(ko.toJS(originalModel));
+                return changes;
+            }
+
+            self.initialize = function () {
+
+                var empInfo = [];
+                for (var i = 0; i < args.model.Employees.length; i++) {
+                    var emp = args.model.Employees[i];
+                    empInfo.push(new BuildEmployeeInfo(emp.Id, emp.Name, emp.Company, emp.Email, emp.Gender, emp.WorkHistory));
+                }
+                self.model.employeeInfo(empInfo);
+
+                var origModel = [];
+                for (var i = 0; i < args.model.Employees.length; i++) {
+                    var emp = args.model.Employees[i];
+                    origModel.push(new BuildEmployeeInfo(emp.Id, emp.Name, emp.Company, emp.Email, emp.Gender, emp.workHistory));
+                }
+                self.originalModel.employeeInfo(origModel);
+
+                ko.applyBindings(viewModel);
+                self.isInitialized(true);
+            }
+        }
+
+        function BuildEmployeeInfo(id, name, company, email, gender, wrkHist) {
+            var self = this;
+
+            self.employeeId = ko.observable(id);
+            self.employeeName = ko.observable(name);
+            self.company = ko.observable(company);
+            self.email = ko.observable(email);
+            self.gender = ko.observable(gender);
+            self.workHistory = ko.observableArray([]);
+
+            if (wrkHist) {
+                var wrkHistArrays = [];
+                for (var j = 0; j < wrkHist.length; j++) {
+                    wrkHistArrays.push(new BuildWorkHistory(wrkHist[j]));
+                }
+            }
+
+            self.isDeleted = ko.observable(false);
+            self.isNew = ko.observable(false);
+            self.isModified = ko.observable(false);
+        }
+
+        function BuildWorkHistory(workHistory) {
+            var self = this;
+            self.workHistoryId = ko.observable(workHistory.Id);
+            self.employeeId = ko.observable(workHistory.EmployeeId);
+            self.company = ko.observable(workHistory.CompanyName);
+            self.title = ko.observable(workHistory.Title);
+            self.displaySeq = ko.observable(workHistory.DisplaySequence);
+            self.salary = ko.observable(workHistory.Salary);
+            self.hireDate = ko.observable(workHistory.HireDate);
+            self.isDeleted = ko.observable(false);
+            self.isNew = ko.observable(false);
+            self.isModified = ko.observable(false);
+        }
+
+    </script>
+}

@@ -73,5 +73,11 @@ namespace Playground.Mvc.Controllers
             var values = _repository.GetDistinctColumnValues(columnName);
             return Json(values, JsonRequestBehavior.AllowGet);
         }
+
+        public ActionResult ManageEmployees()
+        {
+            var model = _repository.GetEmployees();
+            return View(model);
+        }
     }
 }

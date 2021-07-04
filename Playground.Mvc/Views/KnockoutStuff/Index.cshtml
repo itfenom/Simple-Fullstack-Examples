@@ -37,6 +37,11 @@
 
 <br />
 
+<p>
+    <input type="button" class="btn btn-primary" value="Manage Employees" onclick="location.href='@Url.Action("ManageEmployees", "KnockoutStuff")'" />
+</p>
+
+
 <table id="list"></table>
 
 @section Scripts {
@@ -91,7 +96,7 @@
             }
             $grid.triggerHandler("jqGridRefreshFilterValues");
             $elem.multiselect(options);
-            // replace icons ui-icon-check, ui-icon-closethick, ui-icon-circle-close
+            // replace icons ui-iUrlon-check, ui-icon-closethick, ui-icon-circle-close
             // and ui-icon-triangle-1-s to font awesome icons
             var $header = $elem.data("echMultiselect").header;
             $header.find("span.ui-icon.ui-icon-check")
