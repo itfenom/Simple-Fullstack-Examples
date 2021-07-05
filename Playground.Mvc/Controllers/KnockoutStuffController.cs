@@ -79,5 +79,11 @@ namespace Playground.Mvc.Controllers
             var model = _repository.GetEmployees();
             return View(model);
         }
+
+        public JsonResult SaveNewEmployee(string name, string company, string email, string gender, string salary, string title)
+        {
+            var result = _repository.InsertNewEmployee(name, company, email, gender, salary, title);
+            return Json(new { isSucceed = result.IsSucceed, message = result.Message });
+        }
     }
 }

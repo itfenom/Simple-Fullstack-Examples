@@ -116,13 +116,45 @@ namespace Playground.Mvc.Models
             }
         }
 
-        public IEnumerable<XyzEmployeeWorkHistory> GetEmployeeWorkHistory(int empId)
+        public Result InsertNewEmployee(string name, string company, string email, string gender, string salary, string title)
         {
-            var sql = $"SELECT * FROM XYZ_EMPLOYEE_WORK_HISTORY WHERE EMPLOYEE_ID = {empId} ORDER BY DISPLAY_SEQUENCE";
+            var result = new Result();
+            result.IsSucceed = true;
+            result.Message = string.Empty;
+
             using (var dbConn = new OracleConnection(GetConnectionString()))
             {
-                return dbConn.Query<XyzEmployeeWorkHistory>(sql);
+                dbConn.Open();
+                using (var trans = dbConn.BeginTransaction())
+                {
+                    try
+                    {
+                        //insert into XYZ_EMPLOYEE
+                        var empId = dbConn.ExecuteScalar<int>("SELECT XYZ_EMPLOYEE_SEQ.NEXTVAL FROM DUAL", null, trans);
+
+                        var sql = $@"Insert into XYZ_EMPLOYEE (ID,NAME,COMPANY,EMAIL,GENDER) 
+                        values ({empId},'{name}','{company}','{email}','{gender}')";
+
+                        dbConn.Execute(sql, null, trans);
+
+                        //Now, insert into XYZ_EMPLOYEE_WORK_HISTORY
+                        sql = $@"INSERT INTO XYZ_EMPLOYEE_WORK_HISTORY (ID,EMPLOYEE_ID,COMPANY_NAME,TITLE,DISPLAY_SEQUENCE,SALARY,STATUS) 
+                             VALUES (NULL,{empId},'{company}','{title}',{1},{salary},'Active')";
+
+                        dbConn.Execute(sql, null, trans);
+
+                        trans.Commit();
+                    }
+                    catch (Exception e)
+                    {
+                        trans.Rollback();
+                        result.IsSucceed = false;
+                        result.Message = e.Message;
+                    }
+                }
             }
+
+            return result;
         }
     }
 
@@ -210,6 +242,12 @@ namespace Playground.Mvc.Models
         public int ItemCount { get; set; }
 
         public int TotalPages { get; set; }
+    }
+
+    public class Result
+    {
+        public bool IsSucceed { get; set; }
+        public string Message { get; set; }
     }
 
     #region Base Dapper Repository class
