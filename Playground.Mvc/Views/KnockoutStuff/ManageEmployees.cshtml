@@ -80,7 +80,7 @@
     <div class="col-sm-6">
     </div>
     <div class="col-sm-6 text-right">
-        <button class="btn btn-primary main-button" id="btn-submit" onclick="submitIfChanged(event)">No Changes...</button>
+        <button class="btn btn-primary main-button" id="btn-submit" data-bind="click: function() { submitIfChanged(event) }">No Changes...</button>
         <button class="btn btn-secondary main-button-right-edge" data-bind="click: function(){cancelClicked(event)}">Cancel</button>
     </div>
 </div>
@@ -265,6 +265,82 @@
     </div>
 </div>
 
+<div id="edit-work-history-dialog" class="modal" tabindex="1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Employee Work History</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row mt-1">
+                    <div class="col-sm-2 text-right"><b>Company:</b></div>
+                    <div class="col-sm-4">
+                        <input type="text" data-bind="value: companyName" />
+                    </div>
+                    <div class="col-sm-2 text-right"><b>Title:</b></div>
+                    <div class="col-sm-4">
+                        <select data-bind="options: titles, value: title, optionsCaption: 'Choose Title...'"></select>
+                    </div>
+                </div>
+                <div class="row mt-1">
+                    <div class="col-sm-2 text-right"><b>Salary:</b></div>
+                    <div class="col-sm-4">
+                        <input type="number" data-bind="value: salary" />
+                    </div>
+                    <div class="col-sm-2 text-right"><b>Hire Date:</b></div>
+                    <div class="col-sm-4">
+                        <input type="date" id="hire-date-field" name="hireDate" data-bind="datepicker: hireDate" />
+                    </div>
+                </div>
+                <div class="row mt-1">
+                    <div class="col-sm-2 text-right"><b>Skills:</b></div>
+                    <div class="col-sm-10">
+                        <br />
+                        <select multiple style="width: 100px;" size=5
+                                data-bind="options: skills,
+                                selectedOptions: selectedSkills">
+                        </select>
+                        <br />
+                        <input type="checkbox" data-bind="checked: addWrkHistSelectAllSkills" /> Select All Skills
+                    </div>
+                </div>
+                <div class="row mt-1">
+                    <div class="col-sm-2 text-right"><b>Hobbies</b></div>
+                    <div class="col-sm-10">
+                        <div class="col-sm-10">
+                            <input type="checkbox" id="add-wrk-hist-hobbies" data-bind="checked: selectAllHobbies" /> <label for="add-wrk-hist-hobbies">Select All Hobbies</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-1">
+                    <div class="col-sm-2 text-right">
+                    </div>
+                    <div class="col-sm-10" data-bind="foreach: hobbies">
+                        &nbsp;&nbsp;&nbsp;&nbsp;
+                        <input type="checkbox" data-bind="attr: { id: $data }, checkedValue: $data, checked: $parent.selectedHobbies" />
+                        <label data-bind="attr: { for: $data }, text: $data"></label>
+                    </div>
+                </div>
+                <div class="row mt-1">
+                    <div class="col-sm-2 text-right"><b>Status:</b></div>
+                    <div class="col-sm-10">
+                        <select data-bind="options: statusList, value: selectedStatus, optionsCaption: 'Choose Status...'"></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="update-work-history" data-bind="click: updateWorkHistory">Save</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancle</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 
     @Scripts.Render("~/bundles/knockout/js")
@@ -350,8 +426,14 @@
 
             //select work-History of a selected employee
             self.selectWorkHistory = function (workHistory, showEditDialog) {
-                console.log(workHistory()[0].employeeId() + '/' + workHistory()[0].company() + ' was clicked');
+                console.log(workHistory.employeeId() + '/' + workHistory.company() + ' was clicked');
                 self.selectedWorkHistory(workHistory);
+
+                if (showEditDialog) {
+
+                    //TODO: check for changes and prompt to save!
+                    self.editWorkHistory(workHistory);
+                }
             }
 
             self.moveWorkHistoryUp = function (workHistory) {
@@ -474,7 +556,7 @@
             self.salary = ko.observable();
             self.hireDate = ko.observable(new Date());
             self.skills = ko.observableArray([]);
-            self.skills(["C#", ".NET", "PL/SQL", "Oracle", "SQL Server", "Visual Studio", "Javascript", "jQuery", "KnockoutJS", "Angular", "WPF", "MVVM", "MVC"]);
+            self.skills(["C#", ".NET", "PL/SQL", "Oracle", "HTML", "SQL Server", "Visual Studio", "Javascript", "jQuery", "KnockoutJS", "Angular", "WPF", "MVVM", "MVC"]);
             self.selectedSkills = ko.observableArray([]);
             self.hobbies = ko.observableArray([]);
             self.hobbies(["Music", "Crafting", "Movies", "Running", "Hiking", "Swimming", "Walking"]);
@@ -483,6 +565,7 @@
             self.statusList = ko.observableArray([]);
             self.statusList(["Active", "Quit", "Terminated", "Retired"]);
             self.selectedStatus = ko.observable();
+            self.fileName = ko.observable();
 
             // #region Add New Employee
 
@@ -610,7 +693,7 @@
                 self.companyName(undefined);
                 self.hireDate(new Date());
                 self.selectedSkills([]);
-                self.selectedSkills(["C#"]); // Pre-selecting "C#"
+                self.selectedSkills(["Oracle"]); // Pre-selecting "Oracle"
                 self.selectedHobbies([]);
                 self.selectedHobbies.push("Music"); //pre-selecting "Music"
                 self.selectAllHobbies(false);
@@ -660,10 +743,10 @@
                 if (self.selectedHobbies().length > 0) {
                     formattedHobbies = self.selectedHobbies().join(",");
                 }
-                //("0" + (this.getMonth() + 1)).slice(-2)
-                var day = self.hireDate().getDate();       // yields date
-                var month = ("0" + (self.hireDate().getMonth() + 1)).slice(-2);    // yields month (add one as '.getMonth()' is zero indexed)
-                var year = self.hireDate().getFullYear();  // yields year  
+
+                var day = self.hireDate().getDate();       
+                var month = ("0" + (self.hireDate().getMonth() + 1)).slice(-2);    
+                var year = self.hireDate().getFullYear();  
                 formattedDate = month + "/" + day + "/" + year;
 
 
@@ -696,6 +779,126 @@
             }
 
             // #endregion
+
+
+            self.editWorkHistory = function (workHistory) {
+
+                var wrkHistId = workHistory.workHistoryId();
+                var empId = self.selectedEmployee().employeeId();
+
+                $.ajax({
+                    url: '@Url.Action("GetWorkHistoryDataToEdit", "KnockoutStuff")',
+                    cache: false,
+                    traditional: true,
+                    dataType: "json",
+                    type: 'GET',
+                    //contentType: 'application/json; charset=utf-8',
+                    data: { employeeId: empId, workHistoryId: wrkHistId },
+                    success: function (data) {
+                        if (data.isSucceed) {
+
+                            self.companyName(data.Company);
+                            self.title(data.Title);
+
+                            //self.hireDate(new Date(data.HireDate));
+                            if (data.HireDate.length > 0) {
+                                var parts = data.HireDate.split('/');
+                                var month = (parseInt(parts[0]) - 1);
+                                var day = parseInt(parts[1]);
+                                var year = parseInt(parts[2]);
+
+                                self.hireDate(new Date(year, month, day));
+                            }
+
+                            self.selectedStatus(data.Status)
+                            self.salary(data.Salary);
+
+                            //IMPORTANT!!!
+                            //For collection use the following syntax
+                            //self.statusList(ko.mapping.fromJS(data.StatusList));
+
+                            self.selectedSkills([]);
+                            if (data.Skills.length > 0) {
+                                for (var i = 0; i < data.Skills.length; i++) {
+                                    self.selectedSkills.push(data.Skills[i]);
+                                }
+                            }
+
+                            self.selectedHobbies([]);
+                            if (data.Hobbies.length > 0) {
+                                for (var i = 0; i < data.Hobbies.length; i++) {
+                                    self.selectedHobbies.push(data.Hobbies[i]);
+                                }
+                            }
+
+                            self.fileName(undefined);
+                            if (data.FileName.length > 0) {
+                                self.fileName(data.FileName);
+                            }
+
+                            //Show the edit dialog!
+                            $('#edit-work-history-dialog').modal('show');
+                        }
+                        else {
+                            toastr["error"](data.message, 'Error');
+                        }
+                    },
+                    error: function (response) {
+                        toastr["error"](response, 'Error');
+                    }
+                });
+            }
+
+            self.updateWorkHistory = function () {
+
+                var errMsg = [];
+                if (self.companyName() === null || self.companyName() === undefined) {
+                    errMsg.push("Company is required!");
+                }
+
+                if (self.selectedStatus() === null || self.selectedStatus() === undefined) {
+                    errMsg.push("Status is required!");
+                }
+
+                if (self.title() === null || self.title() === undefined) {
+                    errMsg.push("Title is required!");
+                }
+
+                if (self.salary() === null || self.salary() === undefined) {
+                    errMsg.push("Salary is required!");
+                }
+
+                if (errMsg.length > 0) {
+                    var msg = "";
+                    for (var i = 0; i < errMsg.length; i++) {
+                        msg += errMsg[i] + "\n";
+                    }
+                    toastr["error"](msg, 'Error');
+                    return false;
+                }
+
+                var formattedSkills = "";
+                var formattedHobbies = "";
+                var formattedDate = "";
+
+                if (self.selectedSkills().length > 0) {
+                    formattedSkills = self.selectedSkills().join(",");
+                }
+
+                if (self.selectedHobbies().length > 0) {
+                    formattedHobbies = self.selectedHobbies().join(",");
+                }
+
+                var day = self.hireDate().getDate();
+                var month = ("0" + (self.hireDate().getMonth() + 1)).slice(-2);
+                var year = self.hireDate().getFullYear();
+                formattedDate = month + "/" + day + "/" + year;
+
+                //disable save button
+                $('#update-work-history').prop('disabled', true);
+
+
+            }
 
             //Delete employee
             self.deleteEmployee = function (empId) {
@@ -769,6 +972,7 @@
                         }
                         else {
                             alert("error: " + data.msg);
+                            self.submitBtn.prop('disabled', false);
                         }
                     },
                     error: function (response) {

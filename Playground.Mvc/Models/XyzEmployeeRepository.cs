@@ -187,6 +187,29 @@ namespace Playground.Mvc.Models
 
             return result;
         }
+
+        public DataTable GetWorkHistoryDataTable(string employeeId, string workHistoryId)
+        {
+            var sql = $@"
+            SELECT A.* , 
+                   B.FILE_NAME, 
+                   B.FILE_TYPE
+            FROM  XYZ_EMPLOYEE_WORK_HISTORY A
+                LEFT JOIN XYZ_EMPLOYEE_FILE B
+                    ON A.ID = B.EMPLOYEE_WORK_HISTORY_ID
+            WHERE A.ID = {workHistoryId}
+            AND A.EMPLOYEE_ID = {employeeId}";
+
+            var ds = GetDataSet(sql);
+
+            return ds.Tables[0];
+        }
+
+
+        public void UpdateWorkHistory()
+        {
+
+        }
     }
 
     [DatabaseSchema("Seraph")]
