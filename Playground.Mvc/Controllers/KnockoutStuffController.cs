@@ -85,5 +85,11 @@ namespace Playground.Mvc.Controllers
             var result = _repository.InsertNewEmployee(name, company, email, gender, salary, title);
             return Json(new { isSucceed = result.IsSucceed, message = result.Message });
         }
+
+        public JsonResult SaveWorkHistory(string empId, string company, string title, string salary, string skills, string hobbies, string status, string hireDate)
+        {
+            var result = _repository.InsertWorkHistory(empId, company, title, salary, skills, hobbies, status, hireDate);
+            return Json(new { isSucceed = result.IsSucceed, message = result.Message });
+        }
     }
 }

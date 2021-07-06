@@ -156,6 +156,37 @@ namespace Playground.Mvc.Models
 
             return result;
         }
+
+        public Result InsertWorkHistory(string empId, string company, string title, string salary, string skills, string hobbies, string status, string hireDate)
+        {
+            var result = new Result();
+            result.IsSucceed = true;
+            result.Message = string.Empty;
+
+            var skillsVal = string.IsNullOrEmpty(skills) ? "NULL" : $"'{skills}'";
+            var hobbiesVal = string.IsNullOrEmpty(hobbies) ? "NULL" : $"'{hobbies}'";
+            var hireDateVal = $"TO_DATE('{hireDate}', 'MM/DD/YYYY')";
+
+            try
+            {
+                using (var dbConn = new OracleConnection(GetConnectionString()))
+                {
+                    dbConn.Open();
+                    var sql = $@"INSERT INTO XYZ_EMPLOYEE_WORK_HISTORY (ID, EMPLOYEE_ID, COMPANY_NAME, TITLE, DISPLAY_SEQUENCE, SALARY, SKILLS, HOBBIES, STATUS, HIRE_DATE) 
+                          VALUES (NULL, {empId}, '{company}', '{title}',
+                          (SELECT NVL(MAX(DISPLAY_SEQUENCE) + 1, 1) AS DISP_SEQ FROM XYZ_EMPLOYEE_WORK_HISTORY WHERE EMPLOYEE_ID = {empId}),
+                          {salary}, {skillsVal}, {hobbiesVal},'{status}', {hireDateVal})";
+                    dbConn.Execute(sql);
+                }
+            }
+            catch (Exception e)
+            {
+                result.IsSucceed = false;
+                result.Message = e.Message;
+            }
+
+            return result;
+        }
     }
 
     [DatabaseSchema("Seraph")]
