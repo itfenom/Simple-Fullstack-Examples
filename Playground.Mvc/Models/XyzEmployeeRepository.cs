@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -205,10 +206,99 @@ namespace Playground.Mvc.Models
             return ds.Tables[0];
         }
 
-
-        public void UpdateWorkHistory()
+        public Result UpdateWorkHistory(XyzEmployeeUpdateModel model)
         {
+            var result = new Result
+            {
+                IsSucceed = true,
+                Message = string.Empty
+            };
 
+            var skillsVal = string.IsNullOrEmpty(model.Skills) ? "NULL" : $"'{model.Skills}'";
+            var hobbiesVal = string.IsNullOrEmpty(model.Hobbies) ? "NULL" : $"'{model.Hobbies}'";
+            var hireDateVal = $"TO_DATE('{model.HireDate}', 'MM/DD/YYYY')";
+
+            using (var dbConn = new OracleConnection(GetConnectionString()))
+            {
+                dbConn.Open();
+                using (var trans = dbConn.BeginTransaction())
+                {
+                    try
+                    {
+                        var sql = $@"UPDATE XYZ_EMPLOYEE_WORK_HISTORY 
+                          SET COMPANY_NAME = '{model.Company}', 
+                               TITLE = '{model.Title}', 
+                               SALARY = {model.Salary}, 
+                               SKILLS = {skillsVal}, 
+                               HOBBIES = {hobbiesVal},
+                               STATUS = '{model.Status}', 
+                               HIRE_DATE = {hireDateVal} 
+                           WHERE ID = {model.WorkHistoryId}
+                           AND EMPLOYEE_ID = {model.EmployeeId}";
+
+                        dbConn.Execute(sql, null, trans);
+
+                        if (!string.IsNullOrEmpty(model.FileName))
+                        {
+                            var fi = new FileInfo(model.FileName);
+                            var fileType = Helpers.MimeTypeHelper.GetMimeType(model.SelectedDocumentationFileData, fi.FullName);
+
+                            sql = $"DELETE FROM XYZ_EMPLOYEE_FILE WHERE EMPLOYEE_WORK_HISTORY_ID = {model.WorkHistoryId}";
+                            dbConn.Execute(sql, null, trans);
+
+                            var blobParameter = new OracleParameter
+                            {
+                                ParameterName = "SelectedDocumentationFileData",
+                                OracleDbType = OracleDbType.Blob,
+                                Direction = ParameterDirection.Input,
+                                Value = model.SelectedDocumentationFileData
+                            };
+
+                            sql = $@"INSERT INTO XYZ_EMPLOYEE_FILE (EMPLOYEE_WORK_HISTORY_ID, FILE_NAME, FILE_TYPE, FILE_DATA)
+                                    VALUES({model.WorkHistoryId}, '{fi.Name}', '{fileType}', :SelectedDocumentationFileData)";
+
+                            dbConn.Execute(sql, model, trans);
+                        }
+
+                        trans.Commit();
+                    }
+                    catch (Exception e)
+                    {
+                        trans.Rollback();
+                        result.IsSucceed = false;
+                        result.Message = e.Message;
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public byte[] GetFileData(string workHistoryId, out string fileType)
+        {
+            byte[] retVal = null;
+            string fType = string.Empty;
+
+            using (var dbConn = new OracleConnection(GetConnectionString()))
+            {
+                using (var cmd = new OracleCommand())
+                {
+                    cmd.Connection = dbConn;
+                    cmd.CommandText = $"SELECT FILE_DATA, FILE_TYPE FROM XYZ_EMPLOYEE_FILE WHERE EMPLOYEE_WORK_HISTORY_ID = {workHistoryId}";
+                    cmd.CommandType = CommandType.Text;
+                    dbConn.Open();
+
+                    var dr = cmd.ExecuteReader();
+                    if(dr.Read())
+                    {
+                        retVal = dr.GetOracleBlob(0).Value;
+                        fType = dr.GetString(1);
+                    }
+                }
+            }
+
+            fileType = fType;
+            return retVal; 
         }
     }
 

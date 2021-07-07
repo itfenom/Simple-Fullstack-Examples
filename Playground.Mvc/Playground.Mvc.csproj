@@ -225,6 +225,7 @@
     </Compile>
     <Compile Include="Helpers\DownloadExcelFileActionResult.cs" />
     <Compile Include="Helpers\ExceptionUtility.cs" />
+    <Compile Include="Helpers\MimeTypeHelper.cs" />
     <Compile Include="Helpers\FlexigridExtensions.cs" />
     <Compile Include="Helpers\HelperTools.cs" />
     <Compile Include="Helpers\OverrideAuthorizeClass.cs" />

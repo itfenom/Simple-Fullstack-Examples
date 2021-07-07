@@ -607,7 +607,10 @@
             }
 
             self.displayFile = function () {
-
+                var wrkHistId = self.selectedWorkHistory().workHistoryId();
+                var url = "@Html.Raw(Url.Action("GetFile", "KnockoutStuff", new { workHistoryId = "xyz" }))";
+                url = url.replace("xyz", wrkHistId);
+                window.open(url, "_blank");
             }
 
             // #region Add New Employee
@@ -830,6 +833,7 @@
                 var empId = self.selectedEmployee().employeeId();
                 self.selectedDocumentationFile(undefined);
                 $('#image-or-documentation').val(null);
+                $('#update-work-history').prop('disabled', false);
 
                 $.ajax({
                     url: '@Url.Action("GetWorkHistoryDataToEdit", "KnockoutStuff")',
@@ -987,8 +991,7 @@
                     success: function (data) {
                         if (data.isSucceed) {
                             toastr["info"]("Success!", 'Info');
-                            //window.location.reload();
-                            //TODO
+                            window.location.reload();
                         }
                         else {
                             toastr["error"](message, 'Error');
