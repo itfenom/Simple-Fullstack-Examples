@@ -125,5 +125,19 @@ namespace Playground.Mvc.Controllers
                     message = ""
                 }, JsonRequestBehavior.AllowGet);
         }
+
+        /*
+         * string empId, string wrkHistId, string company, string status, string title, string salary, string skills, string hobbies, string hireDate, byte[] selectedDocumentationFileData, string fileName
+        XyzEmployeeUpdateModel model
+         */
+
+        public JsonResult UpdateEmployeeWorkHistory(XyzEmployeeUpdateModel model)
+        {
+            var result = new Result();
+            result.IsSucceed = true;
+            result.Message = "";
+
+            return Json(new { isSucceed = result.IsSucceed, message = result.Message });
+        }
     }
 }

@@ -304,6 +304,21 @@ namespace Playground.Mvc.Models
         public string Message { get; set; }
     }
 
+    public class XyzEmployeeUpdateModel
+    {
+        public string EmployeeId { get; set; }
+        public string WorkHistoryId { get; set; }
+        public string Company { get; set; }
+        public string Status { get; set; }
+        public string Title { get; set; }
+        public string Salary { get; set; }
+        public string Skills { get; set; }
+        public string Hobbies { get; set; }
+        public string HireDate { get; set; }
+        public byte[] SelectedDocumentationFileData { get; set; }
+        public string FileName { get; set; }
+    }
+
     #region Base Dapper Repository class
     public abstract class DapperBaseRepository
     {
