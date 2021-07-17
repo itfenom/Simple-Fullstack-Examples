@@ -292,7 +292,7 @@
                     </div>
                     <div class="col-sm-2 text-right"><b>Hire Date:</b></div>
                     <div class="col-sm-4">
-                        <input type="date" id="edit-hire-date-field" name="hireDate" data-bind="datepicker: hireDate" />
+                        <input id="edit-hire-date-field" data-bind="datepicker: hireDate, datepickerOptions: { minDate: new Date(01/01/1900) }" style="width:150px;" />
                     </div>
                 </div>
                 <div class="row mt-1">
@@ -361,10 +361,10 @@
 
 @section Scripts {
 
-    @*@Scripts.Render("~/bundles/jqueryui")*@
+    @Scripts.Render("~/bundles/jqueryui")
     @Scripts.Render("~/bundles/knockout/js")
     <script src="@Url.Content("~/Scripts/toastr.min.js")" type="text/javascript"></script>
-    <script src="@Url.Content("~/Scripts/moment.min.js")" type="text/javascript"></script>
+    @*<script src="@Url.Content("~/Scripts/moment.min.js")" type="text/javascript"></script>*@
     <script type="text/javascript">
 
         @{
@@ -380,21 +380,37 @@
         @Html.Raw("var originalModel = " + json)
 
         // #region custom date-picker event handler
-        ko.bindingHandlers.datePicker = {
-            init: function (element, valueAccessor, allBindingsAccessor, viewModel) {
-                // Register change callbacks to update the model
-                // if the control changes.
+        ko.bindingHandlers.datepicker = {
+            init: function (element, valueAccessor, allBindingsAccessor) {
+                var options = allBindingsAccessor().datepickerOptions || {},
+                    $el = $(element);
+
+                //initialize datepicker with some optional options
+                $el.datepicker(options);
+
+                //handle the field changing
                 ko.utils.registerEventHandler(element, "change", function () {
-                    var value = valueAccessor();
-                    value(new Date(element.value));
+                    var observable = valueAccessor();
+                    observable($el.datepicker("getDate"));
                 });
+
+                //handle disposal (if KO removes by the template binding)
+                ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
+                    $el.datepicker("destroy");
+                });
+
             },
-            // Update the control whenever the view model changes
-            update: function (element, valueAccessor, allBindingsAccessor, viewModel) {
-                var value = valueAccessor();
-                element.value = value().toISOString();
+            update: function (element, valueAccessor) {
+                var value = ko.utils.unwrapObservable(valueAccessor()),
+                    $el = $(element),
+                    current = $el.datepicker("getDate");
+
+                if (value - current !== 0) {
+                    $el.datepicker("setDate", value);
+                }
             }
         };
+
         // #endregion
 
         var viewModel = new ManageEmployeesViewModel({ model: model });
@@ -574,7 +590,7 @@
             self.email = ko.observable();
             self.gender = ko.observable();
             self.salary = ko.observable();
-            self.hireDate = ko.observable(currentDate());
+            self.hireDate = ko.observable(new Date());
             self.skills = ko.observableArray([]);
             self.skills(["C#", ".NET", "PL/SQL", "Oracle", "HTML", "SQL Server", "Visual Studio", "Javascript", "jQuery", "KnockoutJS", "Angular", "WPF", "MVVM", "MVC"]);
             self.selectedSkills = ko.observableArray([]);
@@ -849,13 +865,7 @@
 
                             self.companyName(data.Company);
                             self.title(data.Title);
-
-                            //convert datetime object to date string.
-                            var date = clientDateStringFromDate(data.HireDate);
-                            self.hireDate(date);
-
-                            //TODO: The hireDate is not binding properly to self.hireDate property
-
+                            self.hireDate(data.HireDate);
                             self.selectedStatus(data.Status)
                             self.salary(data.Salary);
 
@@ -936,7 +946,8 @@
                     formattedHobbies = self.selectedHobbies().join(",");
                 }
                 var datePickerDate = $('#edit-hire-date-field').datepicker({ dateFormat: 'mm/dd/yyyy' }).val();
-                formattedDate = clientDateStringFromDate(datePickerDate);
+                var dateParts = datePickerDate.split('/');
+                formattedDate = parseInt(dateParts[0]) + "/" + parseInt(dateParts[1]) + "/" + parseInt(dateParts[2]);
 
                 //disable save button
                 $('#update-work-history').prop('disabled', true);
@@ -1176,14 +1187,14 @@
             self.fadeOut = ko.observable(false);
         }
 
-        /*Datetime with moment =>*/
-        function currentDate() {
-            return moment(); //return current datetime
-        };
+        ///*Datetime with moment =>*/
+        //function currentDate() {
+        //    return moment(); //return current datetime
+        //};
 
-        function clientDateStringFromDate(date) {
-            return moment(date).format('MM/DD/YYYY');   //converts a date object to a given formate
-        };
+        //function clientDateStringFromDate(date) {
+        //    return moment(date).format('MM/DD/YYYY');   //converts a date object to a given formate
+        //};
 
     </script>
 }
