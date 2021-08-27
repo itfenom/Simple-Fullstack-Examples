@@ -12,6 +12,30 @@
 
 <br />
 
+<style>
+    ul {
+        list-style: none;
+        margin-bottom: 10px;
+    }
+
+    label {
+        display: block;
+        padding: 5px 10px;
+    }
+
+        label:first-child {
+        }
+
+        label:nth-child(n+2) {
+            margin-left: 1em;
+        }
+
+    input[type="checkbox"] {
+        transform: scale(1.5);
+        -webkit-transform: scale(1.5);
+    }
+</style>
+
 
 <div class="row">
     <div class="col-md-4">
@@ -22,7 +46,9 @@
                     Source:
                 </div>
                 <div class="col-sm-10">
-                    <select data-bind="options: sourceIds, value: selectedSourceId, optionsCaption: 'Choose...'" style="width:200px;"></select>
+                    <select data-bind="options: filteredSourceIdList, value: selectedSourceId, optionsCaption: 'Choose...'" style="width:200px;"></select>
+                    <br />
+                    <input id="filter" placeholder="filter src Ids..." type="text" style="width:200px;" data-bind="textInput: sourceIdfilter" />
                 </div>
             </div>
             <br />
@@ -52,14 +78,18 @@
                 </div>
                 <div data-bind="foreach: commonRouteOpers ">
                     <ul data-bind="foreach: TargetRouteOper">
-                        <li data-bind="text: RouteAndTargetId"></li>
-                        <ul data-bind="foreach: Operations">
-                            <li>
-                                <input type="checkbox" name="level-2"
-                                       data-bind="checked: IsSelected">
-                                <span data-bind="text: Operation"></span>
-                            </li>
-                        </ul>
+                        <li class="child">
+                            <input type="checkbox" name="level-1"
+                                   data-bind="checked: IsSelected, click: $root.onSelectRoute($data)" />
+                            <span data-bind="text: RouteAndTargetId"></span>
+                            <ul data-bind="foreach: Operations ">
+                                <li class="child">
+                                    <input type="checkbox" name="level-2"
+                                           data-bind="checked: IsSelected, click: $root.selectOper($parent.Route(), $parent.TargetId())" />
+                                    <span data-bind="text: Operation"></span>
+                                </li>
+                            </ul>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -111,6 +141,78 @@
         self.isInitialized = ko.observable(false);
         self.displaySelectOperDiv = ko.observable(false);
         self.commonRouteOpers = ko.observableArray([]);
+        self.sourceIdfilter = ko.observable();
+
+        self.filteredSourceIdList = ko.computed(function () {
+            var name = self.sourceIdfilter();
+            if (!name || name == "None") {
+
+                return self.sourceIds();
+            } else {
+                return ko.utils.arrayFilter(self.sourceIds(), function (i) {
+                    return i.toString().toLowerCase().indexOf(name.toLowerCase()) !== -1;
+                });
+            }
+        });
+
+        self.selectOper = function (route, id) {
+
+            if (self.displaySelectOperDiv()) {
+                var totalOperCount = 0;
+                var selectedOperCount = 0;
+                for (var i = 0; i < self.commonRouteOpers().TargetRouteOper().length; i++) {
+                    var item = self.commonRouteOpers().TargetRouteOper()[i];
+                    if (item.Route() === route && item.TargetId() === id) {
+                        totalOperCount = item.Operations().length;
+                        for (var j = 0; j < totalOperCount; j++) {
+                            if (item.Operations()[j].IsSelected()) {
+                                selectedOperCount++;
+                            }
+                        }
+                        break;
+                    }
+                }
+
+                if (totalOperCount === selectedOperCount) {
+                    //Check parent Route Check Box to true
+                    for (var i = 0; i < self.commonRouteOpers().TargetRouteOper().length; i++) {
+                        var item = self.commonRouteOpers().TargetRouteOper()[i];
+                        if (item.Route() === route && item.TargetId() === id) {
+                            item.IsSelected(true);
+                            break;
+                        }
+                    }
+                } else {
+                    //Check parent Route Check Box to false
+                    for (var i = 0; i < self.commonRouteOpers().TargetRouteOper().length; i++) {
+                        var item = self.commonRouteOpers().TargetRouteOper()[i];
+                        if (item.Route() === route && item.TargetId() === id) {
+                            item.IsSelected(false);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        self.onSelectRoute = function (data) {
+            if (self.displaySelectOperDiv()) {
+                for (var i = 0; i < self.commonRouteOpers().TargetRouteOper().length; i++) {
+                    var routeItem = self.commonRouteOpers().TargetRouteOper()[i];
+                    if (routeItem.Route() === data.Route() && routeItem.TargetId() === data.TargetId()) {
+                        if (routeItem.IsSelected()) {
+                            for (var j = 0; j < routeItem.Operations().length; j++) {
+                                routeItem.Operations()[j].IsSelected(true);
+                            }
+                        } else {
+                            for (var j = 0; j < routeItem.Operations().length; j++) {
+                                routeItem.Operations()[j].IsSelected(false);
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         self.selectedSourceId.subscribe(function (newValue) {
             if (newValue) {

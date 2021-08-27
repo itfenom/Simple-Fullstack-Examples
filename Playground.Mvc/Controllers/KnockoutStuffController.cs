@@ -305,6 +305,8 @@ namespace Playground.Mvc.Controllers
             get { return $"{TargetId} => {Route}"; }
         }
 
+        public bool IsSelected { get; set; }
+
         public List<CompellingExample1OperationModel> Operations { get; set; }
     }
 
