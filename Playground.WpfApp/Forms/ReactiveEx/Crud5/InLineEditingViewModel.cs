@@ -119,6 +119,15 @@ namespace Playground.WpfApp.Forms.ReactiveEx.Crud5
                 });
             SaveCommand = ReactiveCommand.Create(() => 
             {
+                var isAnyHasError = _allRecords.Any(x => x.HasErrors);
+
+                if (isAnyHasError)
+                {
+                    MessageBox.Show("Pleae fix validation error(s) and try again.", "Save", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+
                 var recordsToSave = _allRecords.Where(x => x.IsChanged || x.EditState == EditState.New).ToList();
                 foreach (var item in recordsToSave)
                 {
