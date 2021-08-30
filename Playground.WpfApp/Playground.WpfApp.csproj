@@ -169,6 +169,7 @@
     <Compile Include="Forms\OtherEx\ItemsControlEx\Ex3\ItemsCtrlViewModel.cs" />
     <Compile Include="Forms\ReactiveEx\BaseWindow.cs" />
     <Compile Include="Forms\ReactiveEx\BindableBase.cs" />
+    <Compile Include="Forms\ReactiveEx\CollectionItemsValidAttribute.cs" />
     <Compile Include="Forms\ReactiveEx\Crud2\ReactiveEmployeeEditorView.xaml.cs">
       <DependentUpon>ReactiveEmployeeEditorView.xaml</DependentUpon>
     </Compile>
@@ -185,6 +186,10 @@
       <DependentUpon>DynamicDataContact2View.xaml</DependentUpon>
     </Compile>
     <Compile Include="Forms\ReactiveEx\Crud4\DynamicDataContact2ViewModel.cs" />
+    <Compile Include="Forms\ReactiveEx\Crud5\InLineEditingView.xaml.cs">
+      <DependentUpon>InLineEditingView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\ReactiveEx\Crud5\InLineEditingViewModel.cs" />
     <Compile Include="Forms\ReactiveEx\Crud\EmpEditorView.xaml.cs">
       <DependentUpon>EmpEditorView.xaml</DependentUpon>
     </Compile>
@@ -660,6 +665,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Forms\ReactiveEx\Crud4\DynamicDataContact2View.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Forms\ReactiveEx\Crud5\InLineEditingView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
