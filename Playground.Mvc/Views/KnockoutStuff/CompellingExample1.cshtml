@@ -34,36 +34,49 @@
         transform: scale(1.5);
         -webkit-transform: scale(1.5);
     }
+
+    .arrow-buttons {
+        width: 100%;
+        margin-bottom: 5px;
+        float: left;
+    }
 </style>
 
 
 <div class="row">
     <div class="col-md-4">
         <fieldset>
-            <legend>Select Source / Target Id</legend>
+            <legend>Select Source Id</legend>
             <div class="row">
-                <div class="col-md-2 text-right">
-                    Source:
-                </div>
-                <div class="col-sm-10">
+                <div class="col-md-3"></div>
+                <div class="col-md-9">
                     <select data-bind="options: filteredSourceIdList, value: selectedSourceId, optionsCaption: 'Choose...'" style="width:200px;"></select>
                     <br />
                     <input id="filter" placeholder="filter src Ids..." type="text" style="width:200px;" data-bind="textInput: sourceIdfilter" />
                 </div>
             </div>
-            <br />
+        </fieldset>
+        <br />
+        <fieldset>
+            <legend>Select target Id(s) </legend>
             <div class="row">
-                <div class="col-md-2 text-right">
-                    Target:
+                <div class="col-md-5">
+                    <select multiple data-bind="options: targetIds, selectedOptions: selectedTargetIds" style="width:150px; height:150px;"></select>
                 </div>
-                <div class="col-sm-10">
-                    <select multiple data-bind="options: targetIds, selectedOptions: selectedTargetIds, optionsCaption: 'Choose...'" style="width:200px; height:150px;"></select>
+                <div class="col-md-2">
+                    <input type='button' value='>>' class="btn btn-primary arrow-buttons" data-bind="click: moveAllToTarget" /><br />
+                    <input type='button' value='>' class="btn btn-primary arrow-buttons" data-bind="click: moveSelectedToTarget" /><br />
+                    <input type='button' value='<' class="btn btn-primary arrow-buttons" data-bind="click: moveSelectedToSource" /><br />
+                    <input type='button' value='<<' class="btn btn-primary arrow-buttons" data-bind="click: moveAllToSource" />
+                </div>
+                <div class="col-md-5">
+                    <select multiple data-bind="options: targetIds2, selectedOptions: selectedTargetIds2" style="width: 150px; height: 150px; padding: 2px;"></select>
                 </div>
             </div>
             <br />
             <div class="row">
-                <div class="col-md-2 text-right"></div>
-                <div class="col-sm-10">
+                <div class="col-md-2"></div>
+                <div class="col-md-10">
                     <button type="button" class="btn btn-primary" data-bind="click: GetRouteOperToCopy">Get Route/Oper to Copy</button>
                 </div>
             </div>
@@ -81,7 +94,7 @@
                         <li class="child">
                             <input type="checkbox" name="level-1"
                                    data-bind="checked: IsSelected, click: $root.onSelectRoute($data)" />
-                            <span data-bind="text: RouteAndTargetId"></span>
+                            <span data-bind="text: RouteAndTargetId, style: {'font-weight': 'bold', 'font-size': '14px'}"></span>
                             <ul data-bind="foreach: Operations ">
                                 <li class="child">
                                     <input type="checkbox" name="level-2"
@@ -142,6 +155,8 @@
         self.displaySelectOperDiv = ko.observable(false);
         self.commonRouteOpers = ko.observableArray([]);
         self.sourceIdfilter = ko.observable();
+        self.targetIds2 = ko.observableArray([]);
+        self.selectedTargetIds2 = ko.observableArray([]);
 
         self.filteredSourceIdList = ko.computed(function () {
             var name = self.sourceIdfilter();
@@ -214,10 +229,120 @@
             }
         }
 
+        self.moveAllToTarget = function () {
+            if (self.targetIds().length === 0) {
+                toastr["error"]("Nothing to move!", 'Error');
+                return false;
+            }
+
+            for (var i = 0; i < self.targetIds().length; i++) {
+                self.targetIds2.push(self.targetIds()[i]);
+                self.selectedTargetIds2.push(self.targetIds()[i]);
+            }
+
+            self.targetIds([]);
+            self.selectedTargetIds([]);
+        }
+
+        self.moveAllToSource = function () {
+            if (self.targetIds2().length === 0) {
+                toastr["error"]("Nothing to move!", 'Error');
+                return false;
+            }
+
+            for (var i = 0; i < self.targetIds2().length; i++) {
+                self.targetIds.push(self.targetIds2()[i]);
+            }
+
+            self.targetIds2([]);
+            self.selectedTargetIds2([]);
+        }
+
+        self.moveSelectedToTarget = function () {
+            if (self.targetIds().length === 0) {
+                toastr["error"]("Nothing to move!", 'Error');
+                return false;
+            }
+
+            if (self.selectedTargetIds() === undefined || self.selectedTargetIds().length === 0) {
+                toastr["error"]("Please select a SWR and try again.", 'Error');
+                return false;
+            }
+
+            //add to selections
+            for (var i = 0; i < self.selectedTargetIds().length; i++) {
+                var swrId = self.selectedTargetIds()[i];
+                for (var j = 0; j < self.targetIds().length; j++) {
+                    var currSwrId = self.targetIds()[j];
+                    if (currSwrId === swrId) {
+                        self.targetIds2.push(self.targetIds()[j]);
+                        self.selectedTargetIds2.push(self.targetIds()[j]);
+                        break;
+                    }
+                }
+            }
+
+            //remove
+            for (var i = 0; i < self.selectedTargetIds2().length; i++) {
+                var swrId = self.selectedTargetIds2()[i];
+                for (var j = 0; j < self.targetIds().length; j++) {
+                    var currSwrId = self.targetIds()[j];
+                    if (currSwrId === swrId) {
+                        self.targetIds.remove(self.targetIds()[j]);
+                        break;
+                    }
+                }
+            }
+
+            //empty out selections
+            self.selectedTargetIds([]);
+        }
+
+        self.moveSelectedToSource = function () {
+            if (self.targetIds2().length === 0) {
+                toastr["error"]("Nothing to move!", 'Error');
+                return false;
+            }
+
+            if (self.selectedTargetIds2() === undefined || self.selectedTargetIds2().length === 0) {
+                toastr["error"]("Please select a SWR and try again.", 'Error');
+                return false;
+            }
+
+            //add to selections
+            for (var i = 0; i < self.selectedTargetIds2().length; i++) {
+                var swrId = self.selectedTargetIds2()[i];
+                for (var j = 0; j < self.targetIds2().length; j++) {
+                    var currSwrId = self.targetIds2()[j];
+                    if (currSwrId === swrId) {
+                        self.targetIds.push(self.targetIds2()[j]);
+                        self.selectedTargetIds.push(swrId);
+                        break;
+                    }
+                }
+            }
+
+            //remove
+            for (var i = self.selectedTargetIds2().length - 1; i >= 0; i--) {
+                var swrId = self.selectedTargetIds2()[i];
+                for (var j = 0; j < self.targetIds2().length; j++) {
+                    var currSwrId = self.targetIds2()[j];
+                    if (currSwrId === swrId) {
+                        self.targetIds2.remove(self.targetIds2()[j]);
+                        break;
+                    }
+                }
+            }
+
+            //empty out selections
+            self.selectedTargetIds2([]);
+        }
+
         self.selectedSourceId.subscribe(function (newValue) {
             if (newValue) {
                 self.targetIds([]); //reset target
                 self.selectedTargetIds([]); //Reset selections as well
+                self.selectedTargetIds2([]);
 
                 $.ajax({
                     url: '@Url.Action("GetTargetIds", "KnockoutStuff")',
@@ -249,12 +374,12 @@
                 return false;
             }
 
-            if (self.selectedTargetIds() === undefined || self.selectedTargetIds().length === 0) {
+            if (self.selectedTargetIds2() === undefined || self.selectedTargetIds2().length === 0) {
                 toastr["error"]("You must select at least one Target Id", 'Error');
                 return false;
             }
 
-            var targetIds = self.selectedTargetIds();
+            var targetIds = self.selectedTargetIds2();
 
             $.ajax({
                 url: '@Url.Action("GetRouteOpersToCopy", "KnockoutStuff")',
@@ -318,8 +443,10 @@
                         self.commonRouteOpers(undefined);
                         self.selectedTargetIds([]);
                         self.selectedSourceId(undefined);
+                        self.selectedTargetIds2([]);
+                        self.targetIds2([]);
 
-                        toastr["info"]("Route copied successfully.", 'Info');
+                        toastr["info"]("Success!.", 'Info');
 
                         self.displaySelectOperDiv(false);
 
