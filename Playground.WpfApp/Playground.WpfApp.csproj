@@ -113,6 +113,7 @@
     <Compile Include="Config.cs" />
     <Compile Include="Controls\FadingContentControl.cs" />
     <Compile Include="Controls\ScrollingContentControl.cs" />
+    <Compile Include="Converters\IntegerConverter.cs" />
     <Compile Include="Converters\VisibilityToCollapsedConverter.cs" />
     <Compile Include="Forms\AsyncEx\AdvAsyncAwaitEx\AdvAsyncAwaitView.xaml.cs">
       <DependentUpon>AdvAsyncAwaitView.xaml</DependentUpon>

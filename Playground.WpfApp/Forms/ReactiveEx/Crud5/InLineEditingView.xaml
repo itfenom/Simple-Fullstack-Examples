@@ -8,6 +8,7 @@
     mc:Ignorable="d"
     xmlns:controls="http://metro.mahapps.com/winfx/xaml/controls"
     xmlns:behaviors="clr-namespace:Playground.WpfApp.Behaviors"
+    xmlns:converters="clr-namespace:Playground.WpfApp.Converters"
     behaviors:WindowCloser.EnableWindowClosing="True"
     BorderBrush="{DynamicResource AccentColorBrush}"
     BorderThickness="1"
@@ -24,6 +25,7 @@
             <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
                 <Setter Property="controls:ButtonHelper.PreserveTextCase" Value="True" />
             </Style>
+            <converters:IntegerConverter x:Key="intConverter"/>
         </ResourceDictionary>
     </controls:MetroWindow.Resources>
 
@@ -99,7 +101,7 @@
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
 
-                        <DataGridTextColumn Header="Age" Width="150" Binding="{Binding Age, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True, ValidatesOnExceptions=True}"
+                        <DataGridTextColumn Header="Age" Width="150" Binding="{Binding Age, Converter={StaticResource intConverter}, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True, NotifyOnValidationError=True, ValidatesOnExceptions=True}"
                                             EditingElementStyle="{StaticResource errorStyle}">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate>
