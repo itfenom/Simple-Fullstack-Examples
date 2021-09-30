@@ -40,55 +40,103 @@
         margin-bottom: 5px;
         float: left;
     }
+
+    .multiSelectStyles {
+        overflow-x: scroll;
+        font-family: Courier;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    option {
+        float: left;
+        min-width: 100%;
+    }
+
+    .row {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+    }
+
+        .row > [class*='col-'] {
+            display: flex;
+            flex-direction: column;
+        }
 </style>
 
 
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-12">
         <fieldset>
             <legend>Select Source Id</legend>
             <div class="row">
-                <div class="col-md-3"></div>
-                <div class="col-md-9">
+                <div class="col-md-2 form-group" style="width: 100%">
+                    Source:
                     <select data-bind="options: filteredSourceIdList, value: selectedSourceId, optionsCaption: 'Choose...'" style="width:200px;"></select>
                     <br />
                     <input id="filter" placeholder="filter src Ids..." type="text" style="width:200px;" data-bind="textInput: sourceIdfilter" />
                 </div>
-            </div>
-        </fieldset>
-        <br />
-        <fieldset>
-            <legend>Select target Id(s) </legend>
-            <div class="row">
-                <div class="col-md-5">
-                    <select multiple data-bind="options: targetIds, selectedOptions: selectedTargetIds" style="width:150px; height:150px;"></select>
+
+                <div class="col-md-2 form-group" style="width: 100%">
+                    Target(s):
+                    <select multiple data-bind="options: targetIds, selectedOptions: selectedTargetIds" class="form-control multiSelectStyles" style="width: 150px; height: 150px; padding: 2px; width: 100%;"></select>
                 </div>
-                <div class="col-md-2">
-                    <input type='button' value='>>' class="btn btn-primary arrow-buttons" data-bind="click: moveAllToTarget" /><br />
-                    <input type='button' value='>' class="btn btn-primary arrow-buttons" data-bind="click: moveSelectedToTarget" /><br />
-                    <input type='button' value='<' class="btn btn-primary arrow-buttons" data-bind="click: moveSelectedToSource" /><br />
-                    <input type='button' value='<<' class="btn btn-primary arrow-buttons" data-bind="click: moveAllToSource" />
+
+                <div class="col-md-1">
+                    <div class="row">
+                        <div class="col-xs-12 mt-5 btn-block ml-2 mr-2 btn-block">
+                            <input type='button' value='>' class="btn btn-sm btn-primary btn-block" data-bind="click: moveSelectedToTarget" title="Move selected one to selected target" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12 mt-4 btn-block btn-block ml-2 mr-2">
+                            <input type='button' value='>>' class="btn btn-sm btn-primary btn-block" data-bind="click: moveAllToTarget" title="Move all to selected target" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-xs-12 mt-4 btn-block btn-block ml-2 mr-2">
+                            <input type='button' value='<' class="btn btn-sm btn-primary btn-block" data-bind="click: moveSelectedToSource" title="Move selected one back to source" />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-xs-12 mt-6 ml-2 mr-2 btn-block">
+                            <input type='button' value='<<' class="btn btn-sm btn-primary btn-block" data-bind="click: moveAllToSource" title="Move all selected targets back to source" />
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-5">
-                    <select multiple data-bind="options: targetIds2, selectedOptions: selectedTargetIds2" style="width: 150px; height: 150px; padding: 2px;"></select>
+
+                <div class="col-md-2 form-group" style="width:100%;">
+                    Selected Target(s):
+                    <select multiple data-bind="options: targetIds2, selectedOptions: selectedTargetIds2"  class="form-control multiSelectStyles" style="height:150px;padding:2px;width:100%;"></select>
                 </div>
-            </div>
-            <br />
-            <div class="row">
-                <div class="col-md-2"></div>
-                <div class="col-md-10">
-                    <button type="button" class="btn btn-primary" data-bind="click: GetRouteOperToCopy">Get Route/Oper to Copy</button>
+
+                <div class="col-md-1 form-group" style="width:50%;">
+                    <div class="row">
+                        <div class="col-sm-12 btn-block mt-5 ml-2 mr-2">
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <br />
+                            <button type="button" class="btn btn-primary btn-sm ml-2" style="width:50%;" data-bind="click: GetRouteOperToCopy" title="Get operation(s) to replace">OK</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </fieldset>
     </div>
+</div>
 
-    <div class="col-md-8" data-bind="visible: displaySelectOperDiv()">
+<div class="row" data-bind="visible: displaySelectOperDiv()">
+    <div class="col-md-6">
         <fieldset>
-            <legend>Select Operations to copy</legend>
+            <legend>Select which data to replace:</legend>
             <div class="row">
-                <div class="col-md-2">
-                </div>
                 <div data-bind="foreach: commonRouteOpers ">
                     <ul data-bind="foreach: TargetRouteOper">
                         <li class="child">
@@ -107,14 +155,20 @@
                 </div>
             </div>
 
-            <br />
-
             <div class="row">
-                <div class="col-md-2 text-right"></div>
-                <div class="col-sm-10">
-                    <button type="button" class="btn btn-primary" data-bind="click: CopySelectedOpers">Copy Selected Oper(s)</button>
+                <div class="col-md-9"></div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary" data-bind="click: CopySelectedOpers" title="Replace selected operations">Submit</button>
                 </div>
             </div>
+        </fieldset>
+    </div>
+
+    <div class="col-md-6">
+        <fieldset>
+            <legend>Re-loadable jqGrid with different data:</legend>
+            <table id="list"></table>
+            <br />
         </fieldset>
     </div>
 </div>
@@ -127,7 +181,7 @@
 
     <script src="@Url.Content("~/Scripts/toastr.min.js")" type="text/javascript"></script>
 
-    <script type="text/javascript">
+<script type="text/javascript">
             @{
         var json = JsonConvert.SerializeObject(Model);
     }
@@ -340,9 +394,8 @@
 
         self.selectedSourceId.subscribe(function (newValue) {
             if (newValue) {
-                self.targetIds([]); //reset target
-                self.selectedTargetIds([]); //Reset selections as well
-                self.selectedTargetIds2([]);
+
+                self.resetForm();
 
                 $.ajax({
                     url: '@Url.Action("GetTargetIds", "KnockoutStuff")',
@@ -448,7 +501,7 @@
 
                         toastr["info"]("Success!.", 'Info');
 
-                        self.displaySelectOperDiv(false);
+                        self.resetForm();
 
                     } else {
                         toastr["error"](data.message, 'Error');
@@ -459,6 +512,16 @@
                 }
             });
         }
+
+        self.resetForm = function () {
+            
+            self.targetIds([]); //reset target
+            self.selectedTargetIds([]); //Reset selections as well
+            self.selectedTargetIds2([]);
+            self.targetIds2([]);
+            self.sourceIdfilter("");
+            self.displaySelectOperDiv(false);
+        };
 
         self.initialize = function () {
 
@@ -485,5 +548,6 @@
             self.isInitialized(true);
         }
     }
-    </script>
+
+</script>
 }

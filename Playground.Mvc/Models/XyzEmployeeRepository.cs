@@ -34,13 +34,13 @@ namespace Playground.Mvc.Models
                 var sql = $@"SELECT * FROM 
                     (
                     SELECT ROWNUM RNUM, A.*
-                    FROM ({SelectColumnList<XyzEmployee>(request.SearchPropertiesAndTerms)}) A
+                    FROM ({BuildSelectColumnListSql<XyzEmployee>(request.SearchPropertiesAndTerms)}) A
                     WHERE ROWNUM <= {pageEnd}
                     )
                     WHERE RNUM > {pageStart}
                     {sortOrder}";
 
-                var countQuery = SelectCount<XyzEmployee>();
+                var countQuery = BuildSelectCountSql<XyzEmployee>();
 
                 var items = dbConn.Query<XyzEmployee>(sql);
                 var count = Convert.ToInt32(dbConn.ExecuteScalar(countQuery));
@@ -60,7 +60,7 @@ namespace Playground.Mvc.Models
 
         public IEnumerable<object> GetDistinctColumnValues(string columnName)
         {
-            var sql = SelectDistinctColumnValues<XyzEmployee>(columnName);
+            var sql = BuildSelectDistinctColumnValuesSql<XyzEmployee>(columnName);
             var items = Select<string>(sql);
             var itemsList = new List<string>(items);
             itemsList.Sort();
