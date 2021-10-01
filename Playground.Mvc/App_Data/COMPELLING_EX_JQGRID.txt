@@ -1,0 +1,59 @@
+DROP TABLE COMPELLING_EX_JQGRID;
+
+CREATE TABLE COMPELLING_EX_JQGRID
+(
+  ID NUMBER primary key NOT NULL,
+  NAME VARCHAR(50), 
+  VALUE VARCHAR2(100)
+);
+SELECT * FROM COMPELLING_EX_JQGRID;
+
+
+DECLARE
+      V_ID NUMBER := 2001;
+      V_NAME VARCHAR2(50) := NULL;
+      V_VALUE VARCHAR2(100) := NULL;
+      TYPE T_LIST IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
+      V_LIST T_LIST;
+BEGIN
+    V_LIST(1) := 2000;
+    V_LIST(2) := 2001;
+    V_LIST(3) := 2002;
+    V_LIST(4) := 2003;
+    V_LIST(5) := 2004;
+    
+    V_LIST(6) := 3000;
+    V_LIST(7) := 3001;
+    V_LIST(8) := 3002;
+    V_LIST(9) := 3003;
+    V_LIST(10) := 3004;
+    
+    V_LIST(11) := 4000;
+    V_LIST(12) := 4001;
+    V_LIST(13) := 4002;
+    V_LIST(14) := 4003;
+    V_LIST(15) := 4004;
+    
+    V_LIST(16) := 5000;
+    V_LIST(17) := 5001;
+    V_LIST(18) := 5002;
+    V_LIST(19) := 5003;
+    V_LIST(20) := 5004;
+    
+    V_LIST(21) := 6000;
+    V_LIST(22) := 6001;
+    V_LIST(23) := 6002;
+    V_LIST(24) := 6003;
+    V_LIST(25) := 6004;
+    
+    FOR i IN 1 .. V_LIST.COUNT
+    LOOP
+        V_ID := V_LIST(i);
+        V_NAME := V_ID || '_Name';
+        V_VALUE := 'Value => ' || V_ID;
+        INSERT INTO COMPELLING_EX_JQGRID(ID, NAME, VALUE)
+        VALUES(V_ID, V_NAME, V_VALUE);
+    END LOOP;
+    COMMIT;
+END;
+

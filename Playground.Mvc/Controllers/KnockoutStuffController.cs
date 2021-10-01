@@ -7,12 +7,17 @@ using System.Data;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using Playground.Mvc.DAL;
+using Oracle.ManagedDataAccess.Client;
+using System.Configuration;
+using Dapper;
 
 namespace Playground.Mvc.Controllers
 {
     public class KnockoutStuffController : Controller
     {
         private readonly XyzEmployeeRepository _repository = new XyzEmployeeRepository();
+        private readonly CompellingExRepository _compExRepository = new CompellingExRepository();
 
         public ActionResult Index()
         {
@@ -268,14 +273,54 @@ namespace Playground.Mvc.Controllers
 
         public JsonResult CopySelectedOperations(CompellingExample1RouteOperModel model)
         {
-            try
+            return Json(new { success = true, message = "" }, JsonRequestBehavior.AllowGet);
+        }
+
+        public JsonResult GetJqGridData(string commaSeparatedIds)
+        {
+            var queryString = Request.QueryString.AllKeys.ToDictionary(x => x, x => Request.QueryString[x]);
+
+            JqGridRequest request = new JqGridRequest();
+            request.Page = Convert.ToInt32(queryString["page"]);
+            request.PerPage = Convert.ToInt32(queryString["rows"]);
+            request.SortByProperty = queryString["sidx"];
+
+            if (queryString["sord"] == "asc")
+                request.SortOrder = SortOrder.Ascending;
+            else
+                request.SortOrder = SortOrder.Descending;
+
+
+            bool doSearch = queryString["_search"] == "true";
+            if (doSearch)
             {
-                return Json(new { success = true, message = "" }, JsonRequestBehavior.AllowGet);
+                queryString.Remove("page");
+                queryString.Remove("rows");
+                queryString.Remove("sord");
+                queryString.Remove("nd");
+                queryString.Remove("_search");
+                queryString.Remove("sidx");
+
+                request.SearchPropertiesAndTerms = new List<KeyValuePair<string, string>>();
+                if (queryString.ContainsKey("filters"))
+                {
+                    dynamic filters = JsonConvert.DeserializeObject(queryString["filters"]);
+                    foreach (var rule in filters["rules"])
+                    {
+                        request.SearchPropertiesAndTerms.Add(new KeyValuePair<string, string>(rule["field"].ToString(), rule["data"].ToString()));
+                    }
+
+                    queryString.Remove("filters");
+                }
+
+                foreach (var kvp in queryString)
+                {
+                    request.SearchPropertiesAndTerms.Add(new KeyValuePair<string, string>(kvp.Key, kvp.Value));
+                }
             }
-            catch (Exception e)
-            {
-                return Json(new { success = false, message = e.Message }, JsonRequestBehavior.AllowGet);
-            }
+            var idsList = commaSeparatedIds.Split(',').ToList();
+            var model = _compExRepository.GetFilteredList(request, idsList);
+            return Json(model, JsonRequestBehavior.AllowGet);
         }
 
         #endregion
@@ -314,6 +359,83 @@ namespace Playground.Mvc.Controllers
     {
         public string Operation { get; set; }
         public bool IsSelected { get; set; }
+    }
+
+    [DatabaseSchema("Seraph")]
+    [DatabaseTable("COMPELLING_EX_JQGRID")]
+    public class CompellingExJqGridModel
+    {
+        public int Id { get; set; }
+
+        public string Name { get; set; }
+
+        public string Value { get; set; }
+    }
+
+    public class CompellingExJqGridPagingModel
+    {
+        public IEnumerable<CompellingExJqGridModel> List { get; set; }
+        public int CurrentPage { get; set; }
+
+        public int ItemCount { get; set; }
+
+        public int TotalPages { get; set; }
+    }
+
+    public class CompellingExRepository : DapperBaseRepository
+    {
+        protected override string GetConnectionString()
+        {
+            return ConfigurationManager.ConnectionStrings["SeraphOracle"].ToString();
+        }
+
+        public CompellingExJqGridPagingModel GetFilteredList(JqGridRequest request, List<string> ids)
+        {
+            var pageStart = request.PerPage * (request.Page - 1);
+            var pageEnd = pageStart + request.PerPage;
+            var sortOrder = string.Empty;
+
+            if (!string.IsNullOrEmpty(request.SortByProperty))
+            {
+                sortOrder = request.SortOrder == SortOrder.Ascending ? $" ORDER BY {request.SortByProperty} ASC" : $" ORDER BY {request.SortByProperty} DESC";
+            }
+
+            using (var dbConn = new OracleConnection(GetConnectionString()))
+            {
+                dbConn.Open();
+                var sql = $@"SELECT * FROM 
+                    (
+                        SELECT ROWNUM RNUM, A.*
+                            FROM ({BuildSelectColumnListSql<CompellingExJqGridModel>(request.SearchPropertiesAndTerms)}) A
+                        WHERE Id IN ({string.Join(",", ids)})  
+                            AND ROWNUM <= {pageEnd}
+                    )
+                    WHERE RNUM > {pageStart}
+                    {sortOrder}";
+
+                var countQuery = $@"SELECT COUNT(*)
+                     FROM 
+                        (
+                            SELECT ROWNUM RNUM, A.*
+                                FROM ({BuildSelectColumnListSql<CompellingExJqGridModel>(request.SearchPropertiesAndTerms)}) A
+                            WHERE Id IN ({string.Join(",", ids)})  
+                        )";
+
+                var items = dbConn.Query<CompellingExJqGridModel>(sql);
+                var count = Convert.ToInt32(dbConn.ExecuteScalar(countQuery));
+                var totalPages = Math.Ceiling((double)count / request.PerPage);
+
+                var retVal = new CompellingExJqGridPagingModel
+                {
+                    ItemCount = count,
+                    CurrentPage = request.Page
+                };
+                retVal.TotalPages = Convert.ToInt32(totalPages);
+                retVal.List = items;
+
+                return retVal;
+            }
+        }
     }
 
     #endregion

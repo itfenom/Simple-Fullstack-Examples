@@ -270,6 +270,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="App_Data\COMPELLING_EX_JQGRID.txt" />
     <Content Include="App_Data\ErrorLog.txt" />
     <Content Include="App_Data\Playground.Mvc_01_Setting_up_Project.txt" />
     <Content Include="App_Data\Playground.Mvc_02_AccountController.txt" />
